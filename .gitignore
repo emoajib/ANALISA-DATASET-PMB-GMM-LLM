@@ -1,0 +1,38 @@
+# Temp files
+temp_dataset.xls
+*.xls
+*.xlsx
+
+# Outputs
+outputs/
+
+# Environment variables
+.env
+.env.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Streamlit
+.streamlit/
+*.py[cod]
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Cache files
+data/embedding_cache.json
+data/embedding_cache.csv
+data/llm_cache.json
+data/llm_cache.csv
+src/steps/__pycache__/
+src/__pycache__/

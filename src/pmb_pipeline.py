@@ -1,5 +1,10 @@
 import pandas as pd
 import numpy as np
+import functools
+import re
+import concurrent.futures
+from multiprocessing import cpu_count
+from joblib import Parallel, delayed
 from sklearn.mixture import GaussianMixture
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
@@ -14,13 +19,9 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics.pairwise import cosine_similarity
 import matplotlib.pyplot as plt
 from collections import Counter
-import re
 import os
-from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut, GeocoderUnavailable, GeocoderRateLimited
 import logging
 import ollama
-from transformers import AutoTokenizer, AutoModel
 import torch
 try:
     import anthropic
@@ -31,6 +32,13 @@ try:
     import openai
 except ImportError:
     openai = None
+
+from steps.utils import (
+    preprocess, get_embedding, post_process_persona,
+    jaccard_similarity, centroid_drift, geocode_location,
+    avg, rnd, detect_col, detect_year, pct,
+    load_llm_cache, save_llm_cache, get_llm_hash
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -48,167 +56,20 @@ FC = {"Pre-COVID": "#3B8BD4", "COVID Crisis": "#E24B4A", "Recovery": "#1D9E75"}
 CC = ["#3B8BD4", "#1D9E75", "#E24B4A", "#BA7517", "#534AB7", "#993356"]
 
 
-# Helpers
-def rnd(v, d=2):
-    return 0 if np.isnan(float(v)) else round(float(v), d)
 
 
-def pct(a, b):
-    return 0 if b == 0 else rnd(a / b * 100, 1)
 
-
-def avg(arr):
-    return 0 if len(arr) == 0 else sum(arr) / len(arr)
-
-
-def detect_col(hs, pats):
-    for p in pats:
-        f = next((h for h in hs if re.search(p, str(h), re.I)), "")
-        if f:
-            return f
-    return ""
-
-
-def detect_year(row):
-    for v in row.values():
-        cleaned = re.sub(r"\D", "", str(v))
-        if cleaned:
-            n = int(cleaned[:4])
-            if 2019 <= n <= 2024:
-                return n
-    return None
-
-
-ABBR_ENTRIES = [
-    (r"\bjl\.?\b", "jalan"),
-    (r"\bds\.?\b", "desa"),
-    (r"\bkec\.?\b", "kecamatan"),
-    (r"\bkel\.?\b", "kelurahan"),
-    (r"\bkab\.?\b", "kabupaten"),
-    (r"\bsmk\b", "sekolah menengah kejuruan"),
-    (r"\bsma\b", "sekolah menengah atas"),
-    (r"\bma\b", "madrasah aliyah"),
-    (r"\bmts\b", "madrasah tsanawiyah"),
-    (r"\bsd\b", "sekolah dasar"),
-    (r"\bsmp\b", "sekolah menengah pertama"),
-    (r"\bpkl\b", "pekalongan"),
-    (r"\bbth\b", "batang"),
-    (r"\bno\.?\b", "nomor"),
-    (r"\bgg\.?\b", "gang"),
-]
-
-
-def preprocess(text):
-    if not text or str(text).strip() == "" or str(text).lower() == "nan":
-        return ""
-    t = re.sub(r"[^a-z0-9\s]", " ", str(text).lower()).replace("\s+", " ").strip()
-    for pat, rep in ABBR_ENTRIES:
-        t = re.sub(pat, rep, t, flags=re.I)
-    return re.sub(r"\s+", " ", t).strip()
-
-
-def get_embedding(text, model=None, tokenizer=None, dim=768):
-    if model is None or tokenizer is None:
-        model_name = "indobenchmark/indobert-base-p1"
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModel.from_pretrained(model_name)
-        model.eval()
-    t = preprocess(text) or "unknown"
-    inputs = tokenizer(
-        t, return_tensors="pt", truncation=True, max_length=512, padding=True
-    )
-    with torch.no_grad():
-        outputs = model(**inputs)
-    embeddings = outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
-    return embeddings.tolist() if dim == 768 else embeddings.tolist()[:dim]
-
-
-def post_process_persona(persona):
-    # Koreksi typo umum
-    # Analisis dataset: Kabupaten Pekalongan (Jawa Tengah), Prodi S1 Informatika/Teknologi Informasi, Jalur Bidikmisi/KIPK/Umum
-    # Typo umum dari LLM: Salah ketik Pekalongan (Pekerjan, Pecelangan), lokasi salah (Sulawesi/Kalimantan -> Jawa Tengah)
-    # Prodi: Informatika, Teknologi Informasi -> S1 Informatika
-    corrections = {
-        "Pekerjan": "Pekalongan",
-        "Pecalangan": "Pekalongan",
-        "Pecelangan": "Pekalongan",
-        "Pekaongan": "Pekalongan",
-        "Pekerangan": "Pekalongan",
-        "Pekerolan": "Pekalongan",
-        "Pecakongan": "Pekalongan",
-        "Pekaolon": "Pekalongan",
-        "Sulawesi Tengah": "Jawa Tengah",
-        "Sulawesi Barat": "Jawa Tengah",
-        "Sulawesi Selatan": "Jawa Tengah",
-        "Kalimantan": "Jawa Tengah",
-        "Sumatera Utara": "Jawa Tengah",
-        "Provinsi Sulawesi": "Provinsi Jawa Tengah",
-        "Provinsi Kalimantan": "Provinsi Jawa Tengah",
-        "Bidikmisi": "Bidikmisi",
-        "Kipk": "KIPK",
-        "Kualifikasi I": "KIPK",
-        "Beasiswa Pip": "Beasiswa PIP",
-        "Umum": "Umum",
-        "Informatika": "S1 Informatika",
-        "Teknologi Informasi": "S1 Teknologi Informasi",
-        "D3 Akuntansi": "D3 Akuntansi",
-        "UNNES": "ITSNU Pekalongan",
-        "UNP": "ITSNU Pekalongan",
-        "UNPemula": "ITSNU Pekalongan",
-        "Institute Teknologi Sesuatu Nusantara": "ITSNU Pekalongan",
-        "ITST NU Pekalongan": "ITSNU Pekalongan",
-        "IT Serpong University": "ITSNU Pekalongan",
-        "ITS NU Pekalongan": "ITSNU Pekalongan",
-        "ITS NUSANTARA Pekalongan": "ITSNU Pekalongan",
-        "Universitas Negeri Surakarta": "ITSNU Pekalongan",
-        "Institusi Teknologi Superlir": "ITSNU Pekalongan",
-        "S1 S1": "S1",
-    }
-    for wrong, correct in corrections.items():
-        persona = persona.replace(wrong, correct)
-    return persona
-
-
-def jaccard_similarity(set1, set2):
-    intersection = len(set1.intersection(set2))
-    union = len(set1.union(set2))
-    return intersection / union if union != 0 else 0
-
-
-def centroid_drift(centers1, centers2):
-    if len(centers1) != len(centers2):
-        return float("inf")
-    return avg(
-        [
-            np.sqrt(np.sum((np.array(c1) - np.array(c2)) ** 2))
-            for c1, c2 in zip(centers1, centers2)
-        ]
-    )
-
-
-def geocode_location(text, geolocator=None, timeout=10):
-    if geolocator is None:
-        geolocator = Nominatim(user_agent="pmb_analysis")
-    try:
-        location = geolocator.geocode(text, timeout=timeout)
-        if location:
-            return location.latitude, location.longitude
-    except GeocoderRateLimited:
-        import time
-
-        time.sleep(60)  # Wait 1 minute for rate limit
-        try:
-            location = geolocator.geocode(text, timeout=timeout)
-            if location:
-                return location.latitude, location.longitude
-        except Exception:
-            pass
-    except (GeocoderTimedOut, GeocoderUnavailable):
-        pass
-    return None
-
-
+ 
 def generate_llm_response(prompt, provider="Ollama", api_key=None, max_tokens=1500):
+    # Load LLM cache
+    cache = load_llm_cache()
+    key = get_llm_hash(prompt, provider, max_tokens)
+    
+    # Check cache first
+    if key in cache:
+        return cache[key]
+    
+    response = None
     if provider == "Anthropic":
         if not anthropic or not api_key:
             raise ValueError("Anthropic library not installed or API key not provided")
@@ -220,7 +81,7 @@ def generate_llm_response(prompt, provider="Ollama", api_key=None, max_tokens=15
                 {"role": "user", "content": prompt}
             ]
         )
-        return message.content[0].text
+        response = message.content[0].text
     elif provider == "OpenCode":
         if not openai or not api_key:
             raise ValueError("OpenAI library not installed or API key not provided")
@@ -230,16 +91,23 @@ def generate_llm_response(prompt, provider="Ollama", api_key=None, max_tokens=15
             messages=[{"role": "user", "content": prompt}],
             max_tokens=max_tokens
         )
-        return response.choices[0].message.content
+        response = response.choices[0].message.content
     else:  # Ollama
         try:
             response = ollama.generate(
                 model="llama3.2:3b", prompt=prompt, options={"num_predict": max_tokens}
             )
-            return response["response"].strip()
+            response = response["response"].strip()
         except Exception as e:
             logger.warning(f"Ollama failed: {e}")
             return f"Error generating response: {e}"
+    
+    # Save to cache if successful
+    if response and not response.startswith("Error"):
+        cache[key] = response
+        save_llm_cache()
+    
+    return response
 
 
 # CRISP-DM Pipeline Class
@@ -268,9 +136,18 @@ class PMBAnalysisPipeline:
         self.cos_sim = []
         self.avg_sim = None
         self.personas = {}
-        self.geolocator = Nominatim(user_agent="pmb_analysis")
         self.tokenizer = None
         self.model = None
+        self.progress_callback = None
+
+    def set_progress_callback(self, callback):
+        self.progress_callback = callback
+
+    def _report_progress(self, step, percent):
+        # Cap percent at 100
+        percent = min(100, max(0, percent))
+        if self.progress_callback:
+            self.progress_callback(step, percent)
 
     # BUSINESS UNDERSTANDING: Pemetaan kebutuhan rekrutmen ITSNU multi-periode
     # Definisi operasional otomasi analisis LLM
@@ -370,96 +247,50 @@ class PMBAnalysisPipeline:
 
     # DATA PREPARATION
     def data_preparation(self):
+        self._report_progress("Text preprocessing", 20)
         logger.info("DATA PREPARATION: Otomasi batch 6 periode")
-        # Load IndoBERT model
-        model_name = "indobenchmark/indobert-base-p1"
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name)
-        self.model.eval()
         # [A] Text Preprocessing Otomatis
-        logger.info("Subproses A: Text preprocessing - case folding, cleaning, normalisasi singkatan (JL→Jalan, DS→Desa, etc.)")
+        logger.info("Subproses A: Text preprocessing")
         for r in self.raw:
             for col in self.cols.values():
                 if col:
                     r[col] = preprocess(r[col])
-        # [B] OTOMASI LLM: IndoBERT Embedding Extraction
-        logger.info("Subproses B: Ekstraksi fitur semantik IndoBERT - model base-p1, mean pooling, validasi cosine similarity >0.70")
-        # Validasi cosine similarity antar periode
+        
+        self._report_progress("Generating embeddings", 40)
+        # [B] IndoBERT Embedding Extraction
+        logger.info("Subproses B: Ekstraksi fitur semantik IndoBERT")
         self.cos_sim = []
         years = sorted(self.by_year.keys())
         for i in range(len(years) - 1):
             y1, y2 = years[i], years[i + 1]
-            emb1 = [
-                get_embedding(
-                    " ".join(
-                        [
-                            r.get(self.cols["nama"], ""),
-                            r.get(self.cols["sekolah"], ""),
-                            r.get(self.cols["kab"], ""),
-                            r.get(self.cols["kec"], ""),
-                            r.get(self.cols["alamat"], ""),
-                        ]
-                    ),
-                    self.model,
-                    self.tokenizer,
-                    self.emb_dim,
-                )
-                for r in self.by_year[y1][:10]
-            ]  # Sample
-            emb2 = [
-                get_embedding(
-                    " ".join(
-                        [
-                            r.get(self.cols["nama"], ""),
-                            r.get(self.cols["sekolah"], ""),
-                            r.get(self.cols["kab"], ""),
-                            r.get(self.cols["kec"], ""),
-                            r.get(self.cols["alamat"], ""),
-                        ]
-                    ),
-                    self.model,
-                    self.tokenizer,
-                    self.emb_dim,
-                )
-                for r in self.by_year[y2][:10]
-            ]
-            sim = avg(
-                [cosine_similarity([e1], [e2])[0][0] for e1 in emb1 for e2 in emb2]
-            )
+            emb1 = [get_embedding(" ".join([r.get(self.cols["nama"], ""), r.get(self.cols["sekolah"], ""), r.get(self.cols["kab"], ""), r.get(self.cols["kec"], ""), r.get(self.cols["alamat"], "")]), dim=self.emb_dim) for r in self.by_year[y1][:10]]
+            emb2 = [get_embedding(" ".join([r.get(self.cols["nama"], ""), r.get(self.cols["sekolah"], ""), r.get(self.cols["kab"], ""), r.get(self.cols["kec"], ""), r.get(self.cols["alamat"], "")]), dim=self.emb_dim) for r in self.by_year[y2][:10]]
+            sim = avg([cosine_similarity([e1], [e2])[0][0] for e1 in emb1 for e2 in emb2])
             self.cos_sim.append({"trans": f"{y1}→{y2}", "sim": rnd(sim, 4)})
         self.avg_sim = rnd(avg([c["sim"] for c in self.cos_sim]), 4)
+        
+        self._report_progress("Geocoding coordinates", 60)
         # [C] Geocoding Koordinat Geospasial
-        logger.info("Subproses C: Geocoding koordinat - GeoPy/Nominatim, imputasi modus untuk missing")
+        logger.info("Subproses C: Geocoding koordinat")
         kec_df = pd.read_csv("data/geo/geo_data/data/coll/kecamatan_lat_long.csv")
-        kec_map = {
-            (row["name"].strip().lower()): (row["lat"], row["long"])
-            for _, row in kec_df.iterrows()
-        }
+        kec_map = {(row["name"].strip().lower()): (row["lat"], row["long"]) for _, row in kec_df.iterrows()}
         kab_df = pd.read_csv("data/geo/geo_data/data/coll/kota_kab_lat_long.csv")
-        kab_map = {
-            (row["name"].strip().lower()): (row["lat"], row["long"])
-            for _, row in kab_df.iterrows()
-        }
+        kab_map = {(row["name"].strip().lower()): (row["lat"], row["long"]) for _, row in kab_df.iterrows()}
         for r in self.raw:
             kec = r.get(self.cols["kec"], "").strip().lower()
             kab = r.get(self.cols["kab"], "").strip().lower()
-            coords = kec_map.get(kec) or kab_map.get(
-                kab.replace("kabupaten", "").replace("kota", "").strip()
-            )
+            coords = kec_map.get(kec) or kab_map.get(kab.replace("kabupaten", "").replace("kota", "").strip())
             if coords:
                 r["_lat"], r["_lon"] = coords
             else:
-                # Fallback to median of all found
                 all_lat = [rr["_lat"] for rr in self.raw if "_lat" in rr]
                 all_lon = [rr["_lon"] for rr in self.raw if "_lon" in rr]
-                r["_lat"] = (
-                    np.median(all_lat) if all_lat else -6.2
-                )  # Default Indonesia lat
-                r["_lon"] = (
-                    np.median(all_lon) if all_lon else 106.8
-                )  # Default Indonesia lon
+                r["_lat"] = np.median(all_lat) if all_lat else -6.2
+                r["_lon"] = np.median(all_lon) if all_lon else 106.8
+        
+        self._report_progress("Encoding categorical variables", 70)
         # [D] Encoding Variabel Kategorikal
-        logger.info("Subproses D: Encoding kategorikal - LabelEncoder fit 2019, unseen categories → 'Unknown'")
+        logger.info("Subproses D: Encoding kategorikal")
         self.label_encoders = {}
         ref2019 = self.by_year.get(2019, self.by_year[sorted(self.by_year.keys())[0]])
         for key in ["prodi", "jalur", "kab"]:
@@ -468,37 +299,32 @@ class PMBAnalysisPipeline:
                 values = [str(r.get(self.cols[key], "")).strip() for r in ref2019]
                 encoder.fit(values)
                 self.label_encoders[key] = encoder
-                # Transform all
                 for r in self.raw:
                     val = str(r.get(self.cols[key], "")).strip()
                     if val not in encoder.classes_:
-                        r[f"{key}_enc"] = (
-                            encoder.transform(["Unknown"])[0]
-                            if "Unknown" in encoder.classes_
-                            else -1
-                        )
+                        r[f"{key}_enc"] = encoder.transform(["Unknown"])[0] if "Unknown" in encoder.classes_ else -1
                     else:
                         r[f"{key}_enc"] = encoder.transform([val])[0]
+        
+        self._report_progress("Feature integration", 90)
         # [E] Feature Integration + Standardisasi
-        logger.info("Subproses E: Feature integration - embedding 768 + geo 2 + encoded 3 = ~773 fitur, StandardScaler fit 2019")
+        logger.info("Subproses E: Feature integration")
+        ref2019 = self.by_year.get(2019, self.by_year[sorted(self.by_year.keys())[0]])
         ref_pts = [self.build_pt(r) for r in ref2019]
         self.scaler = StandardScaler()
         self.scaler.fit(ref_pts)
+        self._report_progress("Data preparation completed", 100)
 
     def build_pt(self, row):
         emb = get_embedding(
-            " ".join(
-                [
-                    str(row.get(self.cols["nama"], "")),
-                    str(row.get(self.cols["sekolah"], "")),
-                    str(row.get(self.cols["kab"], "")),
-                    str(row.get(self.cols["kec"], "")),
-                    str(row.get(self.cols["alamat"], "")),
-                ]
-            ),
-            self.model,
-            self.tokenizer,
-            self.emb_dim,
+            " ".join([
+                str(row.get(self.cols["nama"], "")),
+                str(row.get(self.cols["sekolah"], "")),
+                str(row.get(self.cols["kab"], "")),
+                str(row.get(self.cols["kec"], "")),
+                str(row.get(self.cols["alamat"], ""))
+            ]),
+            dim=self.emb_dim,
         )
         return [
             *emb,
@@ -526,19 +352,32 @@ class PMBAnalysisPipeline:
     # MODELING: GMM per periode
     def modeling(self):
         logger.info("MODELING: GMM per periode - penentuan K optimal dengan BIC minimum, kombinasi AIC dan Silhouette")
-        logger.info("Formulas: BIC=2ln(L̂)+k·ln(n), AIC=2k-2ln(L̂), S(i)=(b(i)-a(i))/max{a(i),b(i)}")
         logger.info("Parameter GMM: covariance_type=full, init_params=k-means++, max_iter=300, n_init=10, random_state=42, tol=1e-3")
+        
         years = sorted(self.by_year.keys())
-        for y in years:
+        total_years = len(years)
+        
+        for idx, y in enumerate(years):
+            progress_base = 40 + (idx / total_years) * 50
+            self._report_progress(f"GMM Modeling {y}", int(progress_base))
+            
             rows = self.by_year[y]
             pts = [self.build_pt(r) for r in rows]
             scaled_pts = self.scaler.transform(pts)
             pca_pts = self.pca.transform(scaled_pts)
-            # K-scan with BIC/AIC/Silhouette
+            
+            # K-scan dengan Early Stopping BIC
             self.k_scan[y] = {}
+            prev_bic = float('inf')
+            increasing_count = 0
+            
             for k in range(2, 7):
                 if k >= len(rows):
-                    continue
+                    break
+                
+                k_progress = progress_base + (k - 2) * (50 / (total_years * 5))
+                self._report_progress(f"GMM {y} - K={k}", int(k_progress))
+                
                 try:
                     gmm = GaussianMixture(
                         n_components=k,
@@ -555,7 +394,8 @@ class PMBAnalysisPipeline:
                     aic = gmm.aic(pca_pts)
                     ch = calinski_harabasz_score(pca_pts, labels)
                     db = davies_bouldin_score(pca_pts, labels)
-                    ll = gmm.score(pca_pts) * len(pca_pts)  # Log-likelihood
+                    ll = gmm.score(pca_pts) * len(pca_pts)
+                    
                     self.k_scan[y][k] = {
                         "sil": sil,
                         "bic": bic,
@@ -564,11 +404,26 @@ class PMBAnalysisPipeline:
                         "db": db,
                         "ll": ll,
                     }
-                except Exception:
+                    
+                    # Early stopping: jika BIC naik 2 kali berturut-turut, hentikan
+                    if bic > prev_bic:
+                        increasing_count += 1
+                        if increasing_count >= 2:
+                            logger.info(f"Early stopping at K={k} for year {y} (BIC increasing)")
+                            break
+                    else:
+                        increasing_count = 0
+                    prev_bic = bic
+                    
+                except Exception as e:
+                    logger.warning(f"Error in GMM K={k} for year {y}: {e}")
                     continue
-            # GMM final: select K with min BIC
+            
+            # GMM final: pilih K dengan BIC minimum
             if self.k_scan[y]:
                 best_k = min(self.k_scan[y], key=lambda x: self.k_scan[y][x]["bic"])
+                self._report_progress(f"GMM {y} - fitting final K={best_k}", int(progress_base + 45))
+                
                 gmm = GaussianMixture(
                     n_components=best_k,
                     covariance_type="full",
@@ -587,31 +442,25 @@ class PMBAnalysisPipeline:
                 db = davies_bouldin_score(pca_pts, labels)
                 ll = gmm.score(pca_pts) * len(pca_pts)
                 pts_2d = self.pca_2d(pca_pts)
+                
                 clusters = []
                 for ci in range(best_k):
                     mems = [rows[i] for i in range(len(rows)) if labels[i] == ci]
                     avg_post = rnd(avg(post[:, ci][labels == ci]), 3)
-                    clusters.append(
-                        {
-                            "ci": ci,
-                            "n": len(mems),
-                            "pct": pct(len(mems), len(rows)),
-                            "avgPost": avg_post,
-                            "topNama": self.top_n(mems, self.cols["nama"])
-                            if self.cols["nama"]
-                            else [],
-                            "topProdi": self.top_n(mems, self.cols["prodi"]),
-                            "topJalur": self.top_n(mems, self.cols["jalur"]),
-                            "topKab": self.top_n(mems, self.cols["kab"]),
-                            "topKec": self.top_n(mems, self.cols["kec"])
-                            if self.cols["kec"]
-                            else [],
-                            "topSekolah": self.top_n(mems, self.cols["sekolah"])
-                            if self.cols["sekolah"]
-                            else [],
-                        }
-                    )
+                    clusters.append({
+                        "ci": ci,
+                        "n": len(mems),
+                        "pct": pct(len(mems), len(rows)),
+                        "avgPost": avg_post,
+                        "topNama": self.top_n(mems, self.cols["nama"]) if self.cols["nama"] else [],
+                        "topProdi": self.top_n(mems, self.cols["prodi"]),
+                        "topJalur": self.top_n(mems, self.cols["jalur"]),
+                        "topKab": self.top_n(mems, self.cols["kab"]),
+                        "topKec": self.top_n(mems, self.cols["kec"]) if self.cols["kec"] else [],
+                        "topSekolah": self.top_n(mems, self.cols["sekolah"]) if self.cols["sekolah"] else [],
+                    })
                 clusters.sort(key=lambda x: x["n"], reverse=True)
+                
                 self.gmm_res[y] = {
                     "n": len(rows),
                     "K": best_k,
@@ -621,14 +470,15 @@ class PMBAnalysisPipeline:
                     "ch": ch,
                     "db": db,
                     "ll": ll,
-                    "labels": labels,
-                    "centers": gmm.means_.tolist(),
-                    "covariances": gmm.covariances_.tolist(),
-                    "weights": gmm.weights_.tolist(),
-                    "post": post,
                     "clusters": clusters,
-                    "pts2d": pts_2d,
+                    "labels": labels.tolist(),
+                    "pts_2d": pts_2d,
+                    "post": post.tolist(),
                 }
+                
+                self._report_progress(f"GMM {y} completed", int(progress_base + 50))
+        
+        self._report_progress("Modeling completed", 100)
 
     def pca_2d(self, matrix):
         pca2 = PCA(n_components=2)
@@ -738,39 +588,68 @@ class PMBAnalysisPipeline:
         logger.info("Persona: Prompt terstruktur dari profil GMM, output <150 kata actionable")
         logger.info("Reasoning kausal: Integrasi ARI, drift, proporsi jalur, konteks historis")
         logger.info("Ringkasan: Temuan utama, implikasi manajemen, rekomendasi prioritas")
-        self.personas = {}
+        
+        # Collect all (year, cluster) pairs for parallel processing
+        tasks = []
         for y in self.by_year.keys():
-            for cl in self.gmm_res[y]["clusters"][
-                :3
-            ]:  # Generate only first 3 clusters per year for optimization
-                top_nama = cl["topNama"][0][0] if cl["topNama"] else "Tidak spesifik"
-                top_prodi = cl["topProdi"][0][0] if cl["topProdi"] else "Tidak spesifik"
-                top_jalur = cl["topJalur"][0][0] if cl["topJalur"] else "Tidak spesifik"
-                top_kab = cl["topKab"][0][0] if cl["topKab"] else "Tidak spesifik"
-                prompt = f"Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan atribut berikut: Nama: {top_nama}, Asal: {top_kab}, Program Studi: {top_prodi}, Jalur Penerimaan: {top_jalur}. Sertakan latar belakang keluarga, motivasi kuliah, aktivitas di kampus, dan prospek karir. Pastikan deskripsi realistis dan dalam bahasa Indonesia. Provide a complete, detailed analysis with no abbreviations or omissions."
+            for cl in self.gmm_res[y]["clusters"][:3]:  # Generate only first 3 clusters per year
+                tasks.append((y, cl))
+        
+        self.personas = {}
+        total_tasks = len(tasks)
+        
+        # Helper function for parallel persona generation
+        def generate_persona(task):
+            y, cl = task
+            top_nama = cl["topNama"][0][0] if cl["topNama"] else "Tidak spesifik"
+            top_prodi = cl["topProdi"][0][0] if cl["topProdi"] else "Tidak spesifik"
+            top_jalur = cl["topJalur"][0][0] if cl["topJalur"] else "Tidak spesifik"
+            top_kab = cl["topKab"][0][0] if cl["topKab"] else "Tidak spesifik"
+            prompt = f"Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan atribut berikut: Nama: {top_nama}, Asal: {top_kab}, Program Studi: {top_prodi}, Jalur Penerimaan: {top_jalur}. Sertakan latar belakang keluarga, motivasi kuliah, aktivitas di kampus, dan prospek karir. Pastikan deskripsi realistis dan dalam bahasa Indonesia. Provide a complete, detailed analysis with no abbreviations or omissions."
+            
+            try:
+                api_key = self.anthropic_api_key if self.llm_provider == "Anthropic" else self.opencode_api_key
+                response = generate_llm_response(prompt, self.llm_provider, api_key, 1500)
+                persona = post_process_persona(response)
+            except Exception as e:
+                logger.warning(f"LLM failed at 1500 tokens: {e}, retrying with 2000 tokens")
                 try:
                     api_key = self.anthropic_api_key if self.llm_provider == "Anthropic" else self.opencode_api_key
-                    response = generate_llm_response(prompt, self.llm_provider, api_key, 1500)
+                    response = generate_llm_response(prompt, self.llm_provider, api_key, 2000)
                     persona = post_process_persona(response)
+                except Exception as e2:
+                    logger.warning(f"LLM failed again: {e2}")
+                    persona = f"Mahasiswa ITSNU Pekalongan bernama {top_nama} dari {top_kab}, memilih prodi {top_prodi} melalui jalur {top_jalur}. Ia merupakan siswa berprestasi dengan motivasi kuat untuk berkarir di bidang teknologi, didukung oleh latar belakang pendidikan yang solid dari sekolah menengah di daerahnya."
+            
+            return (y, cl["ci"] + 1, persona)
+        
+        # Process in parallel
+        with concurrent.futures.ThreadPoolExecutor(max_workers=min(4, total_tasks)) as executor:
+            futures = {executor.submit(generate_persona, task): task for task in tasks}
+            completed = 0
+            for future in concurrent.futures.as_completed(futures):
+                completed += 1
+                progress = 40 + (completed / total_tasks) * 50  # Step 9 is 40-90%
+                self._report_progress(f"Generating personas...", int(progress))
+                
+                try:
+                    y, ci, persona = future.result()
+                    if y not in self.personas:
+                        self.personas[y] = []
+                    self.personas[y].append({"cluster": ci, "persona": persona})
+                    logger.info(f"Persona Klaster {ci} Tahun {y}: {persona}")
                 except Exception as e:
-                    logger.warning(f"LLM failed at 1500 tokens: {e}, retrying with 2000 tokens")
-                    try:
-                        api_key = self.anthropic_api_key if self.llm_provider == "Anthropic" else self.opencode_api_key
-                        response = generate_llm_response(prompt, self.llm_provider, api_key, 2000)
-                        persona = post_process_persona(response)
-                    except Exception as e2:
-                        logger.warning(f"LLM failed again: {e2}")
-                        persona = f"Mahasiswa ITSNU Pekalongan bernama {top_nama} dari {top_kab}, memilih prodi {top_prodi} melalui jalur {top_jalur}. Ia merupakan siswa berprestasi dengan motivasi kuat untuk berkarir di bidang teknologi, didukung oleh latar belakang pendidikan yang solid dari sekolah menengah di daerahnya."
-                if y not in self.personas:
-                    self.personas[y] = []
-                self.personas[y].append({"cluster": cl["ci"] + 1, "persona": persona})
-                logger.info(f"Persona Klaster {cl['ci'] + 1} Tahun {y}: {persona}")
+                    logger.warning(f"Failed to generate persona: {e}")
+        
+        self._report_progress("Persona generation completed", 90)
 
     def causal_trend_analysis(self):
         logger.info("ANALISIS TREN KAUSAL: Penalaran perubahan cluster antar tahun")
         self.causal_explanations = []
         years = sorted(self.by_year.keys())
+        total_pairs = len(years) - 1
         for i in range(1, len(years)):
+            self._report_progress(f"Reasoning {years[i-1]}→{years[i]}", 40 + (i / total_pairs) * 50)
             y1, y2 = years[i - 1], years[i]
             ari = next(
                 (p["ari"] for p in self.ari_pairs if p["y1"] == y1 and p["y2"] == y2), 0

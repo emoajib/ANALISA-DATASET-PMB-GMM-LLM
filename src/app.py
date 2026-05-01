@@ -11,17 +11,16 @@ uploaded_file = st.sidebar.file_uploader("Upload XLS file", type=["xls", "xlsx"]
 
 st.sidebar.header("LLM Provider")
 llm_provider = st.sidebar.radio("Pilih Provider LLM:", ("Ollama", "Anthropic", "OpenCode"), index=0)
+anthropic_api_key = None
+opencode_api_key = None
 if llm_provider == "Anthropic":
-    anthropic_api_key = st.sidebar.text_input("Anthropic API Key:", type="password", value=os.environ.get('ANTHROPIC_API_KEY', ''))
+    anthropic_api_key = st.sidebar.text_input("Anthropic API Key:", type="password", value=st.secrets.get('ANTHROPIC_API_KEY', os.environ.get('ANTHROPIC_API_KEY', '')))
     if not anthropic_api_key:
         st.sidebar.warning("Masukkan API Key Anthropic untuk menggunakan provider ini.")
 elif llm_provider == "OpenCode":
-    opencode_api_key = st.sidebar.text_input("OpenCode API Key:", type="password", value=os.environ.get('OPENCODE_API_KEY', ''))
+    opencode_api_key = st.sidebar.text_input("OpenCode API Key:", type="password", value=st.secrets.get('OPENCODE_API_KEY', os.environ.get('OPENCODE_API_KEY', '')))
     if not opencode_api_key:
         st.sidebar.warning("Masukkan API Key OpenCode untuk menggunakan provider ini.")
-else:
-    anthropic_api_key = None
-    opencode_api_key = None
 
 # Initialize session state
 if "pipeline" not in st.session_state:
@@ -65,8 +64,25 @@ def run_step(step_index, file_name):
     step_method = step_names[step_index]
     try:
         if st.session_state.pipeline:
+            # Setup progress bar
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            
+            def update_progress(step_name, percent):
+                # Ensure percent is between 0 and 100
+                percent = max(0, min(100, percent))
+                progress_bar.progress(percent / 100)
+                status_text.text(f"{step_name}... {percent}%")
+            
+            st.session_state.pipeline.set_progress_callback(update_progress)
+            
             method = getattr(st.session_state.pipeline, step_method)
             method()
+            
+            progress_bar.empty()
+            status_text.empty()
+            st.session_state.pipeline.set_progress_callback(None)
+            
             st.session_state[step_method] = True
             st.session_state.errors[step_method] = None
             st.success(f"Step {step_index + 1} completed successfully!")
