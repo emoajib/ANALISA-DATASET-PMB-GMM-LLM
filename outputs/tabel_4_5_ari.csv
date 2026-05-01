@@ -1,0 +1,6 @@
+y1,y2,label,ari,isBreak,cat,jaccard,drift
+2019,2020,2019→2020,-0.0037,True,⚡ Structural Break,0.8333,inf
+2020,2021,2020→2021,0.0004,True,⚡ Structural Break,0.8333,inf
+2021,2022,2021→2022,0.0136,True,⚡ Structural Break,0.4,inf
+2022,2023,2022→2023,0.1114,True,⚡ Structural Break,1.0,11.1506
+2023,2024,2023→2024,-0.013,True,⚡ Structural Break,0.3333,inf
