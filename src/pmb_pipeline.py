@@ -1113,8 +1113,8 @@ class PMBAnalysisPipeline:
             df.to_csv(f"outputs/tabel_4_{9 + years.index(y)}_profil_{y}.csv", index=False)
 
             # Scatter PCA
-            pts2d = self.gmm_res[y]["pts2d"]
-            if pts2d:
+            pts2d = self.gmm_res[y].get("pts2d", None)
+            if pts2d is not None:
                 plt.figure(figsize=(8, 6))
                 for i, pt in enumerate(pts2d[:400]):  # Sample
                     plt.scatter(

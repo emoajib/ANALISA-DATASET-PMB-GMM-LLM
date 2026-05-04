@@ -235,7 +235,7 @@ if uploaded_file:
                     with st.expander("📊 Tabel 4.1: Distribusi Pendaftar", expanded=True):
                         df41 = load_csv_safe("outputs/tabel_4_1_distribusi.csv")
                         if df41 is not None:
-                            st.dataframe(df41, use_container_width=True)
+                            st.dataframe(df41, use_column_width=True)
                             if hasattr(pipeline, "table_narratives") and "outputs/tabel_4_1" in pipeline.table_narratives:
                                 with st.expander("📖 Analisis Akademik Tabel 4.1"):
                                     st.markdown(pipeline.table_narratives["outputs/tabel_4_1"])
@@ -246,7 +246,7 @@ if uploaded_file:
                     with st.expander("📊 Tabel 4.2: Distribusi Prodi"):
                         df42 = load_csv_safe("outputs/tabel_4_2_prodi.csv")
                         if df42 is not None:
-                            st.dataframe(df42, use_container_width=True)
+                            st.dataframe(df42, use_column_width=True)
                             if hasattr(pipeline, "table_narratives") and "outputs/tabel_4_2" in pipeline.table_narratives:
                                 with st.expander("📖 Analisis Akademik Tabel 4.2"):
                                     st.markdown(pipeline.table_narratives["outputs/tabel_4_2"])
@@ -280,7 +280,7 @@ if uploaded_file:
                     with st.expander("📊 Tabel 4.3: Preprocessing", expanded=True):
                         df43 = load_csv_safe("outputs/tabel_4_3_preprocessing.csv")
                         if df43 is not None:
-                            st.dataframe(df43, use_container_width=True)
+                            st.dataframe(df43, use_column_width=True)
                             if hasattr(pipeline, "table_narratives") and "outputs/tabel_4_3" in pipeline.table_narratives:
                                 with st.expander("📖 Analisis Akademik Tabel 4.3"):
                                     st.markdown(pipeline.table_narratives["outputs/tabel_4_3"])
@@ -292,7 +292,7 @@ if uploaded_file:
                     with st.expander("📊 Tabel 4.4: Cosine Similarity", expanded=True):
                         df44a = load_csv_safe("outputs/tabel_4_4_cosine_similarity.csv")
                         if df44a is not None:
-                            st.dataframe(df44a, use_container_width=True)
+                            st.dataframe(df44a, use_column_width=True)
                             if hasattr(pipeline, "table_narratives") and "outputs/tabel_4_4" in pipeline.table_narratives:
                                 with st.expander("📖 Analisis Akademik Tabel 4.4"):
                                     st.markdown(pipeline.table_narratives["outputs/tabel_4_4"])
@@ -308,7 +308,7 @@ if uploaded_file:
                     with st.expander("📊 Tabel 4.5: K-Scan", expanded=True):
                         df45 = load_csv_safe("outputs/tabel_4_5_kscan.csv")
                         if df45 is not None:
-                            st.dataframe(df45, use_container_width=True)
+                            st.dataframe(df45, use_column_width=True)
                             if hasattr(pipeline, "table_narratives") and "outputs/tabel_4_5" in pipeline.table_narratives:
                                 with st.expander("📖 Analisis Akademik Tabel 4.5"):
                                     st.markdown(pipeline.table_narratives["outputs/tabel_4_5"])
@@ -339,7 +339,7 @@ if uploaded_file:
                     with st.expander("📊 Tabel 4.6: ARI", expanded=True):
                         df46 = load_csv_safe("outputs/tabel_4_6_ari.csv")
                         if df46 is not None:
-                            st.dataframe(df46, use_container_width=True)
+                            st.dataframe(df46, use_column_width=True)
                             if hasattr(pipeline, "table_narratives") and "outputs/tabel_4_6" in pipeline.table_narratives:
                                 with st.expander("📖 Analisis Akademik Tabel 4.6"):
                                     st.markdown(pipeline.table_narratives["outputs/tabel_4_6"])
@@ -375,7 +375,7 @@ if uploaded_file:
                         with st.expander(f"📊 Profil {y}", expanded=True):
                             df = load_csv_safe(csv_file)
                             if df is not None:
-                                st.dataframe(df, use_container_width=True)
+                                st.dataframe(df, use_column_width=True)
                                 table_key = f"outputs/tabel_4_{9 + years.index(y)}"
                                 if hasattr(pipeline, "table_narratives") and table_key in pipeline.table_narratives:
                                     with st.expander(f"📖 Analisis Akademik Profil {y}"):
@@ -405,7 +405,7 @@ if uploaded_file:
                 with st.expander("📊 Tabel 4.15: Lifecycle Pendaftar", expanded=True):
                     df415 = load_csv_safe("outputs/tabel_4_15_lifecycle.csv")
                     if df415 is not None:
-                        st.dataframe(df415, use_container_width=True)
+                        st.dataframe(df415, use_column_width=True)
                         if hasattr(pipeline, "table_narratives") and "outputs/tabel_4_15" in pipeline.table_narratives:
                             with st.expander("📖 Analisis Akademik Tabel 4.15"):
                                 st.markdown(pipeline.table_narratives["outputs/tabel_4_15"])
@@ -421,7 +421,7 @@ if uploaded_file:
                     with st.expander("📊 Tabel 4.16: Prioritas 2025", expanded=True):
                         df416 = load_csv_safe("outputs/tabel_4_16_prioritasi_2025.csv")
                         if df416 is not None:
-                            st.dataframe(df416, use_container_width=True)
+                            st.dataframe(df416, use_column_width=True)
                             if hasattr(pipeline, "table_narratives") and "outputs/tabel_4_16" in pipeline.table_narratives:
                                 with st.expander("📖 Analisis Akademik Tabel 4.16"):
                                     st.markdown(pipeline.table_narratives["outputs/tabel_4_16"])
@@ -432,7 +432,7 @@ if uploaded_file:
                     with st.expander("📊 Tabel 4.18: Perbandingan"):
                         df418 = load_csv_safe("outputs/tabel_4_18_perbandingan.csv")
                         if df418 is not None:
-                            st.dataframe(df418, use_container_width=True)
+                            st.dataframe(df418, use_column_width=True)
                             if hasattr(pipeline, "table_narratives") and "outputs/tabel_4_18" in pipeline.table_narratives:
                                 with st.expander("📖 Analisis Akademik Tabel 4.18"):
                                     st.markdown(pipeline.table_narratives["outputs/tabel_4_18"])
@@ -462,7 +462,7 @@ if uploaded_file:
                     with st.expander("📊 Tabel Adjusted Rand Index (ARI) Antar Tahun", expanded=True):
                         ari_df = pd.DataFrame(pipeline.ari_pairs)
                         ari_df = ari_df.rename(columns={"y1": "Tahun 1", "y2": "Tahun 2", "ari": "ARI"})
-                        st.dataframe(ari_df, use_container_width=True)
+                        st.dataframe(ari_df, use_column_width=True)
                         with st.expander("📖 Penjelasan ARI"):
                             st.markdown("""
 **Adjusted Rand Index (ARI)** mengukur stabilitas cluster antara dua tahun berurutan. Nilai ARI berkisar dari -1 (perbedaan maksimal) hingga 1 (kesamaan maksimal). Nilai tinggi menunjukkan konsistensi segmentasi mahasiswa antar tahun, sedangkan nilai rendah atau negatif menandai perubahan struktural signifikan, seperti dampak pandemi COVID-19.
