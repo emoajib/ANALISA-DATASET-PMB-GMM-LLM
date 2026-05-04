@@ -126,7 +126,7 @@ def get_embedding(text, model=None, tokenizer=None, dim=768):
         outputs = _model(**inputs)
     embeddings = outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
     result = embeddings.tolist() if dim == 768 else embeddings.tolist()[:dim]
-    _embedding_cache[key] = result  # Store as list, not string
+    _embedding_cache[key] = result  # Store as list (fix cache serialization bug)
     save_embedding_cache(_embedding_cache)  # Auto-save to disk
     return result
 
@@ -156,7 +156,7 @@ def get_embeddings_batch(texts, model=None, tokenizer=None, dim=768, batch_size=
             t = processed[j]
             key = get_text_hash(t)
             result = emb.tolist() if dim == 768 else emb.tolist()[:dim]
-            _embedding_cache[key] = str(result)
+            _embedding_cache[key] = result  # Fix: store as list, not string
             results.append(result)
     save_embedding_cache(_embedding_cache)
     return results

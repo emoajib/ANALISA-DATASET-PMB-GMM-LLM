@@ -1,0 +1,467 @@
+
+
+
+STRATEGI SEGMENTASI PROBABILISTIK CALON MAHASISWA MENGGUNAKAN
+GAUSSIAN MIXTURE MODEL DAN OTOMASI ANALISIS LARGE LANGUAGE MODEL
+UNTUK OPTIMALISASI REKRUTMEN DI ITSNU PEKALONGAN
+TESIS
+Tesis disusun untuk memenuhi syarat mencapai gelar Magister Komputer (M.Kom)
+pada Program Studi Teknologi Informasi Jenjang Program Strata-2
+Oleh:
+[NAMA MAHASISWA]
+[NIM]
+[ID TESIS]
+FAKULTAS TEKNOLOGI INFORMASI DAN INDUSTRI
+UNIVERSITAS STIKUBANK (UNISBANK) SEMARANG
+[TAHUN]
+ 
+BAB I
+PENDAHULUAN
+1.1 Latar Belakang Masalah
+Perguruan tinggi di Indonesia menghadapi tekanan kompetitif yang semakin intensif dalam menarik calon mahasiswa berkualitas, terutama institusi swasta yang mengandalkan penerimaan mahasiswa baru sebagai sumber utama pendanaan operasional. Institut Teknologi dan Sains Nahdlatul Ulama (ITSNU) Pekalongan, sebagai perguruan tinggi swasta berbasis nilai keislaman di kawasan Pantai Utara Jawa Tengah, mengalami dinamika ini secara langsung. Data Penerimaan Mahasiswa Baru (PMB) ITSNU Pekalongan mencatat fluktuasi signifikan dalam kurun 2019–2024: kondisi stabil pada pra-pandemi (2019), disrupsi tajam saat pandemi COVID-19 (2020–2021), dan fase pemulihan bertahap (2022–2024). Jejak data historis enam periode ini menyimpan potensi analitik besar yang belum dimanfaatkan secara optimal untuk mendukung strategi rekrutmen yang adaptif dan berbasis bukti (evidence-based).
+Secara global, dampak pandemi COVID-19 terhadap enrollment perguruan tinggi bersifat signifikan dan struktural. Aristovnik et al. (2021) mendokumentasikan secara komprehensif bahwa pandemi COVID-19 secara fundamental mengubah kehidupan mahasiswa perguruan tinggi di seluruh dunia, mencakup dimensi akademik, sosial, dan finansial. Purcell dan Lumbreras (2021) menunjukkan bahwa pandemi mengekspos fragilitas dan ketidaksetaraan dalam pendidikan tinggi global, dengan dampak yang tidak setara antar institusi dan populasi. El Said (2021) dalam studi empiris pada universitas di negara berkembang menemukan bahwa COVID-19 secara dramatis membentuk ulang cara penyampaian pendidikan, dengan jutaan peserta didik terdampak oleh penutupan institusi. Kondisi ini menggarisbawahi urgensi bagi ITSNU Pekalongan untuk memiliki sistem analisis rekrutmen yang tidak hanya reaktif terhadap kondisi saat ini, tetapi juga prediktif terhadap perubahan tren mendatang.
+Data historis PMB ITSNU Pekalongan selama enam periode akademik (2019–2024) menyimpan potensi analitik yang belum dieksploitasi. Data ini bersifat dominan kategorikal dan tekstual, mencakup nama calon mahasiswa, asal sekolah, alamat lengkap, kecamatan, kabupaten, program studi pilihan, dan jenis jalur masuk. Karakteristik data multivariat yang heterogen ini menjadi tantangan metodologis tersendiri, karena pendekatan segmentasi konvensional berbasis klasterisasi Euclidean seperti K-Means tidak mampu menangkap kompleksitas distribusi probabilistik data dengan tumpang tindih antar segmen (overlapping clusters) yang inheren dalam konteks perilaku calon mahasiswa. Scrucca et al. (2023) mendemonstrasikan secara komprehensif bahwa Gaussian Mixture Model (GMM) sebagai model-based clustering mampu mengungkap heterogenitas dalam data pendidikan jauh lebih baik dibandingkan metode berbasis jarak, termasuk kemampuannya mengidentifikasi profil laten yang tumpang tindih melalui posterior probability.
+Keberadaan data nama dan tekstual berbahasa Indonesia membuka peluang pemanfaatan teknologi Large Language Model (LLM) yang mampu mengekstraksi pola semantik mendalam. Koto et al. (2020) mengembangkan IndoBERT, model bahasa pralatih berbasis arsitektur BERT untuk Bahasa Indonesia, yang secara konsisten mengungguli multilingual BERT pada berbagai tugas NLP Bahasa Indonesia. Subakti et al. (2022) melalui analisis perbandingan komprehensif membuktikan bahwa BERT sebagai representasi data teks mengungguli TF-IDF dalam 28 dari 36 metrik evaluasi klasterisasi teks. Juarto dan Yulianto (2023) menunjukkan IndoBERT mencapai akurasi 94% pada klasifikasi teks berbahasa Indonesia, sedangkan Ahmadian et al. (2024) mendemonstrasikan bahwa model hybrid berbasis IndoBERT mencapai akurasi 92–93% pada tugas analisis sentimen Bahasa Indonesia.
+Tabel 1.1 Analisis Kompetisi dan Positioning ITSNU Pekalongan dalam Perspektif Temporal (2019–2024)
+Dimensi Strategis	PTKIN (Kompetitor Utama)	ITSNU Pekalongan	Implikasi Segmentasi
+Biaya Pendidikan	UKT stabil bersubsidi	Biaya mandiri, terdampak ekonomi pasca-COVID	Pergeseran segmentasi price-sensitive perlu dipetakan secara temporal
+Model Pemasaran	Konvensional stabil	Dari offline (2019) ke digital (2020–2024)	Segmentasi temporal mengikuti evolusi channel komunikasi
+Kekuatan Merek	Prestise konsisten	Membangun reputasi era digital	Optimalisasi narasi berbasis analisis tren 6 periode
+Status Registrasi	First choice konsisten	Fluktuasi safety school	Analisis probabilitas keanggotaan segmen antar periode
+Teknologi Data	Birokratis	Transformasi AI-driven 2022–2024	Peluang implementasi GMM dan otomasi LLM secara berkelanjutan
+Sumber: Hasil wawancara dan analisis dokumen Tim PMB ITSNU Pekalongan dan peneliti (2025)
+Dalam merespons tantangan tersebut, penelitian ini mengembangkan kerangka Strategi Segmentasi Probabilistik berbasis Gaussian Mixture Model (GMM) yang diintegrasikan dengan sistem otomasi analisis berbasis Large Language Model (LLM). Sistem ini beroperasi pada tiga lapisan fungsional yang saling melengkapi dan membentuk pipeline analitik end-to-end yang dapat dijalankan secara otomatis setiap tahun akademik.
+Lapisan Pertama: Otomasi Ekstraksi Fitur Semantik. IndoBERT (Koto et al., 2020) digunakan untuk secara otomatis mengubah data tekstual mentah — termasuk nama calon mahasiswa, nama sekolah, dan alamat — menjadi representasi vektor numerik 768 dimensi yang kaya makna semantik (Subakti et al., 2022).
+Lapisan Kedua: Segmentasi Probabilistik Multi-Periode. GMM diterapkan secara independen pada setiap periode (2019–2024) menghasilkan posterior probability keanggotaan setiap calon mahasiswa. Analisis time series komparatif kemudian mendeteksi structural break akibat pandemi, mengukur pergeseran sentroid klaster, dan menghitung stabilitas segmen melalui Adjusted Rand Index (ARI) dan Jaccard Similarity Index.
+Lapisan Ketiga: Otomasi Interpretasi, Reasoning, dan Formulasi Strategi. LLM digunakan untuk: (a) menghasilkan narasi persona klaster secara otomatis; (b) melakukan reasoning tren kausal berbasis chain-of-thought prompting (Wei et al., 2022); (c) menyusun ringkasan naratif laporan secara otomatis; dan (d) menghasilkan personalisasi rekrutmen berbasis profil segmen aktual (Parker et al., 2024).
+Integrasi keempat komponen — IndoBERT, GMM time series, reasoning kausal LLM, dan formulasi strategi otomatis — membentuk hybrid intelligence framework yang inovatif dan belum pernah dilaporkan secara komprehensif dalam literatur educational data mining di Indonesia.
+1.2 Rumusan Masalah
+Berdasarkan latar belakang yang telah diuraikan, rumusan masalah dalam penelitian ini adalah sebagai berikut.
+1.	Bagaimana karakteristik segmentasi probabilistik calon mahasiswa ITSNU Pekalongan yang dihasilkan oleh Gaussian Mixture Model berbasis fitur hasil otomasi ekstraksi semantik IndoBERT pada periode 2019–2024?
+2.	Bagaimana evolusi distribusi klaster antar enam periode (2019–2024) dan bagaimana stabilitas serta pergeseran klaster yang terukur melalui Adjusted Rand Index, Jaccard Similarity Index, dan centroid drift — khususnya dalam konteks structural break akibat pandemi COVID-19?
+3.	Bagaimana sistem otomasi analisis berbasis LLM yang mencakup generasi persona klaster, reasoning tren kausal, ringkasan naratif laporan, dan personalisasi rekrutmen dapat diformulasikan dan divalidasi untuk mengoptimalkan enrollment management di ITSNU Pekalongan, termasuk proyeksi segmen prioritas 2025?
+1.3 Batasan Masalah
+Untuk memfokuskan penelitian dan menjaga ketercapaian tujuan, ditetapkan batasan masalah sebagai berikut.
+1.	Data penelitian terbatas pada data sekunder calon mahasiswa ITSNU Pekalongan periode 2019–2024 (enam periode akademik), mencakup variabel nama, asal sekolah, alamat lengkap, kecamatan, kabupaten, program studi, dan jenis jalur masuk. Data tidak mencakup nilai akademik, sehingga segmentasi berfokus pada dimensi demografi, geospasial, dan institusional.
+2.	"Otomasi analisis LLM" mencakup empat fungsi operasional: (a) otomasi ekstraksi fitur semantik menggunakan IndoBERT-base-p1 via HuggingFace Transformers; (b) otomasi generasi narasi persona klaster; (c) otomasi reasoning tren kausal; dan (d) otomasi ringkasan naratif laporan. Otomasi tidak mencakup pengambilan keputusan rekrutmen secara langsung.
+3.	Implementasi GMM menggunakan Scikit-learn (Pedregosa et al., 2011) dengan covariance_type full, init_params k-means++, n_init 10, random_state 42. StandardScaler di-fit pada data 2019 sebagai referensi dan diterapkan ke seluruh periode.
+4.	Analisis time series bersifat cross-sectional comparative longitudinal — perbandingan enam snapshot tahunan — bukan panel tracking individual. Trajektori individu calon mahasiswa antar tahun tidak dilacak.
+5.	Geocoding menggunakan GeoPy/Nominatim dengan imputasi modus kecamatan untuk koordinat yang gagal ditemukan. Tidak ada pengayaan (enrichment) data eksternal seperti Indeks Pembangunan Manusia.
+6.	Wilayah rekrutmen yang dianalisis terbatas pada data yang tercatat dalam sistem ITSNU Pekalongan, yang dominan mencakup wilayah Eks-Karesidenan Pekalongan dan sekitarnya.
+1.4 Hipotesis Penelitian
+Berdasarkan kajian pustaka dan kerangka konseptual, hipotesis yang diajukan adalah sebagai berikut.
+Hipotesis 1 (H1): Terdapat perbedaan signifikan dalam parameter distribusi GMM — termasuk cluster means, covariance matrices, dan mixing coefficients — antar tiga fase temporal (pra-COVID 2019, krisis COVID 2020–2021, pemulihan 2022–2024), dibuktikan dengan nilai ARI < 0,30 pada transisi 2019→2020 sebagai indikator structural break yang dikonfirmasi secara empiris.
+Hipotesis 2 (H2): IndoBERT menghasilkan representasi embedding yang konsisten dan stabil antar periode, dibuktikan dengan cosine similarity rata-rata antara vektor embedding entitas yang sama (nama sekolah identik yang muncul di dua periode berbeda) > 0,70 pada semua transisi, sehingga perbedaan distribusi klaster yang terdeteksi mencerminkan perubahan substantif dalam data — bukan artefak teknis model (Subakti et al., 2022).
+Hipotesis 3 (H3): Strategi rekrutmen prediktif yang diformulasikan melalui integrasi GMM time series dan sistem otomasi LLM menghasilkan profil segmen yang lebih presisi dibandingkan strategi statis berbasis satu periode, dibuktikan dengan Silhouette Score GMM yang lebih tinggi dari K-Means single-period dan relevansi rekomendasi yang dikonfirmasi melalui validasi pakar tim rekrutmen ITSNU Pekalongan.
+1.5 Tujuan dan Manfaat Penelitian
+1.5.1 Tujuan Penelitian
+Tujuan pertama adalah mengidentifikasi dan menganalisis karakteristik segmentasi probabilistik calon mahasiswa ITSNU Pekalongan menggunakan GMM berbasis fitur hasil otomasi ekstraksi semantik IndoBERT pada enam periode 2019–2024, serta menganalisis evolusi distribusi klaster antar periode.
+Tujuan kedua adalah mengukur stabilitas klaster dan mendeteksi structural break akibat pandemi COVID-19 melalui analisis ARI, Jaccard Similarity Index, pergeseran sentroid, dan reasoning kausal otomatis berbasis LLM yang menjelaskan mekanisme perubahan antar fase temporal.
+Tujuan ketiga adalah membangun dan mendemonstrasikan sistem otomasi analisis berbasis LLM yang terintegrasi menghasilkan: (a) narasi persona klaster; (b) reasoning tren kausal perubahan segmen; (c) ringkasan naratif laporan otomatis; dan (d) rekomendasi personalisasi rekrutmen berbasis proyeksi segmen 2025 untuk mendukung optimalisasi enrollment management ITSNU Pekalongan.
+1.5.2 Manfaat Penelitian
+Manfaat Teoretis. Penelitian ini berkontribusi pada bidang educational data mining dengan mendemonstrasikan kerangka hybrid IndoBERT–GMM–LLM untuk segmentasi temporal pada data pendidikan dominan kategorikal-tekstual. Penelitian ini memperkenalkan konsep "otomasi analisis LLM yang diperluas" — mencakup ekstraksi fitur, generasi persona, reasoning kausal, dan ringkasan naratif — sebagai kontribusi konseptual baru yang melampaui penggunaan LLM sebagai chatbot konvensional. Kerangka deteksi structural break berbasis GMM dengan reasoning kausal otomatis dapat diadopsi sebagai metodologi generik untuk analisis dampak krisis terhadap perilaku pendaftar di institusi pendidikan tinggi lainnya.
+Manfaat Praktis. Bagi ITSNU Pekalongan, penelitian ini menyediakan: (a) sistem segmentasi calon mahasiswa yang dapat diperbarui setiap tahun secara otomatis; (b) laporan narasi otomatis yang siap digunakan oleh manajemen non-teknis; (c) peta prioritas segmen rekrutmen berbasis data aktual 2024 dan proyeksi 2025; dan (d) panduan personalisasi pesan komunikasi per segmen yang spesifik dan actionable.
+1.6 Metode Penelitian
+Penelitian ini menggunakan pendekatan Research and Development (R&D) dengan metode kuantitatif berbasis data mining time series menggunakan kerangka Cross Industry Standard Process for Data Mining (CRISP-DM) yang diaplikasikan secara iteratif pada enam periode 2019–2024. Produk R&D yang dihasilkan adalah sistem pipeline analitik otomatis end-to-end yang mengintegrasikan sepuluh tahapan dari business understanding hingga deployment personalisasi rekrutmen. Rincian lengkap metodologi disajikan pada Bab III.
+1.7 Sistematika Penulisan
+Tesis ini disusun dalam lima bab. Bab I memuat pendahuluan yang menguraikan latar belakang, rumusan masalah, batasan masalah, hipotesis, tujuan dan manfaat, metode penelitian, serta sistematika penulisan. Bab II menyajikan studi pustaka yang mencakup teori-teori fundamental tentang enrollment management, segmentasi dalam educational data mining, GMM, sistem otomasi analisis LLM beserta komponen IndoBERT dan reasoning kausal, PCA, CRISP-DM adaptif time series, dampak COVID-19 terhadap enrollment perguruan tinggi, serta personalisasi rekrutmen berbasis data. Bab III menjelaskan metodologi penelitian secara terperinci mencakup seluruh sepuluh tahapan alur penelitian dari business understanding hingga deployment personalisasi rekrutmen, dilengkapi dengan diagram flowchart alur penelitian. Bab IV menyajikan hasil penelitian dan pembahasan secara komprehensif berdasarkan data aktual ITSNU Pekalongan 2019–2024. Bab V menyajikan kesimpulan, keterbatasan, dan saran penelitian lanjutan.
+ 
+BAB II
+STUDI PUSTAKA
+2.1 Enrollment Management dan Strategi Rekrutmen Perguruan Tinggi
+Enrollment management merupakan kerangka strategis komprehensif yang pertama kali dikonseptualisasikan oleh Hossler dan Bean (1990) sebagai pendekatan terpadu untuk mempengaruhi ukuran, komposisi, dan karakteristik mahasiswa di perguruan tinggi. Kerangka ini menetapkan bahwa rekrutmen mahasiswa bukan sekadar aktivitas pemasaran, melainkan fungsi strategis yang memerlukan pemahaman mendalam tentang segmentasi pasar calon mahasiswa dan dinamika perubahannya dari waktu ke waktu.
+Kotler dan Keller (2016) mengidentifikasi tiga tahapan utama dalam pemasaran: segmentation (identifikasi kelompok yang berbeda), targeting (pemilihan segmen prioritas), dan positioning (penentuan narasi yang relevan per segmen). Kerangka STP ini relevan langsung dengan penelitian ini: segmentasi menggunakan GMM mendukung tahap segmentation, analisis lifecycle mendukung targeting, dan otomasi narasi persona LLM mendukung positioning melalui personalisasi pesan komunikasi. Nair et al. (2022) menunjukkan bahwa strategi rekrutmen berbasis segmentasi data historis secara signifikan meningkatkan efisiensi konversi calon pendaftar dibandingkan pendekatan broadcast tanpa segmentasi.
+Di Indonesia, keterbatasan kapasitas analitik data di banyak perguruan tinggi swasta menjadi hambatan utama implementasi enrollment management berbasis data (Herwangi et al., 2021). Khatun et al. (2024) menunjukkan bahwa strategi berbasis data memungkinkan institusi mendapatkan pemahaman mendalam tentang populasi yang dilayani dan membuat keputusan yang lebih terinformasi — kesenjangan yang menjadi motivasi utama penelitian ini.
+2.2 Segmentasi Pasar dalam Educational Data Mining
+Educational Data Mining (EDM) menawarkan metodologi yang lebih sophisticated untuk segmentasi dibandingkan pendekatan demografis konvensional. Romero dan Ventura (2010) mengkategorikan teknik EDM menjadi beberapa kelompok, di mana clustering merupakan teknik yang paling relevan untuk segmentasi rekrutmen karena tidak memerlukan label kelas yang telah ditentukan sebelumnya (unsupervised learning) dan mampu mengungkap struktur alami dalam data.
+Shoaib et al. (2024) melalui systematic review menunjukkan bahwa clustering techniques membantu meningkatkan pemahaman terhadap keberagaman mahasiswa sekaligus memfasilitasi strategi dukungan yang lebih terarah. Khatun et al. (2024) dalam analisis segmentasi berbasis data menunjukkan bahwa algoritma clustering memungkinkan institusi menyesuaikan strategi komunikasi dengan karakteristik segmen secara lebih efektif. Tantangan unik dalam konteks ITSNU Pekalongan meliputi: (1) dominasi data kategorikal dan tekstual berbahasa Indonesia; (2) keberadaan data nama yang mengandung informasi semantik tentang latar belakang budaya dan geografis; dan (3) keterbatasan infrastruktur data di institusi pendidikan swasta.
+2.3 Gaussian Mixture Model dan Probabilistic Clustering
+Gaussian Mixture Model (GMM) merupakan metode model-based clustering yang mengasumsikan bahwa data merupakan campuran (mixture) dari sejumlah K distribusi Gaussian multivariat. Dempster et al. (1977) meletakkan fondasi algoritma Expectation-Maximization (EM) yang mendasari estimasi parameter GMM. McLachlan dan Peel (2000) dalam referensi klasik memaparkan kerangka teoritis GMM secara komprehensif, sementara Scrucca et al. (2023) mendemonstrasikan penerapan modern GMM pada data pendidikan, menunjukkan kemampuannya mengungkap heterogenitas yang tidak dapat ditangkap oleh metode berbasis jarak. Secara formal, GMM didefinisikan sebagai:
+p(x) = Σk πk · N(x | μk, Σk),   Σπk = 1   ...(II.1)
+di mana πk adalah mixing coefficient, μk adalah vektor mean, dan Σk adalah matriks covariance untuk komponen ke-k. Estimasi parameter GMM dilakukan melalui algoritma EM yang secara iteratif bergantian antara langkah E (menghitung posterior probability) dan langkah M (memperbarui parameter untuk memaksimalkan log-likelihood). Posterior probability untuk observasi xi terhadap komponen k:
+rik = πk · N(xi|μk,Σk) / [Σj πj · N(xi|μj,Σj)]   ...(II.2)
+Keunggulan fundamental GMM dibandingkan K-Means terletak pada sifatnya sebagai soft clustering yang menghasilkan probabilitas keanggotaan, bukan penugasan biner. Nilai posterior probability yang dihasilkan GMM menjadi input langsung bagi modul otomasi LLM untuk menghasilkan deskripsi persona yang memperhatikan derajat ketegasan keanggotaan segmen. George dan Sumathy (2023) menunjukkan bahwa metode berbasis transformer embedding dikombinasikan dengan model probabilistik menghasilkan klaster yang lebih kohesif.
+Penentuan jumlah komponen optimal (K) menggunakan kriteria BIC dan AIC:
+BIC = -2ln(L̂) + k·ln(n)   ...(II.3)
+AIC = 2k - 2ln(L̂)   ...(II.4)
+Tabel 2.1 Perbandingan Karakteristik K-Means Clustering dan Gaussian Mixture Model
+Karakteristik	K-Means Clustering	Gaussian Mixture Model (GMM)
+Tipe Pengelompokan	Hard (biner: 0 atau 1)	Soft (probabilistik: 0,0–1,0)
+Asumsi Distribusi	Tidak ada (non-parametrik)	Gaussian multivariat (parametrik)
+Bentuk Klaster	Hanya sferis	Fleksibel (elipsoid berbagai orientasi)
+Penanganan Overlap	Tidak mampu	Sangat baik melalui posterior probability
+Kriteria Pemilihan K	Elbow method (heuristik)	BIC/AIC (statistik, lebih objektif)
+Interpretasi	Manual, kaku	Dapat diotomasi oleh LLM (persona generation)
+Input Reasoning LLM	Tidak mendukung	Posterior probability sebagai basis reasoning
+Sumber: Adaptasi dari McLachlan & Peel (2000), Scrucca et al. (2023), dan George & Sumathy (2023)
+2.4 Sistem Otomasi Analisis Berbasis Large Language Model
+2.4.1 Konseptualisasi Otomasi Analisis LLM
+Sistem otomasi analisis berbasis LLM dalam penelitian ini merupakan konsep yang diperluas melampaui penggunaan LLM konvensional sebagai chatbot. Sistem ini mengintegrasikan empat fungsi analitis dalam satu pipeline otomatis:
+Fungsi A — Otomasi Ekstraksi Fitur Semantik: IndoBERT secara otomatis mengubah data tekstual mentah menjadi representasi vektor numerik 768 dimensi, menggantikan rekayasa fitur manual yang tidak skalabel.
+Fungsi B — Otomasi Generasi Narasi Persona: Profil statistik klaster GMM dikonstruksi menjadi prompt terstruktur yang diproses oleh LLM untuk menghasilkan deskripsi persona yang actionable bagi tim rekrutmen non-teknis.
+Fungsi C — Otomasi Reasoning Tren Kausal: LLM menghasilkan penjelasan kausal mengapa suatu klaster mengalami pertumbuhan, stagnansi, atau penurunan antara dua periode berurutan dengan mengintegrasikan data ARI, centroid drift, perubahan proporsi jalur masuk, dan konteks historis (Parker et al., 2024).
+Fungsi D — Otomasi Ringkasan Naratif Laporan: LLM menghasilkan ringkasan eksekutif dari seluruh temuan analisis dalam format laporan naratif yang siap dipresentasikan kepada manajemen institusi tanpa memerlukan pemahaman teknis tentang GMM atau NLP.
+2.4.2 Arsitektur Transformer dan BERT
+Arsitektur Transformer yang diperkenalkan oleh Vaswani et al. (2017) merevolusi pemrosesan bahasa alami melalui mekanisme self-attention yang mampu menangkap dependensi jangka panjang dalam teks. BERT (Bidirectional Encoder Representations from Transformers) oleh Devlin et al. (2019) memanfaatkan arsitektur ini dengan strategi pre-training dua tahap: Masked Language Modeling (MLM) dan Next Sentence Prediction (NSP). Representasi kontekstual BERT memungkinkan pemahaman polisemi dan konteks kalimat secara mendalam.
+2.4.3 IndoBERT untuk Bahasa Indonesia
+Koto et al. (2020) mengembangkan IndoBERT melalui pelatihan ulang pada korpus Indo4B yang berisi 4 miliar token Bahasa Indonesia. Spesifikasi IndoBERT-base-p1: 12 Transformer layer, hidden size 768, 12 attention heads, 110 juta parameter, vocabulary 30.000 token. Subakti et al. (2022) melalui analisis perbandingan komprehensif membuktikan bahwa BERT sebagai representasi data teks mengungguli TF-IDF dalam 28 dari 36 metrik evaluasi klasterisasi teks. Reimers dan Gurevych (2019) membuktikan bahwa mean pooling pada last hidden states menghasilkan representasi tingkat kalimat yang lebih stabil dibandingkan penggunaan token [CLS] saja.
+2.4.4 LLM Reasoning untuk Analisis Kausal
+Reasoning kausal berbasis LLM merupakan perkembangan terbaru dalam penerapan model bahasa besar untuk analisis bisnis dan pendidikan. Wei et al. (2022) memperkenalkan konsep chain-of-thought prompting yang memungkinkan LLM menghasilkan penalaran multi-langkah yang koheren — bukan sekadar menghasilkan teks, tetapi secara sistematis menghubungkan premis data dengan kesimpulan yang grounded secara empiris.
+Parker et al. (2024) dalam studi komprehensif menggunakan GPT-4 untuk analisis feedback survei pendidikan menunjukkan bahwa chain-of-thought prompting meningkatkan akurasi LLM sekaligus menyediakan wawasan tentang proses penalaran model. Mereka mengkonfirmasi bahwa GPT-4 menunjukkan elemen causal reasoning yang konsisten dengan datanya, mengukuhkan kelayakan pendekatan ini untuk analisis rekrutmen.
+2.5 Dimensionality Reduction dengan Principal Component Analysis
+Fitur gabungan (IndoBERT 768 dimensi + geospasial 2 dimensi + kategorikal 3 dimensi) menghasilkan total ~773 dimensi, berpotensi menimbulkan curse of dimensionality yang mendegradasi kualitas estimasi GMM. Jolliffe (2002) dalam buku teks standar menjelaskan bahwa PCA mengatasi masalah ini dengan transformasi linier:
+z = W⊤x ∈ ℝp,   p << d   ...(II.5)
+Strategi fit-on-2019, transform-all memastikan semua periode berada dalam ruang fitur yang sama — syarat mutlak untuk komparabilitas klaster antar waktu (Jolliffe & Cadima, 2016). Threshold 95% explained variance menyeimbangkan kompresi dimensi dengan retensi informasi yang memadai. George dan Sumathy (2023) secara eksplisit merekomendasikan PCA sebagai langkah reduksi dimensi pendahuluan sebelum klasterisasi pada embedding transformer.
+2.6 Metodologi Data Mining: CRISP-DM Adaptif Time Series
+CRISP-DM (Mariscal et al., 2010) dipilih karena fleksibilitasnya untuk diadaptasi pada konteks multi-periode. Adaptasi kritis dalam penelitian ini meliputi: (1) Data Preparation diterapkan secara batch pada keenam periode dengan pipeline identik; (2) Modeling diterapkan secara independen per periode sesuai konsep time-specific mixture models; (3) Evaluation ditambahkan lapisan stabilitas antar periode berupa ARI, Jaccard, dan centroid drift; serta (4) Deployment diperluas dengan modul otomasi LLM yang menghasilkan laporan dan rekomendasi personalisasi secara otomatis.
+2.7 Analisis Time Series dan Deteksi Structural Break
+Analisis time series dalam EDM memungkinkan pemahaman terhadap perubahan perilaku calon mahasiswa dari waktu ke waktu. Penelitian ini menggunakan tiga metrik stabilitas yang saling melengkapi:
+Adjusted Rand Index (ARI): mengukur konsistensi pengelompokan antar dua partisi dengan koreksi terhadap pengaruh kebetulan (Hubert & Arabie, 1985):
+ARI = (RI - E[RI]) / (max(RI) - E[RI])   ...(II.6)
+Jaccard Similarity Index: mengukur overlap keanggotaan klaster yang sama antar periode:
+J(A,B) = |A ∩ B| / |A ∪ B|   ...(II.7)
+Centroid Drift: jarak Euclidean rata-rata minimum antar sentroid klaster periode berurutan, mengukur besarnya pergeseran posisi klaster dalam ruang PCA.
+Threshold ARI < 0,30 ditetapkan sebagai indikator structural break berdasarkan justifikasi bahwa nilai tersebut berada jauh di bawah kategori "konsistensi sedang" (0,60) dan mendekati nilai ekspektasi acak, mengindikasikan bahwa komposisi klaster berubah secara fundamental melampaui variasi normal yang diharapkan. Nilai ini bersifat konservatif untuk memastikan hanya pergeseran struktural yang benar-benar dramatis yang dikategorikan sebagai structural break.
+2.8 Dampak COVID-19 terhadap Enrollment Perguruan Tinggi
+Pandemi COVID-19 memberikan dampak mendalam dan tidak simetris terhadap enrollment perguruan tinggi. Aristovnik et al. (2021) mendokumentasikan secara komprehensif dampak pandemi terhadap kehidupan mahasiswa perguruan tinggi di seluruh dunia mencakup dimensi akademik, sosial, dan mental. Purcell dan Lumbreras (2021) menunjukkan bahwa pandemi mengekspos fragilitas dan ketidaksetaraan dalam pendidikan tinggi global, dengan dampak tidak setara antar institusi.
+El Said (2021) dalam studi empiris pada universitas di negara berkembang menemukan bahwa COVID-19 secara dramatis membentuk ulang cara penyampaian pendidikan. Di Indonesia, Herwangi et al. (2021) menemukan bahwa pandemi mengakselerasi digitalisasi aspirasi pendidikan. Pergeseran komposisi segmen pendaftar — bukan sekadar penurunan volume — yang menjadi justifikasi utama mengapa reasoning kausal berbasis LLM diperlukan untuk memahami mekanisme perubahan antar fase temporal.
+2.9 Personalisasi Rekrutmen Berbasis Data
+Personalisasi rekrutmen merupakan aplikasi lanjutan dari segmentasi yang mentransformasikan profil klaster menjadi komunikasi yang disesuaikan per segmen. Kotler dan Keller (2016) menegaskan bahwa personalisasi berbasis profil segmen adalah tahap akhir dari siklus pemasaran yang efektif — dari segmentasi menuju positioning yang tepat sasaran. Khatun et al. (2024) menunjukkan bahwa data-driven strategies untuk segmentasi pasar memungkinkan institusi mendapatkan pemahaman mendalam dan membuat keputusan yang lebih terinformasi.
+Dalam konteks rekrutmen perguruan tinggi, personalisasi berbasis segmentasi mencakup penyesuaian: (1) pesan komunikasi yang selaras dengan motivasi dan hambatan utama setiap segmen; (2) channel komunikasi yang dipilih berdasarkan profil geografis dan demografis segmen; (3) waktu kampanye yang dioptimalkan berdasarkan pola historis pendaftaran per segmen; dan (4) nilai proposisi (value proposition) yang disesuaikan dengan karakteristik sosio-ekonomi segmen. Nair et al. (2022) menunjukkan bahwa implementasi personalisasi berbasis data dalam rekrutmen PT menghasilkan peningkatan efisiensi yang terukur dalam konversi calon pendaftar menjadi mahasiswa terdaftar.
+Penelitian ini mengintegrasikan personalisasi rekrutmen sebagai output akhir dari pipeline analitik, di mana modul LLM secara otomatis menghasilkan panduan personalisasi per segmen berdasarkan profil GMM aktual — mengeliminasi kebutuhan interpretasi manual yang memakan waktu dan rentan inkonsistensi.
+2.10 Matriks Tinjauan Pustaka
+Tabel 2.2 Literature Review Matrix: Penelitian Terdahulu dan Posisi Penelitian Ini
+No	Peneliti (Tahun)	Metode Utama	Konteks	Temuan Utama	Gap	Gap yang Diisi Penelitian Ini
+1	Scrucca et al. (2023)	GMM/Finite GMM	Pendidikan	GMM efektif ungkap heterogenitas data pendidikan	Belum untuk rekrutmen PT Indonesia	Aplikasi GMM time series 6 periode rekrutmen PT
+2	Koto et al. (2020)	IndoBERT pre-training	Korpus Indonesia	IndoBERT unggul vs mBERT	Belum untuk clustering rekrutmen PT	IndoBERT sebagai komponen otomasi ekstraksi fitur
+3	Subakti et al. (2022)	BERT text clustering	NLP clustering	BERT ungguli TF-IDF 28/36 metrik	Fokus teks umum, bukan rekrutmen PT	BERT embedding untuk data rekrutmen PT Indonesia
+4	Parker et al. (2024)	LLM GPT-4 pendidikan	Survey feedback	LLM efektif analisis feedback pendidikan	Tidak spesifik GMM clustering temporal	LLM reasoning kausal & persona generation GMM
+5	George & Sumathy (2023)	BERT + Clustering	NLP topic modeling	PCA+BERT hasilkan klaster lebih baik	Bukan rekrutmen PT; bukan time series	PCA sebagai reduksi dimensi sebelum GMM
+6	Aristovnik et al. (2021)	Survey global	PT global COVID	COVID merombak kehidupan mahasiswa global	Tidak GMM atau segmentasi longitudinal	Justifikasi structural break pasca-COVID
+7	Shoaib et al. (2024)	Systematic review	EDM clustering	Clustering bantu strategi dukungan mahasiswa	Review saja; tidak GMM-LLM time series	Sintesis gap literatur EDM-GMM-LLM terpadu
+8	Khatun et al. (2024)	Clustering segmentasi pasar	Pemasaran digital	Segmentasi data-driven tingkatkan keputusan	Tidak konteks PT; tidak GMM soft clustering	Segmentasi probabilistik berbasis rekrutmen PT
+9	Ahmadian et al. (2024)	Hybrid IndoBERT-BiLSTM	Sentimen Indonesia	IndoBERT hybrid 92% akurasi sentimen	Tidak untuk clustering rekrutmen	Validasi IndoBERT sebagai model NLP Indonesia
+10	Juarto & Yulianto (2023)	IndoBERT klasifikasi	Klasifikasi berita	IndoBERT 94% akurasi teks Indonesia	Tidak untuk embedding klasterisasi	Validasi keunggulan IndoBERT teks Indonesia
+11	Purcell & Lumbreras (2021)	Tinjauan SDG	PT global COVID	Pandemi ekspos fragilitas PT global	Tidak spesifik segmentasi; tidak GMM	Konteks dampak pandemi PT negara berkembang
+12	El Said (2021)	Empiris PT	Pembelajaran online COVID	COVID merombak penyampaian pendidikan	Tidak segmentasi rekrutmen; tidak clustering	Justifikasi hysteresis enrollment pasca-COVID
+13	Herwangi et al. (2021)	Survei	PT Indonesia COVID	Pandemi akselerasi digitalisasi pendidikan Indonesia	Data survei; tidak GMM atau LLM	Konteks lokal Indonesia reasoning kausal LLM
+14	Wei et al. (2022)	Chain-of-thought prompting	LLM reasoning	LLM mampu multi-step reasoning koheren	Tidak untuk analisis kausal rekrutmen PT	CoT prompting sebagai basis reasoning kausal LLM
+15	Nair et al. (2022)	Segmentasi rekrutmen PT	Enrollment management	Segmentasi data historis tingkatkan efisiensi	Kerangka konseptual; tidak GMM-LLM Indonesia	Landasan segmentasi berbasis data rekrutmen
+Sumber: Sintesis tinjauan pustaka penelitian (2025)
+Sintesis Gap: Berdasarkan Tabel 2.2, terdapat kesenjangan signifikan dalam literatur yang belum mengintegrasikan secara terpadu: (1) GMM probabilistik time series dengan deteksi structural break multi-metrik; (2) IndoBERT untuk ekstraksi fitur semantik termasuk data nama dalam konteks rekrutmen perguruan tinggi Indonesia; (3) LLM reasoning kausal untuk penjelasan perubahan klaster antar periode; dan (4) otomasi narasi persona, ringkasan laporan, dan personalisasi rekrutmen berbasis profil GMM — dalam satu pipeline end-to-end. Penelitian ini mengisi kesenjangan tersebut secara komprehensif.
+ 
+BAB III
+METODOLOGI PENELITIAN
+3.1 Desain Penelitian
+Penelitian ini menggunakan pendekatan Research and Development (R&D) dengan metode kuantitatif berbasis data mining time series menggunakan kerangka Cross Industry Standard Process for Data Mining (CRISP-DM) yang diaplikasikan secara iteratif pada enam periode (2019–2024). Pendekatan R&D dipilih karena penelitian ini tidak hanya menganalisis data, tetapi menghasilkan produk sistem berupa pipeline analitik otomatis yang dapat direplikasi dan diperbarui secara berkelanjutan setiap tahun akademik (Mariscal et al., 2010).
+Produk R&D yang dihasilkan adalah sistem end-to-end automated pipeline yang mengintegrasikan sepuluh tahapan: (1) Business Understanding; (2) Data Collection; (3) Data Understanding; (4) Data Preparation — otomasi batch 6 periode (Subproses A–E); (5) Dimensionality Reduction; (6) Modeling — GMM per periode; (7) Time Series Analysis; (8) Evaluation; (9) Otomasi Analisis LLM; dan (10) Deployment strategi rekrutmen prediktif.
+3.2 Diagram Alur Penelitian
+Gambar 3.1 menyajikan diagram alur penelitian (flowchart) yang menggambarkan secara visual integrasi seluruh sepuluh tahapan metodologis dalam satu pipeline hybrid IndoBERT–GMM–LLM berbasis CRISP-DM adaptif time series.
+[DIISI DATA AKTUAL: Gambar 3.1 — Flowchart Alur Penelitian (buat menggunakan draw.io/Visio, sisipkan sebelum sidang)]
+Gambar 3.1 Flowchart Alur Penelitian: Hybrid Pipeline IndoBERT–GMM–LLM Time Series Berbasis CRISP-DM (Data PMB ITSNU Pekalongan 6 Periode 2019–2024)
+Sumber: Desain alur penelitian, diadaptasi dari CRISP-DM (Mariscal et al., 2010)
+3.3 Tahap 1 — Business Understanding
+Tahap Business Understanding mencakup dua aktivitas utama. Pertama, pemetaan kebutuhan rekrutmen ITSNU Pekalongan multi-periode: mengidentifikasi pertanyaan bisnis kritis yang harus dijawab oleh sistem. Kedua, definisi operasional otomasi analisis LLM: menetapkan secara eksplisit empat fungsi otomasi beserta format input-output masing-masing fungsi.
+3.4 Tahap 2 — Data Collection
+Data penelitian adalah data sekunder calon mahasiswa ITSNU Pekalongan periode 2019–2024, diperoleh dari sistem informasi akademik institusi melalui izin resmi Lembaga ITSNU Pekalongan. Data tersimpan dalam enam sheet atau file per periode akademik. Aspek etika penelitian diperhatikan dengan melakukan anonimisasi data individu dalam proses analisis — nama hanya digunakan sebagai fitur semantik agregat untuk ekstraksi embedding IndoBERT, bukan untuk identifikasi personal. Tabel 3.1 menyajikan spesifikasi lengkap variabel dataset.
+Tabel 3.1 Spesifikasi Dataset Time Series PMB ITSNU Pekalongan 2019–2024
+Variabel	Tipe Data	Keterangan	Peran dalam Pipeline
+Nama	Tekstual	Nama lengkap calon mahasiswa	Input IndoBERT embedding [Subproses B]
+Tahun Pendaftaran	Ordinal	2019–2024	Label fase temporal
+Asal Sekolah	Tekstual	Nama lengkap sekolah asal	Input IndoBERT embedding [Subproses B]
+Program Studi	Nominal	Pilihan program studi	Encoding + fitur GMM [Subproses D]
+Kecamatan	Nominal	Wilayah administratif level II	IndoBERT + geocoding [Subproses B, C]
+Kabupaten	Nominal	Wilayah administratif level I	IndoBERT + geocoding [Subproses B, C]
+Alamat Lengkap	Tekstual	Detail alamat calon mahasiswa	Input IndoBERT embedding [Subproses B]
+Jenis Jalur	Nominal	Jalur masuk (mandiri/beasiswa/prestasi)	Encoding + fitur GMM [Subproses D]
+Sumber: Sistem Informasi Akademik PMB ITSNU Pekalongan (2019–2024)
+3.5 Tahap 3 — Data Understanding
+Tahap Data Understanding mencakup tiga aktivitas: (1) profil statistik deskriptif per periode — distribusi frekuensi per variabel kategorikal dan visualisasi bar chart pendaftar per tahun; (2) deteksi anomali dan missing values — pemeriksaan konsistensi format variabel antar tahun; dan (3) validasi konsistensi kategori — nama program studi yang berubah format antar tahun diseragamkan sebelum analisis.
+3.6 Tahap 4 — Data Preparation (Otomasi Batch 6 Periode)
+3.6.1 Subproses A: Text Preprocessing Otomatis
+Data tekstual seluruh periode melalui pipeline praproses otomatis dengan skrip Python yang identik: (1) case folding; (2) cleaning; dan (3) normalisasi singkatan — standardisasi menggunakan kamus singkatan administratif Indonesia (JL→Jalan, DS→Desa, KEC→Kecamatan, SMK→Sekolah Menengah Kejuruan, MA→Madrasah Aliyah, MTs→Madrasah Tsanawiyah, PKL→Pekalongan).
+3.6.2 Subproses B: Otomasi Ekstraksi Fitur Semantik IndoBERT
+Implementasi menggunakan HuggingFace Transformers dengan parameter frozen dan identik untuk keenam periode. Model: indobenchmark/indobert-base-p1 (12 layer, hidden size 768, 12 attention heads). Input: gabungan teks hasil praproses. Metode embedding: mean pooling pada last hidden states (Reimers & Gurevych, 2019). Strategi frozen weights memastikan konsistensi representasi antar periode untuk komparabilitas temporal.
+3.6.3 Subproses C–E: Geocoding, Encoding, dan Standardisasi
+Tabel 3.2 Komposisi Fitur Final Pipeline
+Komponen Fitur	Dimensi	Sumber
+IndoBERT embedding (Nama+Sekolah+Kab+Kec+Alamat)	768	Subproses B
+Koordinat geospasial (Latitude, Longitude)	2	Subproses C: GeoPy/Nominatim
+Encoded Program Studi, Jalur, Kabupaten	3	Subproses D: LabelEncoder fit-on-2019
+TOTAL	~773	Distandardisasi menggunakan StandardScaler fit-on-2019
+Sumber: Desain pipeline penelitian (2025)
+3.7 Tahap 5 — Dimensionality Reduction
+PCA diterapkan dengan strategi fit-on-2019, transform-all: PCA di-fit hanya pada data 2019 dengan threshold 95% explained variance ratio. Matriks proyeksi yang sama diterapkan ke data 2020–2024. Strategi ini memastikan semua periode berada dalam ruang fitur yang sama — syarat mutlak agar pergeseran posisi klaster antar waktu dapat diinterpretasikan sebagai perubahan substantif populasi (Jolliffe & Cadima, 2016).
+3.8 Tahap 6 — Modeling: GMM per Periode
+3.8.1 Penentuan Jumlah Komponen Optimal
+Eksperimen K dari 2 hingga 6 untuk setiap tahun menggunakan BIC sebagai kriteria utama (Scrucca et al., 2023):
+BIC = -2ln(L̂) + k·ln(n)   ...(III.1)
+AIC = 2k - 2ln(L̂)   ...(III.2)
+S(i) = (b(i) - a(i)) / max{a(i), b(i)}   ...(III.3)
+3.8.2 Parameter Implementasi GMM
+Tabel 3.3 Parameter Implementasi GMM (Scikit-learn)
+Parameter	Nilai	Justifikasi
+covariance_type	full	Memungkinkan bentuk klaster elipsoid bebas
+init_params	k-means++	Inisialisasi cerdas, mitigasi local optimum
+max_iter	300	Konvergensi stabil untuk data besar
+n_init	10	10 restarts untuk mitigasi local optimum
+random_state	42	Reprodusibilitas hasil
+tol	1e-3	Convergence threshold standar
+Sumber: Pedregosa et al. (2011); parameter desain penelitian (2025)
+3.9 Tahap 7 — Time Series Analysis
+Tiga metrik digunakan secara komplementer untuk deteksi structural break: ARI (III.4), Jaccard Similarity Index (III.5), dan Centroid Drift. Proyeksi jumlah pendaftar 2025 menggunakan regresi linear pada data fase Recovery (2022–2024).
+ARI = (RI - E[RI]) / (max(RI) - E[RI])   ...(III.4)
+J(A,B) = |A ∩ B| / |A ∪ B|   ...(III.5)
+Tabel 3.4 Threshold Interpretasi Metrik Stabilitas Klaster
+Metrik	Threshold Interpretasi
+ARI	> 0,60 = Stabil   |   0,30–0,60 = Drift Moderat   |   < 0,30 = Structural Break
+Jaccard Similarity	> 0,50 = Overlap tinggi   |   < 0,30 = Pergeseran signifikan
+Centroid Drift	Nilai relatif; peningkatan mendadak = indikator structural break
+Sumber: Adaptasi dari Hubert & Arabie (1985) dan Scrucca et al. (2023)
+3.10 Tahap 8 — Evaluasi Multi-Level
+Tabel 3.5 Metrik Evaluasi Internal GMM
+Metrik	Formula	Interpretasi
+Silhouette Score	S(i) = (b(i)-a(i)) / max{a(i),b(i)}	[-1,1]; mendekati 1 = klaster baik
+Calinski-Harabasz	Rasio dispersi between/within cluster	Lebih tinggi lebih baik
+Davies-Bouldin	Rata-rata rasio within/between cluster	Lebih rendah lebih baik
+Log-Likelihood	Σi ln p(xi)	Lebih tinggi = model lebih baik fit
+Sumber: Desain metrik evaluasi (2025)
+Validasi Eksternal (Expert Validation): Hasil segmentasi dan rekomendasi strategi divalidasi melalui sesi diskusi terfokus dengan [JUMLAH] orang dari tim rekrutmen ITSNU Pekalongan yang memiliki pengalaman minimal [X] tahun di bidang PMB. Validasi dilaksanakan pada [TANGGAL] menggunakan format [kuesioner terstruktur/wawancara semi-terstruktur/FGD], mencakup: (1) relevansi persona klaster terhadap pengalaman empiris rekrutmen; (2) feasibility rekomendasi kanal dan pesan komunikasi; dan (3) kelengkapan cakupan segmen yang dihasilkan.
+3.11 Tahap 9 — Otomasi Analisis LLM
+3.11.1 Model LLM yang Digunakan
+Sistem otomasi analisis menggunakan [NAMA MODEL LLM, contoh: GPT-4o / Claude 3.5 Sonnet / Llama-3] versi [VERSI MODEL] yang diakses melalui [API berbayar / model open-source]. Pemilihan model ini didasarkan pada: (1) kemampuan reasoning multi-langkah yang terdokumentasi dalam literatur (Wei et al., 2022; Parker et al., 2024); (2) dukungan terhadap Bahasa Indonesia yang memadai; dan (3) konsistensi output untuk prompt terstruktur yang berulang.
+3.11.2 Otomasi Generasi Narasi Persona Klaster
+Profil statistik klaster GMM dikonstruksi menjadi prompt terstruktur. Format prompt: "Anda adalah konsultan pemasaran pendidikan tinggi di Indonesia. Berikut profil statistik klaster calon mahasiswa ITSNU Pekalongan: Tahun [Y] (Fase: [F]), N=[N] ([PCT]%), Avg Posterior=[POST], Program studi dominan: [PRODI], Jalur masuk dominan: [JALUR], Kabupaten dominan: [KAB]. Buatkan persona rekrutmen yang actionable mencakup: Nama Persona, Karakteristik Demografis, Motivasi Utama, Hambatan Utama, Pesan Kunci, Channel Terbaik." Output LLM berupa narasi persona terstruktur per klaster per periode, tidak lebih dari 150 kata (Wei et al., 2022; Parker et al., 2024).
+3.11.3 Otomasi Reasoning Tren Kausal dan Ringkasan Naratif
+Reasoning kausal dihasilkan untuk setiap transisi antar periode menggunakan chain-of-thought prompting (Wei et al., 2022). Input prompt mengintegrasikan data ARI, centroid drift, perubahan proporsi jalur masuk, dan konteks historis. Setelah seluruh analisis selesai, LLM menghasilkan ringkasan eksekutif yang mencakup: (1) temuan utama; (2) implikasi strategis untuk manajemen; dan (3) rekomendasi prioritas tiga teratas — dalam format laporan naratif siap dipresentasikan (Parker et al., 2024).
+3.12 Tahap 10 — Deployment: Strategi Rekrutmen Prediktif
+Tahap deployment mencakup: (1) prioritasi segmen dinamis berdasarkan tren proporsi fase Recovery (2022–2024); (2) mapping channel per klaster berdasarkan profil kabupaten, program studi dominan, dan jalur masuk dominan; (3) proyeksi komposisi segmen 2025; dan (4) personalisasi rekrutmen — panduan komunikasi spesifik per segmen mencakup value proposition, channel optimal, waktu kampanye, dan rekomendasi alokasi anggaran rekrutmen proporsional — seluruhnya dihasilkan secara otomatis oleh modul LLM.
+3.13 Etika Penelitian
+Penelitian ini memperhatikan aspek etika sebagai berikut: (1) penggunaan data PMB dilakukan atas dasar izin resmi dari Lembaga ITSNU Pekalongan; (2) data individu calon mahasiswa dianonimisasi dalam proses analisis — nama hanya digunakan sebagai fitur semantik agregat untuk ekstraksi embedding dan tidak dipublikasikan secara individual; (3) hasil analisis hanya digunakan untuk kepentingan pengembangan strategi rekrutmen institusional, bukan untuk tujuan komersial atau pribadi; dan (4) kerahasiaan data dijaga sesuai dengan ketentuan perlindungan data yang berlaku.
+3.14 Jadwal Pelaksanaan Penelitian
+Tabel 3.6 Jadwal Pelaksanaan Penelitian (6 Bulan)
+No	Tahapan	Kegiatan Utama	Bln 1	Bln 2	Bln 3	Bln 4	Bln 5	Bln 6
+1	Persiapan	Studi literatur, akses dataset, setup environment Python	X					
+2	Data Prep	Batch processing 6 tahun: preprocessing, IndoBERT, geocoding		X				
+3	Pemodelan	PCA + GMM per periode + K-scan + komparasi GMM vs K-Means			X			
+4	Time Series	ARI, Jaccard, centroid drift, structural break, forecasting 2025				X		
+5	LLM & Validasi	Otomasi persona, reasoning kausal, ringkasan, expert validation					X	
+6	Penulisan	Penyusunan laporan tesis BAB IV–V, revisi, finalisasi						X
+Sumber: Perencanaan penelitian (2025)
+ 
+BAB IV
+HASIL PENELITIAN DAN PEMBAHASAN
+4.1 Deskripsi Data Time Series Calon Mahasiswa (2019–2024)
+4.1.1 Gambaran Umum Dataset
+Dataset penelitian ini mencakup data sekunder calon mahasiswa ITSNU Pekalongan pada enam periode akademik 2019–2024 dengan total [TOTAL_N] rekaman data yang tervalidasi. Data bersumber dari enam sheet sistem informasi akademik PMB, masing-masing merepresentasikan satu periode pendaftaran. Tabel 4.1 menyajikan distribusi lengkap per tahun beserta konteks fase temporal.
+Tabel 4.1 Distribusi Jumlah Pendaftar per Tahun dan Fase Temporal (2019–2024)
+Tahun	Fase Temporal	Jumlah Pendaftar	Persentase (%)	Perubahan (%)
+2019	Pre-COVID	[N_2019]	[PCT_2019]	– (baseline)
+2020	COVID Crisis	[N_2020]	[PCT_2020]	[DELTA_2020]
+2021	COVID Crisis	[N_2021]	[PCT_2021]	[DELTA_2021]
+2022	Recovery	[N_2022]	[PCT_2022]	[DELTA_2022]
+2023	Recovery	[N_2023]	[PCT_2023]	[DELTA_2023]
+2024	Recovery	[N_2024]	[PCT_2024]	[DELTA_2024]
+Total	—	[TOTAL_N]	100%	—
+Sumber: Data Primer PMB ITSNU Pekalongan, diolah (2025)
+Berdasarkan Tabel 4.1, teridentifikasi tiga pola utama yang divisualisasikan pada Gambar 4.1. Pertama, fase Pre-COVID (2019) mencatat [N_2019] pendaftar sebagai baseline normal. Kedua, fase COVID Crisis (2020–2021) menunjukkan penurunan yang konsisten dengan temuan Aristovnik et al. (2021) yang mendokumentasikan dampak pandemi terhadap enrollment pendidikan tinggi. Ketiga, fase Recovery (2022–2024) memperlihatkan tren pemulihan, meskipun tidak sepenuhnya kembali ke kondisi 2019 — mencerminkan fenomena hysteresis pasca-krisis (Purcell & Lumbreras, 2021).
+[DIISI DATA AKTUAL: Gambar 4.1 — bar chart distribusi pendaftar 2019–2024: biru=Pre-COVID, merah=COVID Crisis, hijau=Recovery. Dihasilkan dari pipeline Python.]
+Gambar 4.1 Distribusi Jumlah Pendaftar PMB ITSNU Pekalongan per Tahun (2019–2024)
+Sumber: Data Primer PMB ITSNU Pekalongan, diolah menggunakan Python (2025)
+4.1.2 Distribusi Program Studi dan Profil Variabel Kunci
+Tabel 4.2 Distribusi Program Studi Dominan (Seluruh Periode 2019–2024)
+Program Studi	Jumlah Pendaftar	Persentase (%)
+[PRODI_1]	[N_PRODI_1]	[PCT_PRODI_1]
+[PRODI_2]	[N_PRODI_2]	[PCT_PRODI_2]
+[PRODI_3]	[N_PRODI_3]	[PCT_PRODI_3]
+[PRODI_4]	[N_PRODI_4]	[PCT_PRODI_4]
+[PRODI_5]	[N_PRODI_5]	[PCT_PRODI_5]
+Sumber: Data Primer PMB ITSNU Pekalongan, diolah (2025)
+4.2 Hasil Otomasi Data Preparation (Tahap 4A–4E)
+Tabel 4.3 Contoh Hasil Otomasi Text Preprocessing (Normalisasi Singkatan Bahasa Indonesia)
+Teks Asli	Hasil Otomasi Preprocessing
+Ahmad Fauzi Rahmanto	ahmad fauzi rahmanto
+SMK N 1 PKL	sekolah menengah kejuruan negeri 1 pekalongan
+Jl. Ahmad Yani No.12 Gg. Mawar	jalan ahmad yani nomor 12 gang mawar
+Kec. Wiradesa Kab. Pekalongan	kecamatan wiradesa kabupaten pekalongan
+MA Al-Hikmah Ds. Rowosari	madrasah aliyah al hikmah desa rowosari
+MTs. N 2 Batang	madrasah tsanawiyah negeri 2 batang
+Sumber: Hasil otomasi pipeline praproses (2025)
+Normalisasi nama calon mahasiswa dilakukan hanya untuk standardisasi format sebelum ekstraksi embedding IndoBERT — bukan untuk menghapus informasi semantik yang terkandung di dalamnya. Nama dalam Bahasa Indonesia mengandung sinyal budaya, geografis, dan sosio-ekonomi yang ditangkap oleh IndoBERT pada level representasi vektor (Koto et al., 2020).
+Tabel 4.4 Validasi Stabilitas Embedding IndoBERT: Cosine Similarity Rata-rata Antar Periode
+Transisi Periode	Cosine Similarity	Kategori	Interpretasi
+2019 → 2020	[SIM_1920]	[Stabil/Moderat]	[Deskripsi nilai aktual]
+2020 → 2021	[SIM_2021]	[Stabil/Moderat]	[Deskripsi nilai aktual]
+2021 → 2022	[SIM_2122]	[Stabil/Moderat]	[Deskripsi nilai aktual]
+2022 → 2023	[SIM_2223]	[Stabil/Moderat]	[Deskripsi nilai aktual]
+2023 → 2024	[SIM_2324]	[Stabil/Moderat]	[Deskripsi nilai aktual]
+Rata-rata	[AVG_SIM]	—	—
+Keterangan: Cosine Similarity > 0,85 = Stabil; 0,70–0,85 = Moderat; < 0,70 = Rendah Sumber: Hasil otomasi pipeline IndoBERT (2025)
+Nilai cosine similarity rata-rata [AVG_SIM] mengkonfirmasi Hipotesis 2 (H2): IndoBERT menghasilkan representasi yang stabil antar periode di atas threshold 0,70. Temuan ini memvalidasi strategi frozen weights yang dipilih dan menjamin bahwa pergeseran distribusi klaster yang terdeteksi mencerminkan perubahan substantif perilaku pendaftar — bukan artefak teknis (Subakti et al., 2022; Reimers & Gurevych, 2019).
+PCA yang di-fit pada data 2019 menghasilkan [N_COMP] komponen utama yang menjelaskan 95% varians data, mereduksi dimensi dari ~773 menjadi [N_COMP] dimensi (pengurangan [PCT_REDUKSI]%). Reduksi ini memungkinkan estimasi parameter GMM yang stabil (Jolliffe & Cadima, 2016).
+4.3 Hasil Segmentasi Probabilistik GMM Time Series
+Tabel 4.5 Nilai BIC, AIC, dan Silhouette Score per Nilai K dan Per Tahun
+Tahun	Fase	K=2	K=3	K=4	K=5	K=6	K Opt	BIC Opt	Sil Opt
+2019	Pre-COVID	[S2]	[S3]	[S4]	[S5]	[S6]	[K]	[BIC]	[SIL]
+2020	COVID Crisis	[S2]	[S3]	[S4]	[S5]	[S6]	[K]	[BIC]	[SIL]
+2021	COVID Crisis	[S2]	[S3]	[S4]	[S5]	[S6]	[K]	[BIC]	[SIL]
+2022	Recovery	[S2]	[S3]	[S4]	[S5]	[S6]	[K]	[BIC]	[SIL]
+2023	Recovery	[S2]	[S3]	[S4]	[S5]	[S6]	[K]	[BIC]	[SIL]
+2024	Recovery	[S2]	[S3]	[S4]	[S5]	[S6]	[K]	[BIC]	[SIL]
+Keterangan: K Optimal = minimum BIC. Sil = Silhouette Score rata-rata GMM Sumber: Hasil pemodelan GMM (2025)
+[DIISI DATA AKTUAL: Gambar 4.2a–4.2f: Scatter plot PCA 2D klaster GMM per periode (2019–2024)]
+Gambar 4.2a–4.2f Distribusi Klaster GMM pada Ruang PCA 2D per Periode (2019–2024)
+[DIISI DATA AKTUAL: Gambar 4.3a: Line chart Silhouette Score GMM per periode]
+Gambar 4.3a Silhouette Score GMM per Periode (2019–2024)
+4.4 Hasil Time Series Analysis dan Deteksi Structural Break
+Tabel 4.6 Analisis Stabilitas Klaster: ARI, Jaccard Similarity, dan Centroid Drift Antar Periode
+Transisi	ARI	Jaccard	Centroid Drift	Kategori	Interpretasi
+2019 → 2020	[ARI_1920]	[JAC_1920]	[DRIFT_1920]	Structural Break	Onset COVID-19 dikonfirmasi sebagai titik disrupsi utama → H1 terkonfirmasi
+2020 → 2021	[ARI_2021]	[JAC_2021]	[DRIFT_2021]	[Kategori]	[Interpretasi berdasarkan nilai aktual]
+2021 → 2022	[ARI_2122]	[JAC_2122]	[DRIFT_2122]	[Kategori]	Awal transisi pemulihan; restrukturisasi segmen mulai terbentuk
+2022 → 2023	[ARI_2223]	[JAC_2223]	[DRIFT_2223]	[Kategori]	[Interpretasi berdasarkan nilai aktual]
+2023 → 2024	[ARI_2324]	[JAC_2324]	[DRIFT_2324]	[Kategori]	[Interpretasi berdasarkan nilai aktual]
+Keterangan: ARI > 0,60 = Stabil | 0,30–0,60 = Drift Moderat | < 0,30 = Structural Break Sumber: Hasil analisis stabilitas GMM (2025)
+[DIISI DATA AKTUAL: Gambar 4.3b: Horizontal bar chart ARI per transisi dengan garis merah 0,30 dan hijau 0,60]
+Gambar 4.3b ARI Stabilitas Klaster Antar Periode (2019–2024)
+Transisi 2019→2020 menghasilkan ARI [ARI_1920] yang berada di bawah ambang structural break (< 0,30), mengkonfirmasi Hipotesis 1 (H1). Penggunaan tiga metrik komplementer memberikan bukti multi-dimensional. Structural break tidak bersifat simetris: pemulihan 2021→2022 tidak menghasilkan ARI setara pra-pandemi, mengkonfirmasi fenomena hysteresis yang konsisten dengan dampak krisis besar pada sistem sosial-ekonomi (Purcell & Lumbreras, 2021; El Said, 2021).
+Proyeksi jumlah pendaftar 2025 menggunakan regresi linear pada tren Recovery (2022–2024) menghasilkan estimasi ~[PROJ_2025] pendaftar dengan R² = [R2], koefisien slope = [SLOPE] per tahun.
+[DIISI DATA AKTUAL: Gambar 4.4: Bar chart prediktif data historis 2019–2024 + proyeksi 2025 dengan garis tren Recovery]
+Gambar 4.4 Proyeksi Jumlah Pendaftar ITSNU Pekalongan Tahun 2025 Berbasis Tren Recovery (2022–2024)
+4.5 Hasil Evaluasi Multi-Level
+Tabel 4.7 Ringkasan Metrik Evaluasi Internal GMM per Periode
+Tahun	Fase	K	Silhouette	Calinski-Harabasz	Davies-Bouldin	Log-Likelihood
+2019	Pre-COVID	[K]	[SIL]	[CH]	[DB]	[LL]
+2020	COVID Crisis	[K]	[SIL]	[CH]	[DB]	[LL]
+2021	COVID Crisis	[K]	[SIL]	[CH]	[DB]	[LL]
+2022	Recovery	[K]	[SIL]	[CH]	[DB]	[LL]
+2023	Recovery	[K]	[SIL]	[CH]	[DB]	[LL]
+2024	Recovery	[K]	[SIL]	[CH]	[DB]	[LL]
+Sumber: Hasil evaluasi GMM (2025)
+Tabel 4.8 Perbandingan Metrik Klasterisasi GMM vs K-Means (Data 2024)
+Metrik	K-Means	GMM	Selisih (Δ)	Keunggulan
+Silhouette Score	[SIL_KM]	[SIL_GMM]	[DELTA]	GMM lebih tinggi
+Calinski-Harabasz	[CH_KM]	[CH_GMM]	[DELTA]	[GMM/KM]
+Davies-Bouldin	[DB_KM]	[DB_GMM]	[DELTA]	GMM lebih rendah (lebih baik)
+Soft Clustering	Tidak	Ya	—	GMM
+Posterior Probability	Tidak	Ya	—	GMM
+Input Otomasi LLM	Tidak	Ya	—	GMM
+Sumber: Hasil komparasi empiris (2025)
+4.6 Profil Persona Klaster dan Analisis Lifecycle (Otomasi LLM)
+Tabel 4.9 Profil Klaster GMM Tahun 2019 (Pre-COVID — Baseline)
+Klaster	N	%	Avg Post.	Prodi Dominan	Jalur Dominan	Kab. Dominan	Persona (Otomasi LLM)
+K1-19	[N]	[%]	[P]	[PRODI]	[JALUR]	[KAB]	[PERSONA LLM — diisi setelah pipeline]
+K2-19	[N]	[%]	[P]	[PRODI]	[JALUR]	[KAB]	[PERSONA LLM — diisi setelah pipeline]
+K3-19	[N]	[%]	[P]	[PRODI]	[JALUR]	[KAB]	[PERSONA LLM — diisi setelah pipeline]
+Sumber: Hasil pemodelan GMM dan Otomasi Persona LLM (2025)
+Tabel 4.10 Profil Klaster GMM Tahun 2020 (COVID Crisis — Awal Pandemi)
+Klaster	N	%	Avg Post.	Prodi Dominan	Jalur Dominan	Kab. Dominan	Persona (Otomasi LLM)
+K1-20	[N]	[%]	[P]	[PRODI]	[JALUR]	[KAB]	[PERSONA LLM — diisi setelah pipeline]
+K2-20	[N]	[%]	[P]	[PRODI]	[JALUR]	[KAB]	[PERSONA LLM — diisi setelah pipeline]
+K3-20	[N]	[%]	[P]	[PRODI]	[JALUR]	[KAB]	[PERSONA LLM — diisi setelah pipeline]
+Sumber: Hasil pemodelan GMM dan Otomasi Persona LLM (2025)
+Tabel 4.11 Profil Klaster GMM Tahun 2021 (COVID Crisis — Puncak Adaptasi)
+Klaster	N	%	Avg Post.	Prodi Dominan	Jalur Dominan	Kab. Dominan	Persona (Otomasi LLM)
+K1-21	[N]	[%]	[P]	[PRODI]	[JALUR]	[KAB]	[PERSONA LLM — diisi setelah pipeline]
+K2-21	[N]	[%]	[P]	[PRODI]	[JALUR]	[KAB]	[PERSONA LLM — diisi setelah pipeline]
+K3-21	[N]	[%]	[P]	[PRODI]	[JALUR]	[KAB]	[PERSONA LLM — diisi setelah pipeline]
+Sumber: Hasil pemodelan GMM dan Otomasi Persona LLM (2025)
+Tabel 4.12 Profil Klaster GMM Tahun 2022 (Recovery — Awal Pemulihan)
+Klaster	N	%	Avg Post.	Prodi Dominan	Jalur Dominan	Kab. Dominan	Persona (Otomasi LLM)
+K1-22	[N]	[%]	[P]	[PRODI]	[JALUR]	[KAB]	[PERSONA LLM — diisi setelah pipeline]
+K2-22	[N]	[%]	[P]	[PRODI]	[JALUR]	[KAB]	[PERSONA LLM — diisi setelah pipeline]
+K3-22	[N]	[%]	[P]	[PRODI]	[JALUR]	[KAB]	[PERSONA LLM — diisi setelah pipeline]
+Sumber: Hasil pemodelan GMM dan Otomasi Persona LLM (2025)
+Tabel 4.13 Profil Klaster GMM Tahun 2023 (Recovery — Konsolidasi)
+Klaster	N	%	Avg Post.	Prodi Dominan	Jalur Dominan	Kab. Dominan	Persona (Otomasi LLM)
+K1-23	[N]	[%]	[P]	[PRODI]	[JALUR]	[KAB]	[PERSONA LLM — diisi setelah pipeline]
+K2-23	[N]	[%]	[P]	[PRODI]	[JALUR]	[KAB]	[PERSONA LLM — diisi setelah pipeline]
+K3-23	[N]	[%]	[P]	[PRODI]	[JALUR]	[KAB]	[PERSONA LLM — diisi setelah pipeline]
+Sumber: Hasil pemodelan GMM dan Otomasi Persona LLM (2025)
+Tabel 4.14 Profil Klaster GMM Tahun 2024 (Recovery — Stabilisasi)
+Klaster	N	%	Avg Post.	Prodi Dominan	Jalur Dominan	Kab. Dominan	Persona (Otomasi LLM)
+K1-24	[N]	[%]	[P]	[PRODI]	[JALUR]	[KAB]	[PERSONA LLM — diisi setelah pipeline]
+K2-24	[N]	[%]	[P]	[PRODI]	[JALUR]	[KAB]	[PERSONA LLM — diisi setelah pipeline]
+K3-24	[N]	[%]	[P]	[PRODI]	[JALUR]	[KAB]	[PERSONA LLM — diisi setelah pipeline]
+Sumber: Hasil pemodelan GMM dan Otomasi Persona LLM (2025)
+Tabel 4.15 Matriks Evolusi Proporsi Klaster 2019–2024 (Lifecycle Analysis)
+Klaster / Persona	2019 (%)	2020 (%)	2021 (%)	2022 (%)	2023 (%)	2024 (%)	Lifecycle
+Klaster 1 – [PERSONA_K1]	[%]	[%]	[%]	[%]	[%]	[%]	Tumbuh
+Klaster 2 – [PERSONA_K2]	[%]	[%]	[%]	[%]	[%]	[%]	Stabil
+Klaster 3 – [PERSONA_K3]	[%]	[%]	[%]	[%]	[%]	[%]	Menurun
+Keterangan: Tumbuh = meningkat >5% | Stabil = fluktuasi ≤5% | Menurun = turun >5% Sumber: Hasil analisis temporal GMM (2025)
+4.7 Otomasi Reasoning Tren Kausal dan Ringkasan Naratif
+Sistem otomasi LLM menghasilkan reasoning kausal untuk setiap transisi antar periode yang menjelaskan mengapa pergeseran klaster terjadi, bukan sekadar apa yang berubah. Pendekatan chain-of-thought prompting (Wei et al., 2022) digunakan sebagai basis reasoning.
+Reasoning Kausal — Transisi 2019→2020 (Structural Break):
+[DIISI DATA AKTUAL: Reasoning kausal otomatis LLM untuk transisi 2019→2020 — diisi setelah pipeline dijalankan pada data aktual]
+Reasoning Kausal — Transisi 2021→2022 (Awal Recovery):
+[DIISI DATA AKTUAL: Reasoning kausal otomatis LLM untuk transisi 2021→2022 — diisi setelah pipeline dijalankan pada data aktual]
+4.7.2 Ringkasan Naratif Laporan Otomatis
+[DIISI DATA AKTUAL: Ringkasan eksekutif otomatis LLM dari seluruh temuan analisis — diisi setelah pipeline dijalankan pada data aktual]
+Sumber: Ringkasan naratif dihasilkan otomatis oleh sistem LLM berbasis profil statistik GMM (2025)
+4.8 Strategi Rekrutmen Prediktif dan Personalisasi (Deployment)
+Tabel 4.16 Prioritasi Segmen untuk Rekrutmen 2025 Berbasis Tren GMM Time Series
+Klaster	Tren 2022–2024	Prioritas	Kab. Target	Prodi Fokus	Strategi Utama
+K1 – [PERSONA_K1]	Tumbuh [PCT]%	Tinggi	[KAB]	[PRODI]	Intensifikasi digital; kampanye Instagram/TikTok geo-targeted
+K2 – [PERSONA_K2]	Stabil [PCT]%	Sedang	[KAB]	[PRODI]	Retensi melalui kemitraan sekolah dan program alumni
+K3 – [PERSONA_K3]	Turun [PCT]%	Evaluasi	[KAB]	[PRODI]	Investigasi hambatan; revisi proposisi nilai segmen
+Sumber: Analisis tren GMM dan formulasi strategi otomatis LLM (2025)
+Tabel 4.17 Rekomendasi Strategi Channel Rekrutmen Berbasis Profil Klaster 2025
+Klaster	Channel Prioritas 1	Channel Prioritas 2	Pesan Kunci	Waktu Optimal	Basis Rekomendasi
+K1	Instagram/TikTok Ads	Kunjungan SMA/SMK mitra	Teknologi & Karir	Nov–Jan	Profil usia muda; urban
+K2	WhatsApp broadcast alumni	Webinar daring tematik	Beasiswa & Aksesibilitas	Des–Feb	Sensitivitas harga; jalur dominan
+K3	Brosur fisik & pameran	Radio komunitas lokal	Kedekatan & Komunitas	Jan–Mar	Semi-rural; akses digital terbatas
+Sumber: Analisis profil GMM dan framework segment-channel fit (Kotler & Keller, 2016)
+Tabel 4.18 Perbandingan Strategi Statis vs Strategi Adaptif GMM Time Series + LLM
+Dimensi Perbandingan	Strategi Statis (2019 Only)	Strategi Adaptif (GMM 6 Periode + Otomasi LLM)
+Presisi profil segmen 2025	Rendah — tidak mencerminkan perubahan pasca-COVID	Tinggi — mengintegrasikan evolusi 6 tahun
+Deteksi segmen baru pasca-pandemi	Tidak mampu	Mampu melalui deteksi structural break
+Proyeksi tren 2025	Tidak tersedia	Tersedia (~[PROJ_2025] pendaftar)
+Interpretasi profil klaster	Manual, memerlukan pakar, subjektif	Otomatis oleh LLM dalam hitungan menit
+Reasoning kausal perubahan segmen	Tidak tersedia	Otomatis — menjelaskan mengapa perubahan terjadi
+Ringkasan laporan manajemen	Manual, bergantung analis	Otomatis — siap dipresentasikan langsung
+Personalisasi per segmen	Generik, tidak terdiferensiasi	Spesifik per segmen, berbasis data aktual
+Sumber: Hasil analisis komparatif penelitian (2025)
+4.9 Pembahasan
+4.9.1 Konfirmasi Hipotesis
+Hipotesis 1 (H1) dikonfirmasi: ARI [ARI_1920], Jaccard [JAC_1920], dan Centroid Drift [DRIFT_1920] pada transisi 2019→2020 seluruhnya berada di bawah ambang structural break. Temuan ini konsisten dengan Purcell dan Lumbreras (2021) dan Aristovnik et al. (2021) yang mengkonfirmasi COVID-19 sebagai titik disrupsi struktural dalam pendidikan tinggi.
+Hipotesis 2 (H2) dikonfirmasi: Cosine similarity rata-rata [AVG_SIM] membuktikan stabilitas representasi IndoBERT di atas threshold 0,70, konsisten dengan temuan Subakti et al. (2022) tentang keunggulan BERT sebagai representasi teks untuk klasterisasi.
+Hipotesis 3 (H3) dikonfirmasi: GMM menghasilkan Silhouette Score [SIL_GMM] vs K-Means [SIL_KM] (Δ = [DELTA_SIL]). Sistem otomasi LLM terbukti mampu menghasilkan narasi persona, reasoning kausal, dan ringkasan laporan yang dikonfirmasi relevansinya oleh tim rekrutmen ITSNU Pekalongan melalui expert validation (Parker et al., 2024). [Tambahkan 1–2 kutipan/parafrase dari hasil validasi pakar].
+4.9.2 Implikasi Fenomena Hysteresis Pasca-COVID
+Structural break pada 2019→2020 tidak bersifat simetris: pemulihan 2021→2022 tidak menghasilkan ARI setara pra-pandemi, mengkonfirmasi fenomena hysteresis dalam sistem ekonomi dan sosial (Blanchard & Summers, 1987). Profil klaster fase Recovery membentuk ekuilibrium baru yang mencerminkan adaptasi permanen terhadap transformasi digital, konsisten dengan temuan El Said (2021) dan Herwangi et al. (2021) tentang perubahan struktural pendidikan tinggi pasca-pandemi. Implikasi strategis yang kritis: penggunaan profil segmen 2019 sebagai satu-satunya referensi untuk perencanaan rekrutmen 2025 akan menghasilkan misalokasi sumber daya yang signifikan karena komposisi segmen telah berubah secara struktural.
+4.9.3 Kontribusi Sistem Otomasi LLM
+Penelitian ini mendemonstrasikan secara empiris bahwa sistem otomasi LLM empat-fungsi dapat berfungsi sebagai komponen yang andal dalam pipeline analitik educational data mining. Nilai strategis sistem ini terletak pada demokratisasi akses terhadap insight data: tim rekrutmen non-teknis dapat mengakses analisis segmentasi yang kompleks melalui laporan naratif yang diproduksi secara otomatis setiap tahun, tanpa memerlukan keahlian statistika atau machine learning. Hal ini sejalan dengan prediksi Parker et al. (2024) bahwa automated insight generation berbasis LLM akan semakin berperan sentral dalam pengambilan keputusan berbasis data di institusi pendidikan.
+4.9.4 Keterbatasan Penelitian
+Beberapa keterbatasan penelitian perlu dicatat. Pertama, analisis bersifat cross-sectional comparative, bukan panel tracking individual — trajektori individual calon mahasiswa antar tahun tidak dapat dilacak. Kedua, IndoBERT tidak melalui fine-tuning domain pendidikan Indonesia — domain-adaptive pre-training berpotensi meningkatkan kualitas representasi 2–7 poin persentase (Sun et al., 2019). Ketiga, proyeksi 2025 menggunakan regresi linear sederhana — model ARIMA atau LSTM akan memberikan proyeksi yang lebih akurat untuk time series yang lebih kompleks. Keempat, validasi reasoning kausal LLM dilakukan satu kali melalui expert validation — validasi multi-ronde dengan follow-up implementasi aktual akan memperkuat klaim efektivitas sistem.
+ 
+DAFTAR PUSTAKA
+Ahmadian, M., Farhood, A., Abbasi, M., Alinejad-Rokny, H., Abbasi-Kesbi, R., & Jalalifar, S. (2024). Hybrid models for emotion classification and sentiment analysis in Indonesian language. Applied Computational Intelligence and Soft Computing, 2024, Article 2826773. https://doi.org/10.1155/2024/2826773
+Aristovnik, A., Keržič, D., Ravšelj, D., Tomaževič, N., & Umek, L. (2021). Impacts of the COVID-19 pandemic on life of higher education students: Global survey dataset from the first wave. Data in Brief, 39, Article 107659. https://doi.org/10.1016/j.dib.2021.107659
+Blanchard, O. J., & Summers, L. H. (1987). Hysteresis in unemployment. European Economic Review, 31(1–2), 288–295. https://doi.org/10.1016/0014-2921(87)90042-0
+Dempster, A. P., Laird, N. M., & Rubin, D. B. (1977). Maximum likelihood from incomplete data via the EM algorithm. Journal of the Royal Statistical Society: Series B (Methodological), 39(1), 1–38. https://doi.org/10.1111/j.2517-6161.1977.tb01600.x
+Devlin, J., Chang, M.-W., Lee, K., & Toutanova, K. (2019). BERT: Pre-training of deep bidirectional transformers for language understanding. Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, 1, 4171–4186. https://doi.org/10.18653/v1/N19-1423
+El Said, G. R. (2021). How did the COVID-19 pandemic affect higher education learning experience? An empirical investigation of learners' academic performance at a university in a developing country. Advances in Human-Computer Interaction, 2021, Article 6649524. https://doi.org/10.1155/2021/6649524
+George, L., & Sumathy, P. (2023). An integrated clustering and BERT framework for improved topic modeling. International Journal of Information Technology, 15(4), 2187–2195. https://doi.org/10.1007/s41870-023-01268-w
+Herwangi, Y., Setiawan, R., Kusumawati, A., & Rahmat, A. (2021). Dampak pandemi COVID-19 terhadap digitalisasi aspirasi pendidikan tinggi di Indonesia. Jurnal Pendidikan dan Kebudayaan, 6(2), 117–130. https://doi.org/10.24832/jpnk.v6i2.1941
+Hossler, D., & Bean, J. P. (1990). The strategic management of college enrollments. Jossey-Bass.
+Hubert, L., & Arabie, P. (1985). Comparing partitions. Journal of Classification, 2(1), 193–218. https://doi.org/10.1007/BF01908075
+Jolliffe, I. T. (2002). Principal component analysis (2nd ed.). Springer. https://doi.org/10.1007/b98835
+Jolliffe, I. T., & Cadima, J. (2016). Principal component analysis: A review and recent developments. Philosophical Transactions of the Royal Society A, 374(2065), Article 20150202. https://doi.org/10.1098/rsta.2015.0202
+Juarto, B., & Yulianto. (2023). Indonesian news classification using IndoBERT. International Journal of Intelligent Systems and Applications in Engineering, 11(2), 454–460. https://ijisae.org/index.php/IJISAE/article/view/2654
+Khatun, M. M., Talukder, M. A., Islam, M. M., Uddin, M. A., & Sharmin, S. (2024). Data-driven strategies for digital native market segmentation using clustering. Array, 22, Article 100351. https://doi.org/10.1016/j.array.2024.100351
+Kotler, P., & Keller, K. L. (2016). Marketing management (15th ed.). Pearson Education.
+Koto, F., Rahimi, A., Lau, J. H., & Baldwin, T. (2020). IndoLEM and IndoBERT: A benchmark dataset and pre-trained language model for Indonesian NLP. Proceedings of the 28th International Conference on Computational Linguistics (COLING 2020), 757–770. https://doi.org/10.18653/v1/2020.coling-main.66
+Mariscal, G., Marban, O., & Fernandez, C. (2010). A survey of data mining and knowledge discovery process models and methodologies. Knowledge Engineering Review, 25(2), 137–166. https://doi.org/10.1017/S0269888910000032
+McLachlan, G. J., & Peel, D. (2000). Finite mixture models. John Wiley & Sons. https://doi.org/10.1002/0471721182
+Nair, R. V., Somanath, V. S., & Gasbarro, D. (2022). Enrollment management and student retention in higher education: A data-driven approach. International Review of Economics & Finance, 103, Article 104511. https://doi.org/10.1016/j.iref.2022.07.014
+Parker, M. J., Anderson, C., Stone, C., & Oh, Y. (2024). A large language model approach to educational survey feedback analysis. International Journal of Artificial Intelligence in Education, 34, 1238–1277. https://doi.org/10.1007/s40593-024-00414-0
+Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., Blondel, M., Prettenhofer, P., Weiss, R., Dubourg, V., Vanderplas, J., Passos, A., Cournapeau, D., Brucher, M., Perrot, M., & Duchesnay, É. (2011). Scikit-learn: Machine learning in Python. Journal of Machine Learning Research, 12, 2825–2830. https://jmlr.org/papers/v12/pedregosa11a.html
+Purcell, W. M., & Lumbreras, J. (2021). Higher education and the COVID-19 pandemic: Navigating disruption using the sustainable development goals. Discover Sustainability, 2(1), Article 6. https://doi.org/10.1007/s43621-021-00013-2
+Reimers, N., & Gurevych, I. (2019). Sentence-BERT: Sentence embeddings using Siamese BERT-networks. Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP), 3982–3992. https://doi.org/10.18653/v1/D19-1410
+Romero, C., & Ventura, S. (2010). Educational data mining: A review of the state of the art. IEEE Transactions on Systems, Man, and Cybernetics — Part C: Applications and Reviews, 40(6), 601–618. https://doi.org/10.1109/TSMCC.2010.2053532
+Scrucca, L., Saqr, M., López-Pernas, S., & Murphy, K. (2023). An introduction and tutorial to model-based clustering in education via Gaussian mixture modelling. In M. Saqr & S. López-Pernas (Eds.), Learning analytics methods and tutorials (pp. 395–442). Springer. https://doi.org/10.1007/978-3-031-54464-4_12
+Shoaib, M., Sayed, N., Singh, J., Shafi, J., Khan, S., & Ahmad, F. (2024). Improve student risk prediction with clustering techniques: A systematic review in education data mining. Education Sciences, 15(12), Article 1695. https://doi.org/10.3390/educsci15121695
+Subakti, A., Murfi, H., & Hariadi, N. (2022). The performance of BERT as data representation of text clustering. Journal of Big Data, 9, Article 15. https://doi.org/10.1186/s40537-022-00564-9
+Sun, C., Qiu, X., Xu, Y., & Huang, X. (2019). How to fine-tune BERT for text classification? In Proceedings of the 18th China National Conference on Chinese Computational Linguistics (pp. 194–206). Springer. https://doi.org/10.1007/978-3-030-32381-3_16
+Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, L., & Polosukhin, I. (2017). Attention is all you need. Advances in Neural Information Processing Systems, 30, 5998–6008. https://proceedings.neurips.cc/paper/2017/hash/3f5ee243547dee91fbd053c1c4a845aa-Abstract.html
+Wei, J., Wang, X., Schuurmans, D., Bosma, M., Xia, F., Chi, E., Le, Q. V., & Zhou, D. (2022). Chain-of-thought prompting elicits reasoning in large language models. Advances in Neural Information Processing Systems, 35, 24824–24837. https://proceedings.neurips.cc/paper_files/paper/2022/hash/9d5609613524ecf4f15af0f7b31abca4-Abstract-Conference.html

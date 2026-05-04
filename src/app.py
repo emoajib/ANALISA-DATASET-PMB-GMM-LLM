@@ -2,7 +2,24 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+from functools import lru_cache
 from pmb_pipeline import PMBAnalysisPipeline, FASE  # Import the pipeline class and FASE
+
+# Streamlit caching for performance
+@st.cache_data(ttl=3600)
+def load_csv_safe(path):
+    try:
+        return pd.read_csv(path)
+    except:
+        return None
+
+@st.cache_data(ttl=3600)
+def load_image_bytes(path):
+    try:
+        with open(path, "rb") as f:
+            return f.read()
+    except:
+        return None
 
 st.title("PMB ITSNU Analysis Dashboard")
 
@@ -185,12 +202,12 @@ if uploaded_file:
             tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs(
                 [
                     "📊 T4.1–4.2 & G4.1",
-                    "🔬 T4.3–4.3a",
-                    "🧮 T4.4 & G4.3a",
-                    "📈 T4.5 & G4.3c",
-                    "🎯 T4.6–4.11 & G4.2",
-                    "🔄 T4.12",
-                    "🚀 T4.13–4.15 & G4.5",
+                    "🔬 T4.3–4.4",
+                    "🧮 T4.5 & G4.3a",
+                    "📈 T4.6 & G4.3c",
+                    "🎯 T4.9–4.14 & G4.2",
+                    "🔄 T4.15",
+                    "🚀 T4.16–4.18 & G4.5",
                     "🔍 Tren Kausal & Naratif",
                     "📋 Ringkasan & Persona",
                 ]
@@ -200,8 +217,8 @@ if uploaded_file:
                 with st.spinner("Loading results..."):
                     col1, col2 = st.columns([1, 1])
                     with col1:
-                        if os.path.exists("outputs/tabel_4_1_distribusi.csv"):
-                            df41 = pd.read_csv("outputs/tabel_4_1_distribusi.csv")
+                        df41 = load_csv_safe("outputs/tabel_4_1_distribusi.csv")
+                        if df41 is not None:
                             st.dataframe(df41, width='stretch')
                             if (
                                 hasattr(pipeline, "table_narratives")
@@ -229,8 +246,9 @@ if uploaded_file:
                             )
         
                     with col2:
-                        if os.path.exists("outputs/gambar_4_1_distribusi.png"):
-                            st.image("outputs/gambar_4_1_distribusi.png", width='stretch')
+                        img_bytes = load_image_bytes("outputs/gambar_4_1_distribusi.png")
+                        if img_bytes is not None:
+                            st.image(img_bytes, width='stretch')
                             if (
                                 hasattr(pipeline, "image_narratives")
                                 and "outputs/gambar_4_1" in pipeline.image_narratives
@@ -272,28 +290,9 @@ if uploaded_file:
                             )
         
                     with col2:
-                        if os.path.exists("outputs/tabel_4_3a_cosine_similarity.csv"):
-                            df43a = pd.read_csv("outputs/tabel_4_3a_cosine_similarity.csv")
-                            st.dataframe(df43a, width='stretch')
-                            if (
-                                hasattr(pipeline, "table_narratives")
-                                and "outputs/tabel_4_3a" in pipeline.table_narratives
-                            ):
-                                with st.expander("📖 Analisis Akademik Tabel 4.3a"):
-                                    st.markdown(pipeline.table_narratives["outputs/tabel_4_3a"])
-                            st.download_button(
-                                "⬇ Tabel 4.3a CSV",
-                                df43a.to_csv(index=False),
-                                "outputs/tabel_4_3a_cosine_similarity.csv",
-                            )
-        
-            with tab3:
-                with st.spinner("Loading results..."):
-                    col1, col2 = st.columns([1, 1])
-                    with col1:
-                        if os.path.exists("outputs/tabel_4_4_kscan.csv"):
-                            df44 = pd.read_csv("outputs/tabel_4_4_kscan.csv")
-                            st.dataframe(df44, width='stretch')
+                        if os.path.exists("outputs/tabel_4_4_cosine_similarity.csv"):
+                            df44a = pd.read_csv("outputs/tabel_4_4_cosine_similarity.csv")
+                            st.dataframe(df44a, width='stretch')
                             if (
                                 hasattr(pipeline, "table_narratives")
                                 and "outputs/tabel_4_4" in pipeline.table_narratives
@@ -301,7 +300,26 @@ if uploaded_file:
                                 with st.expander("📖 Analisis Akademik Tabel 4.4"):
                                     st.markdown(pipeline.table_narratives["outputs/tabel_4_4"])
                             st.download_button(
-                                "⬇ Tabel 4.4 CSV", df44.to_csv(index=False), "outputs/tabel_4_4_kscan.csv"
+                                "⬇ Tabel 4.4 CSV",
+                                df44a.to_csv(index=False),
+                                "outputs/tabel_4_4_cosine_similarity.csv",
+                            )
+        
+            with tab3:
+                with st.spinner("Loading results..."):
+                    col1, col2 = st.columns([1, 1])
+                    with col1:
+                        if os.path.exists("outputs/tabel_4_5_kscan.csv"):
+                            df45 = pd.read_csv("outputs/tabel_4_5_kscan.csv")
+                            st.dataframe(df45, width='stretch')
+                            if (
+                                hasattr(pipeline, "table_narratives")
+                                and "outputs/tabel_4_5" in pipeline.table_narratives
+                            ):
+                                with st.expander("📖 Analisis Akademik Tabel 4.5"):
+                                    st.markdown(pipeline.table_narratives["outputs/tabel_4_5"])
+                            st.download_button(
+                                "⬇ Tabel 4.5 CSV", df45.to_csv(index=False), "outputs/tabel_4_5_kscan.csv"
                             )
         
                     with col2:
@@ -326,17 +344,17 @@ if uploaded_file:
                 with st.spinner("Loading results..."):
                     col1, col2 = st.columns([1, 1])
                     with col1:
-                        if os.path.exists("outputs/tabel_4_5_ari.csv"):
-                            df45 = pd.read_csv("outputs/tabel_4_5_ari.csv")
-                            st.dataframe(df45, width='stretch')
+                        if os.path.exists("outputs/tabel_4_6_ari.csv"):
+                            df46 = pd.read_csv("outputs/tabel_4_6_ari.csv")
+                            st.dataframe(df46, width='stretch')
                             if (
                                 hasattr(pipeline, "table_narratives")
-                                and "outputs/tabel_4_5" in pipeline.table_narratives
+                                and "outputs/tabel_4_6" in pipeline.table_narratives
                             ):
-                                with st.expander("📖 Analisis Akademik Tabel 4.5"):
-                                    st.markdown(pipeline.table_narratives["outputs/tabel_4_5"])
+                                with st.expander("📖 Analisis Akademik Tabel 4.6"):
+                                    st.markdown(pipeline.table_narratives["outputs/tabel_4_6"])
                             st.download_button(
-                                "⬇ Tabel 4.5 CSV", df45.to_csv(index=False), "outputs/tabel_4_5_ari.csv"
+                                "⬇ Tabel 4.6 CSV", df46.to_csv(index=False), "outputs/tabel_4_6_ari.csv"
                             )
         
                     with col2:
@@ -358,13 +376,13 @@ if uploaded_file:
                     st.write("Profil per Tahun & Scatter PCA")
                     for y in years:
                         st.subheader(f"Tahun {y}")
-                        csv_file = f"outputs/tabel_4_{6 + years.index(y)}_profil_{y}.csv"
+                        csv_file = f"outputs/tabel_4_{9 + years.index(y)}_profil_{y}.csv"
                         png_file = f"outputs/gambar_4_2{chr(97 + years.index(y))}_scatter_{y}.png"
                         svg_file = f"outputs/gambar_4_2{chr(97 + years.index(y))}_scatter_{y}.svg"
                         if os.path.exists(csv_file):
                             df = pd.read_csv(csv_file)
                             st.dataframe(df)
-                            table_key = f"outputs/tabel_4_{6 + years.index(y)}"
+                            table_key = f"outputs/tabel_4_{9 + years.index(y)}"
                             if (
                                 hasattr(pipeline, "table_narratives")
                                 and table_key in pipeline.table_narratives
@@ -397,53 +415,53 @@ if uploaded_file:
         
             with tab6:
                 with st.spinner("Loading results..."):
-                    if os.path.exists("outputs/tabel_4_12_lifecycle.csv"):
-                        df412 = pd.read_csv("outputs/tabel_4_12_lifecycle.csv")
-                        st.dataframe(df412, width='stretch')
+                    if os.path.exists("outputs/tabel_4_15_lifecycle.csv"):
+                        df415 = pd.read_csv("outputs/tabel_4_15_lifecycle.csv")
+                        st.dataframe(df415, width='stretch')
                     if (
                         hasattr(pipeline, "table_narratives")
-                        and "outputs/tabel_4_12" in pipeline.table_narratives
+                        and "outputs/tabel_4_15" in pipeline.table_narratives
                     ):
-                        with st.expander("📖 Analisis Akademik Tabel 4.12"):
-                            st.markdown(pipeline.table_narratives["outputs/tabel_4_12"])
+                        with st.expander("📖 Analisis Akademik Tabel 4.15"):
+                            st.markdown(pipeline.table_narratives["outputs/tabel_4_15"])
                     st.download_button(
-                        "⬇ Tabel 4.12 CSV",
-                        df412.to_csv(index=False),
-                        "outputs/tabel_4_12_lifecycle.csv",
+                        "⬇ Tabel 4.15 CSV",
+                        df415.to_csv(index=False),
+                        "outputs/tabel_4_15_lifecycle.csv",
                     )
         
             with tab7:
                 with st.spinner("Loading results..."):
                     col1, col2 = st.columns([1, 1])
                     with col1:
-                        if os.path.exists("outputs/tabel_4_13_prioritasi_2025.csv"):
-                            df413 = pd.read_csv("outputs/tabel_4_13_prioritasi_2025.csv")
-                            st.dataframe(df413, width='stretch')
+                        if os.path.exists("outputs/tabel_4_16_prioritasi_2025.csv"):
+                            df416 = pd.read_csv("outputs/tabel_4_16_prioritasi_2025.csv")
+                            st.dataframe(df416, width='stretch')
                             if (
                                 hasattr(pipeline, "table_narratives")
-                                and "outputs/tabel_4_13" in pipeline.table_narratives
+                                and "outputs/tabel_4_16" in pipeline.table_narratives
                             ):
-                                with st.expander("📖 Analisis Akademik Tabel 4.13"):
-                                    st.markdown(pipeline.table_narratives["outputs/tabel_4_13"])
+                                with st.expander("📖 Analisis Akademik Tabel 4.16"):
+                                    st.markdown(pipeline.table_narratives["outputs/tabel_4_16"])
                             st.download_button(
-                                "⬇ Tabel 4.13 CSV",
-                                df413.to_csv(index=False),
-                                "outputs/tabel_4_13_prioritasi_2025.csv",
+                                "⬇ Tabel 4.16 CSV",
+                                df416.to_csv(index=False),
+                                "outputs/tabel_4_16_prioritasi_2025.csv",
                             )
         
-                        if os.path.exists("outputs/tabel_4_15_perbandingan.csv"):
-                            df415 = pd.read_csv("outputs/tabel_4_15_perbandingan.csv")
-                            st.dataframe(df415, width='stretch')
+                        if os.path.exists("outputs/tabel_4_18_perbandingan.csv"):
+                            df418 = pd.read_csv("outputs/tabel_4_18_perbandingan.csv")
+                            st.dataframe(df418, width='stretch')
                             if (
                                 hasattr(pipeline, "table_narratives")
-                                and "outputs/tabel_4_15" in pipeline.table_narratives
+                                and "outputs/tabel_4_18" in pipeline.table_narratives
                             ):
-                                with st.expander("📖 Analisis Akademik Tabel 4.15"):
-                                    st.markdown(pipeline.table_narratives["outputs/tabel_4_15"])
+                                with st.expander("📖 Analisis Akademik Tabel 4.18"):
+                                    st.markdown(pipeline.table_narratives["outputs/tabel_4_18"])
                             st.download_button(
-                                "⬇ Tabel 4.15 CSV",
-                                df415.to_csv(index=False),
-                                "outputs/tabel_4_15_perbandingan.csv",
+                                "⬇ Tabel 4.18 CSV",
+                                df418.to_csv(index=False),
+                                "outputs/tabel_4_18_perbandingan.csv",
                             )
         
                     with col2:
