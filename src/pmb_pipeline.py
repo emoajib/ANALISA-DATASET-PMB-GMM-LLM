@@ -579,7 +579,7 @@ class PMBAnalysisPipeline:
         # Stabilitas: ARI, Jaccard, Centroid Drift already computed
         # Komparatif: GMM vs K-Means per periode
         self.kmeans_res = {}
-        for y in self.by_year.keys():
+        for y in list(self.by_year.keys()):  # FIX: dict.keys() -> list() to avoid iteration error
             pts = [self.build_pt(r) for r in self.by_year[y]]
             scaled_pts = self.scaler.transform(pts)
             pca_pts = self.pca.transform(scaled_pts)
@@ -605,7 +605,7 @@ class PMBAnalysisPipeline:
         
         # Collect all (year, cluster) pairs for parallel processing
         tasks = []
-        for y in self.by_year.keys():
+        for y in list(self.by_year.keys()):  # FIX: dict.keys() -> list() to avoid iteration error
             for cl in self.gmm_res[y]["clusters"][:3]:  # Generate only first 3 clusters per year
                 tasks.append((y, cl))
         
@@ -697,7 +697,7 @@ class PMBAnalysisPipeline:
     def deployment(self):
         logger.info("DEPLOYMENT: Prioritasi segmen dinamis, mapping channel, proyeksi 2025, personalisasi rekrutmen")
         # Prioritasi segmen, mapping channel, proyeksi
-        max_k = max(self.gmm_res[y]["K"] for y in self.by_year.keys())
+        max_k = max(self.gmm_res[y]["K"] for y in list(self.by_year.keys()))
         self.lifecycle = []
         years = sorted(self.by_year.keys())
         for ci in range(max_k):
