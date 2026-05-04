@@ -486,6 +486,7 @@ class PMBAnalysisPipeline:
                     "labels": labels.tolist(),
                     "pts_2d": pts_2d,
                     "post": post.tolist(),
+                    "centers": gmm.means_.tolist(),  # ADD centroid for time series drift
                 }
                 
                 self._report_progress(f"GMM {y} completed", int(progress_base + 50))
@@ -539,8 +540,8 @@ class PMBAnalysisPipeline:
                 }
             )
             # Centroid Drift
-            c1 = self.gmm_res[y1]["centers"]
-            c2 = self.gmm_res[y2]["centers"]
+            c1 = self.gmm_res[y1].get("centers", [])
+            c2 = self.gmm_res[y2].get("centers", [])
             cd = centroid_drift(c1, c2)
             self.centroid_drifts.append(
                 {
