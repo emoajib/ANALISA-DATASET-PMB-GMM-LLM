@@ -205,7 +205,7 @@ if uploaded_file:
             col4.metric("Avg Similarity", f"{avg_sim:.4f}", help="Rata-rata cosine similarity embedding IndoBERT")
             st.markdown("---")
 
-            # Lazy Loading Tab Navigation (horizontal radio replaces st.tabs)
+            # Lazy Loading Tab Navigation with Prev/Next buttons
             tab_options = [
                 "📊 T4.1–4.2 & G4.1 (2 tables)",
                 "🔬 T4.3–4.4 (2 tables)",
@@ -217,6 +217,16 @@ if uploaded_file:
                 "🔍 Tren Kausal & Naratif",
                 "📋 Ringkasan & Persona",
             ]
+
+            # Previous and Next buttons with validation
+            col_prev, col_radio, col_next = st.columns([1, 4, 1])
+            with col_prev:
+                if st.button("⬅ Previous", disabled=st.session_state.active_tab == 0, key="prev_btn"):
+                    st.session_state.active_tab = max(0, st.session_state.active_tab - 1)
+            with col_next:
+                if st.button("Next ➡", disabled=st.session_state.active_tab == len(tab_options) - 1, key="next_btn"):
+                    st.session_state.active_tab = min(len(tab_options) - 1, st.session_state.active_tab + 1)
+
             active_tab = st.radio(
                 "Select Result Section:",
                 tab_options,
