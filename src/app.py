@@ -174,7 +174,7 @@ if uploaded_file:
             st.subheader("Data Understanding Results")
             img_bytes = load_image_bytes("outputs/distribusi_pendaftar.png")
             if img_bytes is not None:
-                st.image(img_bytes, use_container_width=True)
+                st.image(img_bytes, use_column_width=True)
 
         # Final results after deployment
         if st.session_state["deployment"]:
@@ -260,7 +260,7 @@ if uploaded_file:
                         img_path = f"outputs/gambar_4_1_distribusi.{'png' if img_fmt == 'PNG' else 'svg'}"
                         img_bytes = load_image_bytes(img_path)
                         if img_bytes is not None:
-                            st.image(img_bytes, use_container_width=True)
+                            st.image(img_bytes, use_column_width=True)
                             if hasattr(pipeline, "image_narratives") and "outputs/gambar_4_1" in pipeline.image_narratives:
                                 with st.expander("📖 Analisis Akademik Gambar 4.1"):
                                     st.markdown(pipeline.image_narratives["outputs/gambar_4_1"])
@@ -322,7 +322,7 @@ if uploaded_file:
                         img_path = f"outputs/gambar_4_3a_silhouette.{'png' if img_fmt == 'PNG' else 'svg'}"
                         img_bytes = load_image_bytes(img_path)
                         if img_bytes is not None:
-                            st.image(img_bytes, use_container_width=True)
+                            st.image(img_bytes, use_column_width=True)
                             if hasattr(pipeline, "image_narratives") and "outputs/gambar_4_3a" in pipeline.image_narratives:
                                 with st.expander("📖 Analisis Akademik Gambar 4.3a"):
                                     st.markdown(pipeline.image_narratives["outputs/gambar_4_3a"])
@@ -353,7 +353,7 @@ if uploaded_file:
                         img_path = f"outputs/gambar_4_3c_ari.{'png' if img_fmt == 'PNG' else 'svg'}"
                         img_bytes = load_image_bytes(img_path)
                         if img_bytes is not None:
-                            st.image(img_bytes, use_container_width=True)
+                            st.image(img_bytes, use_column_width=True)
                             if hasattr(pipeline, "image_narratives") and "outputs/gambar_4_3c" in pipeline.image_narratives:
                                 with st.expander("📖 Analisis Akademik Gambar 4.3c"):
                                     st.markdown(pipeline.image_narratives["outputs/gambar_4_3c"])
@@ -389,7 +389,7 @@ if uploaded_file:
                             img_path = png_file if img_fmt == "PNG" else svg_file
                             img_bytes = load_image_bytes(img_path)
                             if img_bytes is not None:
-                                st.image(img_bytes, use_container_width=True)
+                                st.image(img_bytes, use_column_width=True)
                                 image_key = f"outputs/gambar_4_2{chr(97 + years.index(y))}"
                                 if hasattr(pipeline, "image_narratives") and image_key in pipeline.image_narratives:
                                     with st.expander(f"📖 Analisis Akademik Scatter {y}"):
@@ -446,7 +446,7 @@ if uploaded_file:
                         img_path = f"outputs/gambar_4_5_proyeksi.{'png' if img_fmt == 'PNG' else 'svg'}"
                         img_bytes = load_image_bytes(img_path)
                         if img_bytes is not None:
-                            st.image(img_bytes, use_container_width=True)
+                            st.image(img_bytes, use_column_width=True)
                             if hasattr(pipeline, "image_narratives") and "outputs/gambar_4_5" in pipeline.image_narratives:
                                 with st.expander("📖 Analisis Akademik Gambar 4.5"):
                                     st.markdown(pipeline.image_narratives["outputs/gambar_4_5"])
