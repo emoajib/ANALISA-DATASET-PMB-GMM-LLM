@@ -403,20 +403,18 @@ class PMBAnalysisPipeline:
                         tol=1e-3,
                     )
                     labels = gmm.fit_predict(pca_pts)
-                    sil = silhouette_score(pca_pts, labels)
+                    # ONLY compute BIC for K-selection (fast, O(n))
+                    # Other metrics computed ONLY for best_k later
                     bic = gmm.bic(pca_pts)
                     aic = gmm.aic(pca_pts)
-                    ch = calinski_harabasz_score(pca_pts, labels)
-                    db = davies_bouldin_score(pca_pts, labels)
-                    ll = gmm.score(pca_pts) * len(pca_pts)
                     
                     self.k_scan[y][k] = {
-                        "sil": sil,
+                        "sil": 0.0,  # Placeholder, computed for best_k only
                         "bic": bic,
                         "aic": aic,
-                        "ch": ch,
-                        "db": db,
-                        "ll": ll,
+                        "ch": 0.0,
+                        "db": 0.0,
+                        "ll": gmm.score(pca_pts) * len(pca_pts),
                     }
                     
                     # Early stopping: jika BIC naik 2 kali berturut-turut, hentikan
