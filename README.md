@@ -73,17 +73,19 @@ Penelitian ini mengembangkan strategi segmentasi probabilistik calon mahasiswa m
 ### Local (dengan Ollama)
 
 1. Clone repository ini
-2. Install [Ollama](https://ollama.com) dan pull model:
+2. Install [Ollama](https://ollama.com)
+3. Pull model yang tersedia:
    ```bash
    ollama pull llama3.2:latest
    ollama pull phi3:latest
    ollama pull deepseek-r1:1.5b
+   ollama pull qwen2.5-coder:1.5b
    ```
-3. Install dependensi Python:
+4. Install dependensi Python:
    ```bash
    pip install -r requirements.txt
    ```
-4. Jalankan aplikasi Streamlit:
+5. Jalankan aplikasi Streamlit:
    ```bash
    streamlit run src/app.py
    ```
