@@ -35,4 +35,11 @@ src/__pycache__/
 
 # Temp files
 src/temp_dataset.xls
-src/data/
+
+# Accidental artifacts
+src/data
+src/src/
+.dockerignore
+
+# Submodule internal state (ignored to avoid macOS clutter)
+data/geo/geo_data/
