@@ -133,7 +133,7 @@ def main():
         sys.exit(1)
 
     # Check comparison artifacts
-    from comparison import COMPARISON_DIR, PROVIDERS as COMPARISON_PROVIDERS
+    from comparison import COMPARISON_DIR
     from providers import PROVIDER_KEYS
     comparison_ok = True
     for pk in PROVIDER_KEYS:

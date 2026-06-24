@@ -4,6 +4,7 @@ import hashlib
 import os
 import json
 import threading
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
@@ -11,7 +12,8 @@ from transformers import AutoTokenizer, AutoModel
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderUnavailable, GeocoderRateLimited
 
-EMBEDDING_CACHE_FILE = "steps/data/embedding_cache.json"
+_BASE_DIR = Path(__file__).parent.parent
+EMBEDDING_CACHE_FILE = str(_BASE_DIR / "src" / "steps" / "data" / "embedding_cache.json")
 
 def get_text_hash(text):
     return hashlib.md5(text.encode()).hexdigest()[:16]
@@ -74,6 +76,7 @@ def flush_embedding_cache():
         print(f"💾 Flushed {len(_embedding_cache)} embeddings to cache")
 
 _embedding_cache = None
+_embedding_cache_lock = threading.Lock()
 _model = None
 _tokenizer = None
 
@@ -156,18 +159,18 @@ def set_model(model, tokenizer):
 def get_embedding(text, model=None, tokenizer=None, dim=768):
     global _embedding_cache, _model, _tokenizer
     
-    if _embedding_cache is None:
-        _embedding_cache = load_embedding_cache()
+    with _embedding_cache_lock:
+        if _embedding_cache is None:
+            _embedding_cache = load_embedding_cache()
+        
+        t = preprocess(text) or "unknown"
+        key = get_text_hash(t)
+        
+        if key in _embedding_cache:
+            emb = _embedding_cache[key]
+            return emb if dim == 768 else emb[:dim]
     
-    t = preprocess(text) or "unknown"
-    key = get_text_hash(t)
-    
-    if key in _embedding_cache:
-        # JSON loads gives us a list directly
-        emb = _embedding_cache[key]
-        return emb if dim == 768 else emb[:dim]
-    
-    # Load model only once
+    # Load model only once (outside cache lock)
     if _model is None or _tokenizer is None:
         model_name = "indobenchmark/indobert-base-p1"
         _tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -181,19 +184,20 @@ def get_embedding(text, model=None, tokenizer=None, dim=768):
         outputs = _model(**inputs)
     embeddings = outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
     result = embeddings.tolist() if dim == 768 else embeddings.tolist()[:dim]
-    _embedding_cache[key] = result
     
-    # Save cache on first write or every 100 entries
-    if len(_embedding_cache) <= 100 or len(_embedding_cache) % 100 == 0:
-        save_embedding_cache(_embedding_cache)
+    with _embedding_cache_lock:
+        _embedding_cache[key] = result
+        if len(_embedding_cache) <= 100 or len(_embedding_cache) % 100 == 0:
+            save_embedding_cache(_embedding_cache)
     
     return result
 
 
 def get_embeddings_batch(texts, model=None, tokenizer=None, dim=768, batch_size=16):
     global _embedding_cache, _model, _tokenizer
-    if _embedding_cache is None:
-        _embedding_cache = load_embedding_cache()
+    with _embedding_cache_lock:
+        if _embedding_cache is None:
+            _embedding_cache = load_embedding_cache()
     
     # Reuse global model from get_embedding() — eliminates 10 model reloads
     if model is None or tokenizer is None:
@@ -219,12 +223,13 @@ def get_embeddings_batch(texts, model=None, tokenizer=None, dim=768, batch_size=
             t = processed[j]
             key = get_text_hash(t)
             result = emb.tolist() if dim == 768 else emb.tolist()[:dim]
-            _embedding_cache[key] = result
+            with _embedding_cache_lock:
+                _embedding_cache[key] = result
             results.append(result)
         
-        # Periodic save to disk (every 100 embeddings) to avoid 5,000+ writes
-        if len(_embedding_cache) % 100 == 0:
-            save_embedding_cache(_embedding_cache)
+        with _embedding_cache_lock:
+            if len(_embedding_cache) % 100 == 0:
+                save_embedding_cache(_embedding_cache)
     
     return results
 
@@ -330,7 +335,7 @@ def detect_year(row):
 def pct(a, b):
     return 0 if b == 0 else round(a / b * 100, 1)
 
-LLM_CACHE_FILE = "data/llm_cache.json"
+LLM_CACHE_FILE = str(_BASE_DIR / "data" / "llm_cache.json")
 _llm_cache = None
 _llm_cache_lock = threading.Lock()
 
@@ -374,5 +379,5 @@ def flush_llm_cache():
         finally:
             _llm_cache_lock.release()
 
-def get_llm_hash(prompt, provider, max_tokens):
-    return hashlib.md5(f"{prompt}|{provider}|{max_tokens}".encode()).hexdigest()[:16]
+def get_llm_hash(prompt, provider, max_tokens, model=""):
+    return hashlib.md5(f"{prompt}|{provider}|{max_tokens}|{model}".encode()).hexdigest()[:16]

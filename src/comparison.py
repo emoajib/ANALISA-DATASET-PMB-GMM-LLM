@@ -5,7 +5,7 @@ import hashlib
 import concurrent.futures
 from pathlib import Path
 
-from providers import PROVIDER_REGISTRY, get_provider_names
+from providers import get_provider_names
 
 BASE_DIR = Path(__file__).parent.parent
 COMPARISON_DIR = BASE_DIR / "outputs" / "comparison"

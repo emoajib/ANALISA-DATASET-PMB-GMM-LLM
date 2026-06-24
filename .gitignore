@@ -29,9 +29,7 @@ build/
 .DS_Store
 Thumbs.db
 
-# Cache files (demo mode: only ignore auto-generated runtime caches)
-data/embedding_cache.csv
-data/llm_cache.csv
+# Cache files (tracked for demo mode, ignore auto-generated runtime caches)
 src/steps/__pycache__/
 src/__pycache__/
 

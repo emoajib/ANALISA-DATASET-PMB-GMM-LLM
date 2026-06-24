@@ -4,7 +4,6 @@ Verify demo readiness: checks all outputs exist, caches valid, LLM responds.
 Usage: python verify_demo.py
 """
 import sys
-import os
 import json
 from pathlib import Path
 

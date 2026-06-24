@@ -1,12 +1,10 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 import os
 from pathlib import Path
-from functools import lru_cache
 from pmb_pipeline import PMBAnalysisPipeline, FASE
 from steps.utils import set_model
-from comparison import run_comparison, load_personas, clear_comparison
+from comparison import run_comparison, clear_comparison
 from providers import PROVIDER_NAMES as COMPARISON_PROVIDERS, OLLAMA_MODELS, DEFAULT_OLLAMA_MODEL
 
 BASE_DIR = Path(__file__).parent.parent
@@ -92,6 +90,8 @@ step_names = [
     "time_series_analysis",
     "evaluation",
     "otomasi_llm",
+    "causal_trend_analysis",
+    "narrative_summary",
     "deployment"
 ]
 for step in step_names:
@@ -117,6 +117,8 @@ crisp_dm_steps = [
     "7. Time Series Analysis",
     "8. Evaluation",
     "9. Otomasi Analisis LLM",
+    "9b. Causal Trend Analysis",
+    "9c. Narrative Summary",
     "10. Deployment",
 ]
 

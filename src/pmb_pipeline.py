@@ -1,11 +1,8 @@
 import pandas as pd
 import numpy as np
-import functools
 import re
 import random
 import concurrent.futures
-from multiprocessing import cpu_count
-from joblib import Parallel, delayed
 from pathlib import Path
 from sklearn.mixture import GaussianMixture
 from sklearn.cluster import KMeans
@@ -31,7 +28,7 @@ except ImportError:
     ollama = None
 from steps.utils import (
     preprocess, get_embedding, get_embeddings_batch, post_process_persona,
-    jaccard_similarity, centroid_drift, geocode_location,
+    jaccard_similarity, centroid_drift,
     avg, rnd, detect_col, detect_year, pct,
     load_llm_cache, save_llm_cache, flush_llm_cache, get_llm_hash,
     flush_embedding_cache,
@@ -62,7 +59,7 @@ CC = ["#3B8BD4", "#1D9E75", "#E24B4A", "#BA7517", "#534AB7", "#993356"]
  
 def generate_llm_response(prompt, provider="Ollama", api_key=None, max_tokens=1500, model=None):
     cache = load_llm_cache()
-    key = get_llm_hash(prompt, provider, max_tokens)
+    key = get_llm_hash(prompt, provider, max_tokens, model or "")
     if key in cache:
         return cache[key]
     response = llm_provider.generate(prompt, provider, max_tokens, model=model)
@@ -245,10 +242,20 @@ class PMBAnalysisPipeline:
         self._report_progress("Geocoding coordinates", 60)
         # [C] Geocoding Koordinat Geospasial
         logger.info("Subproses C: Geocoding koordinat")
-        kec_df = pd.read_csv("data/geo/geo_data/data/coll/kecamatan_lat_long.csv")
-        kec_map = {(row["name"].strip().lower()): (row["lat"], row["long"]) for _, row in kec_df.iterrows()}
-        kab_df = pd.read_csv("data/geo/geo_data/data/coll/kota_kab_lat_long.csv")
-        kab_map = {(row["name"].strip().lower()): (row["lat"], row["long"]) for _, row in kab_df.iterrows()}
+        geo_base = BASE_DIR / "data" / "geo" / "geo_data" / "data" / "coll"
+        kec_path = geo_base / "kecamatan_lat_long.csv"
+        kab_path = geo_base / "kota_kab_lat_long.csv"
+        kec_map = {}
+        kab_map = {}
+        try:
+            if kec_path.exists():
+                kec_df = pd.read_csv(str(kec_path))
+                kec_map = {(row["name"].strip().lower()): (row["lat"], row["long"]) for _, row in kec_df.iterrows()}
+            if kab_path.exists():
+                kab_df = pd.read_csv(str(kab_path))
+                kab_map = {(row["name"].strip().lower()): (row["lat"], row["long"]) for _, row in kab_df.iterrows()}
+        except Exception as e:
+            logger.warning(f"Geo data load error: {e}")
         for r in self.raw:
             kec = r.get(self.cols["kec"], "").strip().lower()
             kab = r.get(self.cols["kab"], "").strip().lower()
@@ -830,57 +837,40 @@ class PMBAnalysisPipeline:
         # Generate image narratives - distinct from table narratives by focusing on visual elements
         self.image_narratives = {}
 
+        # Generate image narratives using cached generate_llm_response
+        self.image_narratives = {}
+
         # Narrative for Gambar 4.1 - Visual bar chart analysis
         if os.path.exists(str(OUTPUTS_DIR / "tabel_4_1_distribusi.csv")):
             df = pd.read_csv(str(OUTPUTS_DIR / "tabel_4_1_distribusi.csv"))
             prompt = f"Analisis visual Gambar 4.1 sebagai diagram batang distribusi pendaftar PMB ITSNU Pekalongan 2019-2024. Fokus pada elemen visual: kode warna fase (Pre-COVID biru, COVID Crisis merah, Recovery hijau), tinggi bar setiap tahun, pola tren naik/turun, dampak visual COVID-19 sebagai penurunan drastis, dan recovery sebagai pemulihan bertahap. Jelaskan bagaimana visualisasi memperlihatkan structural break dan transisi fase. Berikan interpretasi visual detail untuk setiap bar tahun dan kesimpulan visual komprehensif. Provide a complete, detailed visual analysis with no abbreviations or omissions."
-            try:
-                response = ollama.generate(
-                    model=self.llm_model, prompt=prompt, options={"num_predict": 2000}
-                )
-                self.image_narratives["gambar_4_1"] = response["response"].strip()
-            except Exception as e:
-                logger.warning(f"Ollama failed for gambar_4_1: {e}")
-                self.image_narratives["gambar_4_1"] = f"""Gambar 4.1 menampilkan visualisasi diagram batang distribusi pendaftar mahasiswa baru ITSNU Pekalongan dari tahun 2019 hingga 2024. Penggunaan kode warna fase pandemi memudahkan identifikasi temporal: fase Pre-COVID (2019) dengan warna biru menunjukkan baseline stabil, fase COVID Crisis (2020-2021) dengan warna merah menandai penurunan drastis yang mencerminkan disrupsi pandemi, dan fase Recovery (2022-2024) dengan warna hijau mengindikasikan pemulihan bertahap. Pola visual menunjukkan structural break antara 2019-2020 dengan perbedaan tinggi bar yang signifikan, sedangkan fase recovery memperlihatkan tren naik yang konsisten namun belum mencapai level pre-COVID. Analisis visual ini penting untuk memahami dampak COVID-19 pada pola pendaftaran dan mendukung strategi adaptif kampus."""
+            self.image_narratives["gambar_4_1"] = generate_llm_response(
+                prompt, self.llm_provider, None, 2000, model=self.llm_model
+            ) or """Gambar 4.1 menampilkan visualisasi diagram batang distribusi pendaftar mahasiswa baru ITSNU Pekalongan dari tahun 2019 hingga 2024. Penggunaan kode warna fase pandemi memudahkan identifikasi temporal: fase Pre-COVID (2019) dengan warna biru menunjukkan baseline stabil, fase COVID Crisis (2020-2021) dengan warna merah menandai penurunan drastis yang mencerminkan disrupsi pandemi, dan fase Recovery (2022-2024) dengan warna hijau mengindikasikan pemulihan bertahap. Pola visual menunjukkan structural break antara 2019-2020 dengan perbedaan tinggi bar yang signifikan, sedangkan fase recovery memperlihatkan tren naik yang konsisten namun belum mencapai level pre-COVID. Analisis visual ini penting untuk memahami dampak COVID-19 pada pola pendaftaran dan mendukung strategi adaptif kampus."""
 
         # Narrative for Gambar 4.3a - Silhouette score visualization
         if os.path.exists(str(OUTPUTS_DIR / "tabel_4_5_kscan.csv")):
             df_kscan = pd.read_csv(str(OUTPUTS_DIR / "tabel_4_5_kscan.csv"))
             prompt = f"Analisis visual Gambar 4.3a yang menampilkan silhouette scores untuk berbagai nilai k dalam clustering. Fokus pada elemen visual: kurva silhouette per tahun, titik optimal k, perbandingan GMM vs K-Means, pola tren skor, dan bagaimana visualisasi membantu identifikasi kualitas cluster. Jelaskan perbedaan visual antara metode clustering dan implikasi untuk segmentasi mahasiswa. Provide a complete, detailed visual analysis with no abbreviations or omissions."
-            try:
-                response = ollama.generate(
-                    model=self.llm_model, prompt=prompt, options={"num_predict": 2000}
-                )
-                self.image_narratives["gambar_4_3a"] = response["response"].strip()
-            except Exception as e:
-                logger.warning(f"Ollama failed for gambar_4_3a: {e}")
-                self.image_narratives["gambar_4_3a"] = f"""Gambar 4.3a memvisualisasikan silhouette scores untuk menentukan jumlah cluster optimal (k) dalam analisis GMM dan K-Means. Kurva silhouette menunjukkan kualitas clustering dengan nilai mendekati 1 menandai cluster yang terpisah baik. Visualisasi memperlihatkan titik optimal pada k=3-4 untuk kebanyakan tahun, dengan GMM umumnya menunjukkan skor lebih tinggi dibanding K-Means. Pola tren antar tahun menunjukkan konsistensi dalam struktur data mahasiswa, dengan sedikit variasi yang mencerminkan stabilitas demografis."""
+            self.image_narratives["gambar_4_3a"] = generate_llm_response(
+                prompt, self.llm_provider, None, 2000, model=self.llm_model
+            ) or """Gambar 4.3a memvisualisasikan silhouette scores untuk menentukan jumlah cluster optimal (k) dalam analisis GMM dan K-Means. Kurva silhouette menunjukkan kualitas clustering dengan nilai mendekati 1 menandai cluster yang terpisah baik. Visualisasi memperlihatkan titik optimal pada k=3-4 untuk kebanyakan tahun, dengan GMM umumnya menunjukkan skor lebih tinggi dibanding K-Means. Pola tren antar tahun menunjukkan konsistensi dalam struktur data mahasiswa, dengan sedikit variasi yang mencerminkan stabilitas demografis."""
 
         # Narrative for Gambar 4.3c - ARI heatmap/matrix visualization
         if os.path.exists(str(OUTPUTS_DIR / "tabel_4_6_ari.csv")):
             df_ari = pd.read_csv(str(OUTPUTS_DIR / "tabel_4_6_ari.csv"))
             prompt = f"Analisis visual Gambar 4.3c sebagai heatmap atau matriks ARI antar tahun. Fokus pada elemen visual: skala warna untuk nilai ARI (biru untuk tinggi, merah untuk rendah/negatif), pola diagonal, structural break sebagai area merah, stabilitas sebagai area biru, dan tren temporal. Jelaskan bagaimana visualisasi memperlihatkan dampak COVID-19 dan transisi fase. Provide a complete, detailed visual analysis with no abbreviations or omissions."
-            try:
-                response = ollama.generate(
-                    model=self.llm_model, prompt=prompt, options={"num_predict": 2000}
-                )
-                self.image_narratives["gambar_4_3c"] = response["response"].strip()
-            except Exception as e:
-                logger.warning(f"Ollama failed for gambar_4_3c: {e}")
-                self.image_narratives["gambar_4_3c"] = f"""Gambar 4.3c menampilkan heatmap Adjusted Rand Index (ARI) yang memvisualisasikan stabilitas cluster antar tahun dengan skala warna: biru menunjukkan kesamaan tinggi (stabilitas), merah menandai perbedaan signifikan (structural break). Area merah pada transisi 2019→2020 mencerminkan dampak COVID-19, sedangkan pola biru pada fase Recovery (2022-2024) menunjukkan konsistensi. Visualisasi ini membantu mengidentifikasi titik perubahan kebijakan dan mendukung analisis tren temporal."""
+            self.image_narratives["gambar_4_3c"] = generate_llm_response(
+                prompt, self.llm_provider, None, 2000, model=self.llm_model
+            ) or """Gambar 4.3c menampilkan heatmap Adjusted Rand Index (ARI) yang memvisualisasikan stabilitas cluster antar tahun dengan skala warna: biru menunjukkan kesamaan tinggi (stabilitas), merah menandai perbedaan signifikan (structural break). Area merah pada transisi 2019→2020 mencerminkan dampak COVID-19, sedangkan pola biru pada fase Recovery (2022-2024) menunjukkan konsistensi. Visualisasi ini membantu mengidentifikasi titik perubahan kebijakan dan mendukung analisis tren temporal."""
 
         # Narrative for Gambar 4.5 - Projection visualization
         if os.path.exists(str(OUTPUTS_DIR / "tabel_4_16_prioritasi_2025.csv")):
             df_proj = pd.read_csv(str(OUTPUTS_DIR / "tabel_4_16_prioritasi_2025.csv"))
             prompt = f"Analisis visual Gambar 4.5 yang menunjukkan proyeksi pendaftar 2025. Fokus pada elemen visual: garis tren historis, titik proyeksi 2025, confidence interval jika ada, pola pertumbuhan, dan implikasi visual untuk perencanaan kampus. Jelaskan bagaimana visualisasi mendukung forecasting dan strategi rekrutmen. Provide a complete, detailed visual analysis with no abbreviations or omissions."
-            try:
-                response = ollama.generate(
-                    model=self.llm_model, prompt=prompt, options={"num_predict": 2000}
-                )
-                self.image_narratives["gambar_4_5"] = response["response"].strip()
-            except Exception as e:
-                logger.warning(f"Ollama failed for gambar_4_5: {e}")
-                self.image_narratives["gambar_4_5"] = f"""Gambar 4.5 memvisualisasikan proyeksi pendaftar mahasiswa baru ITSNU Pekalongan untuk tahun 2025 berdasarkan model regresi linier dari data fase Recovery. Garis tren menunjukkan pertumbuhan bertahap dari 2022-2024, dengan titik proyeksi 2025 menandai target yang realistis. Visualisasi ini mendukung perencanaan kapasitas kampus dan alokasi sumber daya untuk menangani tren pendaftaran masa depan."""
+            self.image_narratives["gambar_4_5"] = generate_llm_response(
+                prompt, self.llm_provider, None, 2000, model=self.llm_model
+            ) or """Gambar 4.5 memvisualisasikan proyeksi pendaftar mahasiswa baru ITSNU Pekalongan untuk tahun 2025 berdasarkan model regresi linier dari data fase Recovery. Garis tren menunjukkan pertumbuhan bertahap dari 2022-2024, dengan titik proyeksi 2025 menandai target yang realistis. Visualisasi ini mendukung perencanaan kapasitas kampus dan alokasi sumber daya untuk menangani tren pendaftaran masa depan."""
 
         # Narratives for scatter plots per year (Gambar 4.2a, 4.2b, etc.)
         years = sorted(self.by_year.keys())
@@ -890,14 +880,9 @@ class PMBAnalysisPipeline:
             if os.path.exists(csv_file):
                 df_scatter = pd.read_csv(csv_file)
                 prompt = f"Analisis visual scatter plot Gambar 4.2{chr(97 + i)} untuk tahun {y}, menampilkan clustering PCA mahasiswa. Fokus pada elemen visual: distribusi titik cluster, warna/shape untuk setiap cluster, centroid sebagai pusat cluster, dispersi titik, overlap antar cluster, dan pola geografis. Jelaskan bagaimana visualisasi memperlihatkan segmentasi mahasiswa berdasarkan profil demografis dan akademik. Provide a complete, detailed visual analysis with no abbreviations or omissions."
-                try:
-                    response = ollama.generate(
-                        model=self.llm_model, prompt=prompt, options={"num_predict": 2000}
-                    )
-                    self.image_narratives[scatter_key] = response["response"].strip()
-                except Exception as e:
-                    logger.warning(f"Ollama failed for {scatter_key}: {e}")
-                    self.image_narratives[scatter_key] = f"""Gambar 4.2{chr(97 + i)} menampilkan scatter plot clustering mahasiswa tahun {y} menggunakan reduksi dimensi PCA. Setiap titik merepresentasikan mahasiswa dengan warna berbeda untuk cluster GMM, memperlihatkan segmentasi berdasarkan profil demografis dan akademik. Centroid cluster menunjukkan pusat segmentasi, dengan dispersi titik mencerminkan variasi dalam cluster. Visualisasi ini membantu mengidentifikasi pola geografis dan preferensi akademik mahasiswa."""
+                self.image_narratives[scatter_key] = generate_llm_response(
+                    prompt, self.llm_provider, None, 2000, model=self.llm_model
+                ) or f"""Gambar 4.2{chr(97 + i)} menampilkan scatter plot clustering mahasiswa tahun {y} menggunakan reduksi dimensi PCA. Setiap titik merepresentasikan mahasiswa dengan warna berbeda untuk cluster GMM, memperlihatkan segmentasi berdasarkan profil demografis dan akademik. Centroid cluster menunjukkan pusat segmentasi, dengan dispersi titik mencerminkan variasi dalam cluster. Visualisasi ini membantu mengidentifikasi pola geografis dan preferensi akademik mahasiswa."""
 
 
     def save_outputs(self):
