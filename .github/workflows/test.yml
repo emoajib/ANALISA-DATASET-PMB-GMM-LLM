@@ -34,7 +34,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('OLAH DATA/requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
@@ -43,7 +43,6 @@ jobs:
 
       - name: Install Python deps
         run: pip install -r requirements.txt
-        working-directory: OLAH DATA
 
       - name: Syntax check all .py files
         run: |
@@ -52,24 +51,19 @@ jobs:
             python -m py_compile "$f" && echo "  OK $f" || { echo "  FAIL $f"; failed=1; }
           done
           [ "$failed" = "0" ] && echo "All syntax checks passed" || exit 1
-        working-directory: OLAH DATA
 
       - name: Import check (core modules)
         run: |
           python -c "import sys; from pathlib import Path; sys.path.insert(0, str(Path('src').resolve())); from providers import PROVIDER_NAMES; print(f'providers OK: {PROVIDER_NAMES}'); from comparison import COMPARISON_CACHE_VERSION; print(f'comparison OK: v{COMPARISON_CACHE_VERSION}'); from verify_demo import check_comparison; print('verify_demo OK')"
-        working-directory: OLAH DATA
 
       - name: Test comparison module
         run: python .github/tests/test_comparison.py
-        working-directory: OLAH DATA
 
       - name: Test state validation guard
         run: python .github/tests/test_state.py
-        working-directory: OLAH DATA
 
       - name: Lint (non-blocking)
         continue-on-error: true
         run: |
           pip install ruff -q
           ruff check src/ --ignore=E402,F401,E501 --line-length=120
-        working-directory: OLAH DATA
