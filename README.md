@@ -2,62 +2,102 @@
 
 Penelitian ini mengembangkan strategi segmentasi probabilistik calon mahasiswa menggunakan Gaussian Mixture Model (GMM) dan otomasi analisis Large Language Model (LLM) untuk optimalisasi rekrutmen di Institut Teknologi Dan Sains Nahdlatul Ulama Pekalongan (ITSNU Pekalongan) berdasarkan data penerimaan mahasiswa baru periode 2019-2024.
 
+[![CI Test](https://github.com/emoajib/ANALISA-DATASET-PMB-GMM-LLM/actions/workflows/test.yml/badge.svg)](https://github.com/emoajib/ANALISA-DATASET-PMB-GMM-LLM/actions/workflows/test.yml)
+[![98% Aligned with BAB IV](https://img.shields.io/badge/98%25-Aligned%20with%20BAB%20IV-brightgreen)](src/app.py)
+[![Streamlit Cloud](https://img.shields.io/badge/Streamlit%20Cloud-Deploy%20Ready-blue)](https://share.streamlit.io)
+
 ## 📋 Struktur Proyek (Updated)
 
 ```
 ├── src/                          # Kode sumber utama
-│   ├── pmb_pipeline.py          # Pipeline analisis CRISP-DM (1205+ lines)
-│   ├── app.py                   # Aplikasi Streamlit dashboard (592+ lines)
-│   └── steps/
-│       ├── utils.py              # Utilitas: preprocessing, IndoBERT, geocoding (291 lines)
-│       └── data/                # Cache embedding dan LLM
+│   ├── app.py                   # Aplikasi Streamlit dashboard (660+ lines) ⬅ Demo Mode
+│   ├── pmb_pipeline.py          # Pipeline analisis CRISP-DM (1220+ lines)
+│   ├── comparison.py            # Perbandingan persona antar LLM provider
+│   ├── generate_comparison.py   # Script batch generate persona comparison
+│   ├── generate_all.py          # Generate persona untuk semua provider
+│   ├── llm_provider.py          # Abstraksi LLM: Ollama, Gemini, Kilo, OpenCode
+│   ├── providers.py             # Registry provider + model list
+│   ├── verify_demo.py           # Verifikasi demo readiness
+│   ├── steps/
+│   │   ├── utils.py             # Utilitas: preprocessing, IndoBERT, geocoding
+│   │   └── data/                # Cache embedding (35MB, tracked)
+│   └── .github/workflows/      # CI pipeline
+│       └── test.yml             # GitHub Actions (syntax, import, unit tests)
 ├── data/                        # Data dan dataset
 │   ├── geo/                     # Data geografis Indonesia
 │   │   ├── geo_data/           # Prosesing koordinat geografis
 │   │   └── geografis_data/     # Library Node.js untuk data wilayah
-│   └── DATASET PMB ITSNUPKL2019-2024_FIX.xls  # Dataset PMB
+│   ├── llm_cache.json           # Cache LLM responses (158KB, tracked)
+│   └── DATASET PMB ITSNUPKL2019-2024_FIX.xls  # Dataset PMB (upload via UI)
 ├── outputs/                     # Hasil analisis dan visualisasi (38+ files)
 │   ├── tabel_4_1_distribusi.csv             # T4.1 Distribusi Pendaftar
 │   ├── tabel_4_2_prodi.csv                  # T4.2 Distribusi Program Studi
 │   ├── tabel_4_3_preprocessing.csv           # T4.3 Preprocessing
-│   ├── tabel_4_4_cosine_similarity.csv       # T4.4 Cosine Similarity ⬅ FIXED
-│   ├── tabel_4_5_kscan.csv                   # T4.5 K-Scan (BIC/AIC/Silhouette) ⬅ FIXED
-│   ├── tabel_4_6_ari.csv                    # T4.6 ARI, Jaccard, Centroid Drift ⬅ FIXED
-│   ├── tabel_4_7_evaluasi_internal.csv        # T4.7 Evaluasi Internal GMM ⬅ NEW
-│   ├── tabel_4_9_profil_2019.csv             # T4.9 Profil 2019 ⬅ RENUMBERED
+│   ├── tabel_4_4_cosine_similarity.csv       # T4.4 Cosine Similarity
+│   ├── tabel_4_5_kscan.csv                   # T4.5 K-Scan (BIC/AIC/Silhouette)
+│   ├── tabel_4_6_ari.csv                    # T4.6 ARI, Jaccard, Centroid Drift
+│   ├── tabel_4_7_evaluasi_internal.csv        # T4.7 Evaluasi Internal GMM
+│   ├── tabel_4_9_profil_2019.csv             # T4.9 Profil 2019
 │   ├── tabel_4_10_profil_2020.csv            # T4.10 Profil 2020
 │   ├── tabel_4_11_profil_2021.csv            # T4.11 Profil 2021
 │   ├── tabel_4_12_profil_2022.csv            # T4.12 Profil 2022
 │   ├── tabel_4_13_profil_2023.csv            # T4.13 Profil 2023
 │   ├── tabel_4_14_profil_2024.csv            # T4.14 Profil 2024
-│   ├── tabel_4_15_lifecycle.csv               # T4.15 Lifecycle Analysis ⬅ FIXED
-│   ├── tabel_4_16_prioritasi_2025.csv        # T4.16 Prioritas 2025 ⬅ FIXED
-│   ├── tabel_4_17_rekomendasi_channel.csv      # T4.17 Rekomendasi Channel ⬅ NEW
-│   ├── tabel_4_18_perbandingan.csv           # T4.18 Perbandingan ⬅ FIXED
+│   ├── tabel_4_15_lifecycle.csv               # T4.15 Lifecycle Analysis
+│   ├── tabel_4_16_prioritasi_2025.csv        # T4.16 Prioritas 2025
+│   ├── tabel_4_17_rekomendasi_channel.csv      # T4.17 Rekomendasi Channel
+│   ├── tabel_4_18_perbandingan.csv           # T4.18 Perbandingan
 │   ├── gambar_4_1_distribusi.png/.svg        # G4.1 Bar Chart
 │   ├── gambar_4_2a-4_2f_scatter_YYYY.png    # G4.2a-f Scatter PCA per Tahun
 │   ├── gambar_4_3a_silhouette.png/.svg       # G4.3a Silhouette Score
-│   ├── gambar_4_3c_ari.png/.svg             # G4.3c ARI Bar Chart ⬅ FIXED
-│   └── gambar_4_5_proyeksi.png/.svg          # G4.5 Proyeksi 2025 ⬅ FIXED
+│   ├── gambar_4_3c_ari.png/.svg             # G4.3c ARI Bar Chart
+│   ├── gambar_4_5_proyeksi.png/.svg          # G4.5 Proyeksi 2025
+│   └── comparison/              # Persona perbandingan antar LLM (tracked)
+│       ├── ollama/personas.json
+│       ├── gemini/personas.json
+│       ├── kilo/personas.json
+│       └── opencode/personas.json
 ├── docs/                        # Dokumentasi tesis
 │   ├── BAB I - BAB IV.docx       # Dokumen lengkap tesis
 │   └── BAB I - BAB IV.txt        # Versi teks untuk analisis
-├── notebooks/                   # Notebook analisis (jika ada)
+├── .streamlit/
+│   └── config.toml              # Streamlit Cloud config
+├── .github/workflows/
+│   └── test.yml                 # GitHub Actions CI
 ├── requirements.txt             # Dependensi Python
 └── README.md                    # Dokumentasi proyek (this file)
 ```
 
 ## 🚀 Instalasi dan Setup
 
+### Local (dengan Ollama)
+
 1. Clone repository ini
-2. Install dependensi Python:
+2. Install [Ollama](https://ollama.com) dan pull model:
+   ```bash
+   ollama pull llama3.2:latest
+   ollama pull phi3:latest
+   ollama pull deepseek-r1:1.5b
+   ```
+3. Install dependensi Python:
    ```bash
    pip install -r requirements.txt
    ```
-3. Jalankan aplikasi Streamlit:
+4. Jalankan aplikasi Streamlit:
    ```bash
    streamlit run src/app.py
    ```
+
+### Streamlit Cloud (Demo Mode — tanpa Ollama)
+
+[![Deploy to Streamlit Cloud](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io)
+
+1. Fork repo ke akun GitHub Anda
+2. Buka [share.streamlit.io](https://share.streamlit.io)
+3. Pilih repo, branch `main`, main file `src/app.py`
+4. Upload file XLS dataset via sidebar saat runtime
+
+> LLM output akan di-load dari cache pra-generasi. Pipeline langkah 9-10 dan Model Comparison menggunakan data pra-generasi. Lihat `verify_demo.py` untuk verifikasi.
 
 ## 📊 Metodologi (CRISP-DM 10 Tahap)
 
@@ -78,14 +118,25 @@ Proyek ini menggunakan metodologi **CRISP-DM (Cross Industry Standard Process fo
 
 ## 🎯 Fitur Utama (Updated)
 
+### LLM & Model Support:
+- ✅ **Model Selector UI**: Pilih model Ollama langsung dari sidebar (`llama3.2`, `phi3`, `deepseek-r1`, `qwen2.5-coder`)
+- ✅ **Multi-Provider**: Ollama (local), Gemini CLI, Kilo CLI, OpenCode CLI
+- ✅ **Persona Comparison**: Bandingkan persona antar provider LLM
+- ✅ **LLM Cache**: Thread-safe, auto-flush, versioned cache (57 entries, tracked)
+
+### Demo Mode (Streamlit Cloud):
+- ✅ **Ollama Detection**: Banner "Demo Mode" saat Ollama tidak terdeteksi
+- ✅ **Pre-generated Cache**: Embedding (35MB) + LLM (158KB) + Persona Comparison (4 provider)
+- ✅ **Graceful Fallback**: Semua direct `ollama.generate()` diproteksi try/except
+
 ### Performa & Optimasi:
 - ✅ **Batch Embedding**: IndoBERT batch processing (32 texts) → **5x faster**
 - ✅ **Streamlit Caching**: `@st.cache_data` untuk CSV & image loading
-- ✅ **Cache Fix**: Embedding cache serialization (list, not str) berfungsi penuh
+- ✅ **ThreadPoolExecutor**: Parallel persona generation (max 4 workers)
 - ✅ **Representative Sampling**: Cosine similarity 100 sampel (dari 10) → Validasi H2 akurat
 
 ### Analisis & Modeling:
-- ✅ **Otomasi LLM (Ollama Llama 3.2:3B)**: Generasi narasi persona, reasoning kausal, ringkasan laporan
+- ✅ **Otomasi LLM**: Generasi narasi persona, reasoning kausal, ringkasan laporan
 - ✅ **Embedding Semantik IndoBERT**: 768D dari nama + sekolah + alamat + kabupaten
 - ✅ **Geocoding Indonesia**: Konversi alamat ke koordinat (GeoPy + dataset lokal)
 - ✅ **GMM Time Series**: 6 periode independen dengan deteksi structural break
@@ -104,13 +155,15 @@ Proyek ini menggunakan metodologi **CRISP-DM (Cross Industry Standard Process fo
 - **Streamlit 1.32.0**: Dashboard interaktif real-time
 - **Scikit-learn 1.4.2**: GMM, PCA, metrik evaluasi
 - **PyTorch 2.2.2 + Transformers 4.39.3**: IndoBERT (indobenchmark/indobert-base-p1)
-- **Ollama 0.1.0**: LLM lokal (Llama 3.2 3B)
+- **Ollama**: LLM lokal (multi-model via UI: llama3.2, phi3, deepseek-r1, qwen2.5-coder)
 - **Pandas & NumPy**: Manipulasi data
 - **Matplotlib**: Visualisasi grafik
 
 ### Infrastructure:
-- **Embedding Cache**: `src/steps/data/embedding_cache.json` (9.4 MB)
-- **LLM Cache**: `src/steps/data/llm_cache.json`
+- **CI/CD**: GitHub Actions (syntax check, import test, unit test, state guard)
+- **Embedding Cache**: `src/steps/data/embedding_cache.json` (35 MB, 2300 entries, tracked)
+- **LLM Cache**: `data/llm_cache.json` (158 KB, 57 entries, tracked)
+- **Persona Cache**: `outputs/comparison/*/personas.json` (4 provider, tracked)
 - **Geo Data**: 83,449+ entries wilayah Indonesia (provinsi, kota, kecamatan)
 
 ## 📈 Statistik Dataset
@@ -162,7 +215,10 @@ pip install -r requirements.txt
 # 2. Run Streamlit dashboard
 streamlit run src/app.py
 
-# 3. (Optional) Run pipeline directly
+# 3. (Optional) Verify demo readiness
+python src/verify_demo.py
+
+# 4. (Optional) Run pipeline directly
 python src/pmb_pipeline.py
 ```
 
@@ -175,7 +231,11 @@ python src/pmb_pipeline.py
 
 ## 🏆 Achievements
 
-- ✅ **Performance**: 5x faster embedding, caching berfungsi
+- ✅ **Demo Mode**: Streamlit Cloud siap pakai (cache pra-generasi)
+- ✅ **Model Selector**: Pilih model Ollama dari UI (llama3.2, phi3, deepseek-r1, qwen2.5-coder)
+- ✅ **Persona Comparison**: Bandingkan output 4 LLM provider
+- ✅ **CI/CD**: GitHub Actions otomatis (syntax + import + unit tests)
+- ✅ **Performance**: 5x faster embedding, ThreadPoolExecutor parallel
 - ✅ **Thesis Alignment**: 98% penomoran sesuai BAB IV
 - ✅ **Completeness**: 18/18 tabel, 5/5 set gambar tergenerate
 - ✅ **Narratives**: Lengkap dengan LLM-generated insights
@@ -187,6 +247,6 @@ Dikembangkan untuk keperluan tesis akademik Magister Komputer (M.Kom) - Universi
 
 ---
 
-**Commit Terbaru**: `c670a9d` - "Align codebase with thesis BAB IV & fix critical bugs"
+**Commit Terbaru**: `3b63dc5` - "feat: add Ollama model selector in UI"
 **Skor Keselarasan**: 98% (dari 78% sebelum perbaikan)
 **Status**: ✅ **READY FOR DEFENSE** 🎓
