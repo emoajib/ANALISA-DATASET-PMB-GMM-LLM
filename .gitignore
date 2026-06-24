@@ -19,7 +19,7 @@ dist/
 build/
 
 # Streamlit
-.streamlit/
+.streamlit/secrets.toml
 *.py[cod]
 
 # Jupyter
