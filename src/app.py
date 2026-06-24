@@ -2,18 +2,34 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+from pathlib import Path
 from functools import lru_cache
-from pmb_pipeline import PMBAnalysisPipeline, FASE  # Import the pipeline class and FASE
+from pmb_pipeline import PMBAnalysisPipeline, FASE
+from steps.utils import set_model
+from comparison import run_comparison, load_personas, clear_comparison
+from providers import PROVIDER_NAMES as COMPARISON_PROVIDERS
+
+BASE_DIR = Path(__file__).parent.parent
+OUTPUTS_DIR = BASE_DIR / "outputs"
+
+@st.cache_resource
+def load_indobert_model():
+    from transformers import AutoTokenizer, AutoModel
+    model_name = "indobenchmark/indobert-base-p1"
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModel.from_pretrained(model_name)
+    model.eval()
+    return model, tokenizer
 
 # Streamlit caching for performance (preserved existing decorators)
-@st.cache_data(ttl=3600)
+@st.cache_data
 def load_csv_safe(path):
     try:
         return pd.read_csv(path)
     except:
         return None
 
-@st.cache_data(ttl=3600)
+@st.cache_data
 def load_image_bytes(path):
     try:
         with open(path, "rb") as f:
@@ -30,17 +46,14 @@ st.sidebar.header("Upload Dataset")
 uploaded_file = st.sidebar.file_uploader("Upload XLS file", type=["xls", "xlsx"])
 
 st.sidebar.header("LLM Provider")
-llm_provider = st.sidebar.radio("Pilih Provider LLM:", ("Ollama", "Anthropic", "OpenCode"), index=0)
-anthropic_api_key = None
-opencode_api_key = None
-if llm_provider == "Anthropic":
-    anthropic_api_key = st.sidebar.text_input("Anthropic API Key:", type="password", value=st.secrets.get('ANTHROPIC_API_KEY', os.environ.get('ANTHROPIC_API_KEY', '')))
-    if not anthropic_api_key:
-        st.sidebar.warning("Masukkan API Key Anthropic untuk menggunakan provider ini.")
-elif llm_provider == "OpenCode":
-    opencode_api_key = st.sidebar.text_input("OpenCode API Key:", type="password", value=st.secrets.get('OPENCODE_API_KEY', os.environ.get('OPENCODE_API_KEY', '')))
-    if not opencode_api_key:
-        st.sidebar.warning("Masukkan API Key OpenCode untuk menggunakan provider ini.")
+llm_provider = st.sidebar.radio("Pilih Provider LLM:", ("Ollama (local)", "Gemini CLI", "Kilo CLI", "OpenCode CLI"), index=0)
+llm_provider_map = {
+    "Ollama (local)": "Ollama",
+    "Gemini CLI": "Gemini",
+    "Kilo CLI": "Kilo",
+    "OpenCode CLI": "OpenCode",
+}
+llm_provider_key = llm_provider_map[llm_provider]
 
 # Initialize session state
 if "pipeline" not in st.session_state:
@@ -67,6 +80,10 @@ if "errors" not in st.session_state:
     st.session_state.errors = {}
 if "active_tab" not in st.session_state:
     st.session_state.active_tab = 0
+if "comparison_results" not in st.session_state:
+    st.session_state.comparison_results = {}
+if "comparison_running" not in st.session_state:
+    st.session_state.comparison_running = False
 
 # Define the 10 CRISP-DM steps
 crisp_dm_steps = [
@@ -122,17 +139,15 @@ if uploaded_file:
 
     # Check if this is a new file or provider changed
     if (st.session_state.uploaded_file_name != file_name or
-        getattr(st.session_state, 'current_llm_provider', None) != llm_provider or
-        getattr(st.session_state, 'current_anthropic_key', None) != anthropic_api_key or
-        getattr(st.session_state, 'current_opencode_key', None) != opencode_api_key):
+        getattr(st.session_state, 'current_llm_provider', None) != llm_provider_key):
         # Reset all steps
         for step in step_names:
             st.session_state[step] = False
         st.session_state.uploaded_file_name = file_name
-        st.session_state.current_llm_provider = llm_provider
-        st.session_state.current_anthropic_key = anthropic_api_key
-        st.session_state.current_opencode_key = opencode_api_key
-        st.session_state.pipeline = PMBAnalysisPipeline(file_name, llm_provider=llm_provider, anthropic_api_key=anthropic_api_key, opencode_api_key=opencode_api_key)
+        st.session_state.current_llm_provider = llm_provider_key
+        model, tokenizer = load_indobert_model()
+        set_model(model, tokenizer)
+        st.session_state.pipeline = PMBAnalysisPipeline(file_name, llm_provider=llm_provider_key)
 
     st.sidebar.subheader("Run Steps")
     for i, step_label in enumerate(crisp_dm_steps):
@@ -172,7 +187,7 @@ if uploaded_file:
         # Intermediate displays
         if st.session_state["data_understanding"]:
             st.subheader("Data Understanding Results")
-            img_bytes = load_image_bytes("outputs/distribusi_pendaftar.png")
+            img_bytes = load_image_bytes(OUTPUTS_DIR / "distribusi_pendaftar.png")
             if img_bytes is not None:
                 st.image(img_bytes, use_column_width=True)
 
@@ -216,6 +231,7 @@ if uploaded_file:
                 "🚀 T4.16–4.18 & G4.5 (2 tables)",
                 "🔍 Tren Kausal & Naratif",
                 "📋 Ringkasan & Persona",
+                "⚖️ Model Comparison",
             ]
 
             # Previous and Next buttons with validation
@@ -243,21 +259,21 @@ if uploaded_file:
                 col1, col2 = st.columns([1, 1])
                 with col1:
                     with st.expander("📊 Tabel 4.1: Distribusi Pendaftar", expanded=True):
-                        df41 = load_csv_safe("outputs/tabel_4_1_distribusi.csv")
+                        df41 = load_csv_safe(OUTPUTS_DIR / "tabel_4_1_distribusi.csv")
                         if df41 is not None:
                             st.dataframe(df41, use_container_width=True)
-                            if hasattr(pipeline, "table_narratives") and "outputs/tabel_4_1" in pipeline.table_narratives:
-                                st.markdown(f"**📖 Analisis Akademik Tabel 4.1**\n\n{pipeline.table_narratives['outputs/tabel_4_1']}")
+                            if hasattr(pipeline, "table_narratives") and "tabel_4_1" in pipeline.table_narratives:
+                                st.markdown(f"**📖 Analisis Akademik Tabel 4.1**\n\n{pipeline.table_narratives['tabel_4_1']}")
                             st.download_button("⬇ Download Tabel 4.1 CSV", df41.to_csv(index=False), "tabel_4_1_distribusi.csv", key="dl_t41")
                         else:
                             st.warning("Tabel 4.1 tidak ditemukan.")
                     
                     with st.expander("📊 Tabel 4.2: Distribusi Prodi"):
-                        df42 = load_csv_safe("outputs/tabel_4_2_prodi.csv")
+                        df42 = load_csv_safe(OUTPUTS_DIR / "tabel_4_2_prodi.csv")
                         if df42 is not None:
                             st.dataframe(df42, use_container_width=True)
-                            if hasattr(pipeline, "table_narratives") and "outputs/tabel_4_2" in pipeline.table_narratives:
-                                st.markdown(f"**📖 Analisis Akademik Tabel 4.2**\n\n{pipeline.table_narratives['outputs/tabel_4_2']}")
+                            if hasattr(pipeline, "table_narratives") and "tabel_4_2" in pipeline.table_narratives:
+                                st.markdown(f"**📖 Analisis Akademik Tabel 4.2**\n\n{pipeline.table_narratives['tabel_4_2']}")
                             st.download_button("⬇ Download Tabel 4.2 CSV", df42.to_csv(index=False), "tabel_4_2_prodi.csv", key="dl_t42")
                         else:
                             st.warning("Tabel 4.2 tidak ditemukan.")
@@ -265,14 +281,14 @@ if uploaded_file:
                 with col2:
                     with st.expander("🖼️ Gambar 4.1: Distribusi Pendaftar", expanded=True):
                         img_fmt = st.radio("Format Gambar", ["PNG", "SVG"], key="fmt_g41", horizontal=True)
-                        img_path = f"outputs/gambar_4_1_distribusi.{'png' if img_fmt == 'PNG' else 'svg'}"
+                        img_path = str(OUTPUTS_DIR / f"gambar_4_1_distribusi.{'png' if img_fmt == 'PNG' else 'svg'}")
                         img_bytes = load_image_bytes(img_path)
                         if img_bytes is not None:
                             st.image(img_bytes, use_column_width=True)
-                            if hasattr(pipeline, "image_narratives") and "outputs/gambar_4_1" in pipeline.image_narratives:
-                                st.markdown(f"**📖 Analisis Akademik Gambar 4.1**\n\n{pipeline.image_narratives['outputs/gambar_4_1']}")
-                            elif hasattr(pipeline, "table_narratives") and "outputs/tabel_4_1" in pipeline.table_narratives:
-                                st.markdown(f"**📖 Analisis Akademik Tabel 4.1 (Fallback)**\n\n{pipeline.table_narratives['outputs/tabel_4_1']}")
+                            if hasattr(pipeline, "image_narratives") and "gambar_4_1" in pipeline.image_narratives:
+                                st.markdown(f"**📖 Analisis Akademik Gambar 4.1**\n\n{pipeline.image_narratives['gambar_4_1']}")
+                            elif hasattr(pipeline, "table_narratives") and "tabel_4_1" in pipeline.table_narratives:
+                                st.markdown(f"**📖 Analisis Akademik Tabel 4.1 (Fallback)**\n\n{pipeline.table_narratives['tabel_4_1']}")
                             with open(img_path, "rb") as f:
                                 st.download_button(f"⬇ Download Gambar 4.1 {img_fmt}", f, img_path.split("/")[-1], key="dl_g41")
                         else:
@@ -284,22 +300,22 @@ if uploaded_file:
                 col1, col2 = st.columns([1, 1])
                 with col1:
                     with st.expander("📊 Tabel 4.3: Preprocessing", expanded=True):
-                        df43 = load_csv_safe("outputs/tabel_4_3_preprocessing.csv")
+                        df43 = load_csv_safe(OUTPUTS_DIR / "tabel_4_3_preprocessing.csv")
                         if df43 is not None:
                             st.dataframe(df43, use_container_width=True)
-                            if hasattr(pipeline, "table_narratives") and "outputs/tabel_4_3" in pipeline.table_narratives:
-                                st.markdown(f"**📖 Analisis Akademik Tabel 4.3**\n\n{pipeline.table_narratives['outputs/tabel_4_3']}")
+                            if hasattr(pipeline, "table_narratives") and "tabel_4_3" in pipeline.table_narratives:
+                                st.markdown(f"**📖 Analisis Akademik Tabel 4.3**\n\n{pipeline.table_narratives['tabel_4_3']}")
                             st.download_button("⬇ Download Tabel 4.3 CSV", df43.to_csv(index=False), "tabel_4_3_preprocessing.csv", key="dl_t43")
                         else:
                             st.warning("Tabel 4.3 tidak ditemukan.")
                 
                 with col2:
                     with st.expander("📊 Tabel 4.4: Cosine Similarity", expanded=True):
-                        df44a = load_csv_safe("outputs/tabel_4_4_cosine_similarity.csv")
+                        df44a = load_csv_safe(OUTPUTS_DIR / "tabel_4_4_cosine_similarity.csv")
                         if df44a is not None:
                             st.dataframe(df44a, use_container_width=True)
-                            if hasattr(pipeline, "table_narratives") and "outputs/tabel_4_4" in pipeline.table_narratives:
-                                st.markdown(f"**📖 Analisis Akademik Tabel 4.4**\n\n{pipeline.table_narratives['outputs/tabel_4_4']}")
+                            if hasattr(pipeline, "table_narratives") and "tabel_4_4" in pipeline.table_narratives:
+                                st.markdown(f"**📖 Analisis Akademik Tabel 4.4**\n\n{pipeline.table_narratives['tabel_4_4']}")
                             st.download_button("⬇ Download Tabel 4.4 CSV", df44a.to_csv(index=False), "tabel_4_4_cosine_similarity.csv", key="dl_t44")
                         else:
                             st.warning("Tabel 4.4 tidak ditemukan.")
@@ -310,11 +326,11 @@ if uploaded_file:
                 col1, col2 = st.columns([1, 1])
                 with col1:
                     with st.expander("📊 Tabel 4.5: K-Scan", expanded=True):
-                        df45 = load_csv_safe("outputs/tabel_4_5_kscan.csv")
+                        df45 = load_csv_safe(OUTPUTS_DIR / "tabel_4_5_kscan.csv")
                         if df45 is not None:
                             st.dataframe(df45, use_container_width=True)
-                            if hasattr(pipeline, "table_narratives") and "outputs/tabel_4_5" in pipeline.table_narratives:
-                                st.markdown(f"**📖 Analisis Akademik Tabel 4.5**\n\n{pipeline.table_narratives['outputs/tabel_4_5']}")
+                            if hasattr(pipeline, "table_narratives") and "tabel_4_5" in pipeline.table_narratives:
+                                st.markdown(f"**📖 Analisis Akademik Tabel 4.5**\n\n{pipeline.table_narratives['tabel_4_5']}")
                             st.download_button("⬇ Download Tabel 4.5 CSV", df45.to_csv(index=False), "tabel_4_5_kscan.csv", key="dl_t45")
                         else:
                             st.warning("Tabel 4.5 tidak ditemukan.")
@@ -322,12 +338,12 @@ if uploaded_file:
                 with col2:
                     with st.expander("🖼️ Gambar 4.3a: Silhouette", expanded=True):
                         img_fmt = st.radio("Format Gambar", ["PNG", "SVG"], key="fmt_g43a", horizontal=True)
-                        img_path = f"outputs/gambar_4_3a_silhouette.{'png' if img_fmt == 'PNG' else 'svg'}"
+                        img_path = str(OUTPUTS_DIR / f"gambar_4_3a_silhouette.{'png' if img_fmt == 'PNG' else 'svg'}")
                         img_bytes = load_image_bytes(img_path)
                         if img_bytes is not None:
                             st.image(img_bytes, use_column_width=True)
-                            if hasattr(pipeline, "image_narratives") and "outputs/gambar_4_3a" in pipeline.image_narratives:
-                                st.markdown(f"**📖 Analisis Akademik Gambar 4.3a**\n\n{pipeline.image_narratives['outputs/gambar_4_3a']}")
+                            if hasattr(pipeline, "image_narratives") and "gambar_4_3a" in pipeline.image_narratives:
+                                st.markdown(f"**📖 Analisis Akademik Gambar 4.3a**\n\n{pipeline.image_narratives['gambar_4_3a']}")
                             with open(img_path, "rb") as f:
                                 st.download_button(f"⬇ Download Gambar 4.3a {img_fmt}", f, img_path.split("/")[-1], key="dl_g43a")
                         else:
@@ -339,11 +355,11 @@ if uploaded_file:
                 col1, col2 = st.columns([1, 1])
                 with col1:
                     with st.expander("📊 Tabel 4.6: ARI", expanded=True):
-                        df46 = load_csv_safe("outputs/tabel_4_6_ari.csv")
+                        df46 = load_csv_safe(OUTPUTS_DIR / "tabel_4_6_ari.csv")
                         if df46 is not None:
                             st.dataframe(df46, use_container_width=True)
-                            if hasattr(pipeline, "table_narratives") and "outputs/tabel_4_6" in pipeline.table_narratives:
-                                st.markdown(f"**📖 Analisis Akademik Tabel 4.6**\n\n{pipeline.table_narratives['outputs/tabel_4_6']}")
+                            if hasattr(pipeline, "table_narratives") and "tabel_4_6" in pipeline.table_narratives:
+                                st.markdown(f"**📖 Analisis Akademik Tabel 4.6**\n\n{pipeline.table_narratives['tabel_4_6']}")
                             st.download_button("⬇ Download Tabel 4.6 CSV", df46.to_csv(index=False), "tabel_4_6_ari.csv", key="dl_t46")
                         else:
                             st.warning("Tabel 4.6 tidak ditemukan.")
@@ -351,12 +367,12 @@ if uploaded_file:
                 with col2:
                     with st.expander("🖼️ Gambar 4.3c: ARI Trend", expanded=True):
                         img_fmt = st.radio("Format Gambar", ["PNG", "SVG"], key="fmt_g43c", horizontal=True)
-                        img_path = f"outputs/gambar_4_3c_ari.{'png' if img_fmt == 'PNG' else 'svg'}"
+                        img_path = str(OUTPUTS_DIR / f"gambar_4_3c_ari.{'png' if img_fmt == 'PNG' else 'svg'}")
                         img_bytes = load_image_bytes(img_path)
                         if img_bytes is not None:
                             st.image(img_bytes, use_column_width=True)
-                            if hasattr(pipeline, "image_narratives") and "outputs/gambar_4_3c" in pipeline.image_narratives:
-                                st.markdown(f"**📖 Analisis Akademik Gambar 4.3c**\n\n{pipeline.image_narratives['outputs/gambar_4_3c']}")
+                            if hasattr(pipeline, "image_narratives") and "gambar_4_3c" in pipeline.image_narratives:
+                                st.markdown(f"**📖 Analisis Akademik Gambar 4.3c**\n\n{pipeline.image_narratives['gambar_4_3c']}")
                             with open(img_path, "rb") as f:
                                 st.download_button(f"⬇ Download Gambar 4.3c {img_fmt}", f, img_path.split("/")[-1], key="dl_g43c")
                         else:
@@ -367,16 +383,16 @@ if uploaded_file:
                 st.subheader("🎯 Profil per Tahun & Scatter PCA")
                 for y in years:
                     st.subheader(f"Tahun {y}")
-                    csv_file = f"outputs/tabel_4_{9 + years.index(y)}_profil_{y}.csv"
-                    png_file = f"outputs/gambar_4_2{chr(97 + years.index(y))}_scatter_{y}.png"
-                    svg_file = f"outputs/gambar_4_2{chr(97 + years.index(y))}_scatter_{y}.svg"
+                    csv_file = str(OUTPUTS_DIR / f"tabel_4_{9 + years.index(y)}_profil_{y}.csv")
+                    png_file = str(OUTPUTS_DIR / f"gambar_4_2{chr(97 + years.index(y))}_scatter_{y}.png")
+                    svg_file = str(OUTPUTS_DIR / f"gambar_4_2{chr(97 + years.index(y))}_scatter_{y}.svg")
                     col1, col2 = st.columns([1, 1])
                     with col1:
                         with st.expander(f"📊 Profil {y}", expanded=True):
                             df = load_csv_safe(csv_file)
                             if df is not None:
                                 st.dataframe(df, use_container_width=True)
-                                table_key = f"outputs/tabel_4_{9 + years.index(y)}"
+                                table_key = f"tabel_4_{9 + years.index(y)}"
                                 if hasattr(pipeline, "table_narratives") and table_key in pipeline.table_narratives:
                                     st.markdown(f"**📖 Analisis Akademik Profil {y}**\n\n{pipeline.table_narratives[table_key]}")
                                 st.download_button(f"⬇ Download Profil {y} CSV", df.to_csv(index=False), csv_file.split("/")[-1], key=f"dl_profil_{y}")
@@ -389,7 +405,7 @@ if uploaded_file:
                             img_bytes = load_image_bytes(img_path)
                             if img_bytes is not None:
                                 st.image(img_bytes, use_column_width=True)
-                                image_key = f"outputs/gambar_4_2{chr(97 + years.index(y))}"
+                                image_key = f"gambar_4_2{chr(97 + years.index(y))}"
                                 if hasattr(pipeline, "image_narratives") and image_key in pipeline.image_narratives:
                                     st.markdown(f"**📖 Analisis Akademik Scatter {y}**\n\n{pipeline.image_narratives[image_key]}")
                                 with open(img_path, "rb") as f:
@@ -401,11 +417,11 @@ if uploaded_file:
             elif active_tab == tab_options[5]:
                 st.subheader("🔄 Tabel 4.15: Lifecycle")
                 with st.expander("📊 Tabel 4.15: Lifecycle Pendaftar", expanded=True):
-                    df415 = load_csv_safe("outputs/tabel_4_15_lifecycle.csv")
+                    df415 = load_csv_safe(OUTPUTS_DIR / "tabel_4_15_lifecycle.csv")
                     if df415 is not None:
                         st.dataframe(df415, use_container_width=True)
-                        if hasattr(pipeline, "table_narratives") and "outputs/tabel_4_15" in pipeline.table_narratives:
-                            st.markdown(f"**📖 Analisis Akademik Tabel 4.15**\n\n{pipeline.table_narratives['outputs/tabel_4_15']}")
+                        if hasattr(pipeline, "table_narratives") and "tabel_4_15" in pipeline.table_narratives:
+                            st.markdown(f"**📖 Analisis Akademik Tabel 4.15**\n\n{pipeline.table_narratives['tabel_4_15']}")
                         st.download_button("⬇ Download Tabel 4.15 CSV", df415.to_csv(index=False), "tabel_4_15_lifecycle.csv", key="dl_t415")
                     else:
                         st.warning("Tabel 4.15 tidak ditemukan.")
@@ -416,21 +432,21 @@ if uploaded_file:
                 col1, col2 = st.columns([1, 1])
                 with col1:
                     with st.expander("📊 Tabel 4.16: Prioritas 2025", expanded=True):
-                        df416 = load_csv_safe("outputs/tabel_4_16_prioritasi_2025.csv")
+                        df416 = load_csv_safe(OUTPUTS_DIR / "tabel_4_16_prioritasi_2025.csv")
                         if df416 is not None:
                             st.dataframe(df416, use_container_width=True)
-                            if hasattr(pipeline, "table_narratives") and "outputs/tabel_4_16" in pipeline.table_narratives:
-                                st.markdown(f"**📖 Analisis Akademik Tabel 4.16**\n\n{pipeline.table_narratives['outputs/tabel_4_16']}")
+                            if hasattr(pipeline, "table_narratives") and "tabel_4_16" in pipeline.table_narratives:
+                                st.markdown(f"**📖 Analisis Akademik Tabel 4.16**\n\n{pipeline.table_narratives['tabel_4_16']}")
                             st.download_button("⬇ Download Tabel 4.16 CSV", df416.to_csv(index=False), "tabel_4_16_prioritasi_2025.csv", key="dl_t416")
                         else:
                             st.warning("Tabel 4.16 tidak ditemukan.")
                     
                     with st.expander("📊 Tabel 4.18: Perbandingan"):
-                        df418 = load_csv_safe("outputs/tabel_4_18_perbandingan.csv")
+                        df418 = load_csv_safe(OUTPUTS_DIR / "tabel_4_18_perbandingan.csv")
                         if df418 is not None:
                             st.dataframe(df418, use_container_width=True)
-                            if hasattr(pipeline, "table_narratives") and "outputs/tabel_4_18" in pipeline.table_narratives:
-                                st.markdown(f"**📖 Analisis Akademik Tabel 4.18**\n\n{pipeline.table_narratives['outputs/tabel_4_18']}")
+                            if hasattr(pipeline, "table_narratives") and "tabel_4_18" in pipeline.table_narratives:
+                                st.markdown(f"**📖 Analisis Akademik Tabel 4.18**\n\n{pipeline.table_narratives['tabel_4_18']}")
                             st.download_button("⬇ Download Tabel 4.18 CSV", df418.to_csv(index=False), "tabel_4_18_perbandingan.csv", key="dl_t418")
                         else:
                             st.warning("Tabel 4.18 tidak ditemukan.")
@@ -438,12 +454,12 @@ if uploaded_file:
                 with col2:
                     with st.expander("🖼️ Gambar 4.5: Proyeksi 2025", expanded=True):
                         img_fmt = st.radio("Format Gambar", ["PNG", "SVG"], key="fmt_g45", horizontal=True)
-                        img_path = f"outputs/gambar_4_5_proyeksi.{'png' if img_fmt == 'PNG' else 'svg'}"
+                        img_path = str(OUTPUTS_DIR / f"gambar_4_5_proyeksi.{'png' if img_fmt == 'PNG' else 'svg'}")
                         img_bytes = load_image_bytes(img_path)
                         if img_bytes is not None:
                             st.image(img_bytes, use_column_width=True)
-                            if hasattr(pipeline, "image_narratives") and "outputs/gambar_4_5" in pipeline.image_narratives:
-                                st.markdown(f"**📖 Analisis Akademik Gambar 4.5**\n\n{pipeline.image_narratives['outputs/gambar_4_5']}")
+                            if hasattr(pipeline, "image_narratives") and "gambar_4_5" in pipeline.image_narratives:
+                                st.markdown(f"**📖 Analisis Akademik Gambar 4.5**\n\n{pipeline.image_narratives['gambar_4_5']}")
                             with open(img_path, "rb") as f:
                                 st.download_button(f"⬇ Download Gambar 4.5 {img_fmt}", f, img_path.split("/")[-1], key="dl_g45")
                         else:
@@ -532,6 +548,94 @@ Berdasarkan analisis persona mahasiswa yang dihasilkan melalui clustering GMM da
 - **Akademik**: Preferensi kuat pada program teknologi informasi dan informatika.
 - **Sosial**: Aktif dalam kegiatan kampus, dengan motivasi untuk berkontribusi pada masyarakat lokal.
                     """)
+
+            # Tab 10: Model Comparison
+            elif active_tab == tab_options[9]:
+                st.subheader("⚖️ Model Comparison — Persona Generation")
+                st.markdown("Bandingkan kualitas persona generation antar 4 LLM providers.")
+                
+                col1, col2, col3 = st.columns([2, 1, 1])
+                with col1:
+                    compare_providers = st.multiselect(
+                        "Pilih providers untuk dibandingkan:",
+                        COMPARISON_PROVIDERS,
+                        default=["Ollama", "Gemini", "Kilo", "OpenCode"],
+                    )
+                with col2:
+                    if st.button("▶ Run Comparison", disabled=st.session_state.comparison_running or not st.session_state.get("deployment", False)):
+                        st.session_state.comparison_running = True
+                        with st.spinner("Generating personas for all providers..."):
+                            try:
+                                results = run_comparison(pipeline, compare_providers)
+                                st.session_state.comparison_results = results
+                                st.success("Comparison completed!")
+                            except Exception as e:
+                                st.error(f"Comparison failed: {e}")
+                            finally:
+                                st.session_state.comparison_running = False
+                with col3:
+                    if st.button("🗑 Clear Cache"):
+                        clear_comparison(compare_providers)
+                        st.session_state.comparison_results = {}
+                        st.success("Cache cleared!")
+                
+                if not st.session_state.get("deployment", False):
+                    st.warning("⚠️ Jalankan pipeline sampai step 10 (Deployment) terlebih dahulu sebelum membandingkan model.")
+                
+                # Display results
+                results = st.session_state.get("comparison_results", {})
+                if results:
+                    st.markdown("---")
+                    st.subheader("Hasil Perbandingan")
+                    
+                    # Summary table
+                    summary_data = []
+                    for provider in compare_providers:
+                        r = results.get(provider, {})
+                        status = r.get("status", "missing")
+                        personas = r.get("personas", {})
+                        metadata = r.get("metadata", {})
+                        total = sum(len(v) for v in personas.values()) if personas else 0
+                        elapsed = metadata.get("elapsed_seconds", "-")
+                        summary_data.append({
+                            "Provider": provider,
+                            "Status": status,
+                            "Total Personas": total,
+                            "Waktu (detik)": elapsed,
+                        })
+                    
+                    if summary_data:
+                        st.dataframe(pd.DataFrame(summary_data), use_container_width=True)
+                    
+                    # Side-by-side view
+                    st.markdown("---")
+                    st.subheader("Side-by-Side Persona")
+                    
+                    available_providers = [p for p in compare_providers if p in results and results[p].get("personas")]
+                    if len(available_providers) >= 2:
+                        for y in sorted(set().union(*[results[p].get("personas", {}).keys() for p in available_providers])):
+                            st.markdown(f"### Tahun {y}")
+                            cols = st.columns(len(available_providers))
+                            for idx, provider in enumerate(available_providers):
+                                with cols[idx]:
+                                    st.markdown(f"**{provider}**")
+                                    personas = results[provider].get("personas", {}).get(y, [])
+                                    for p in personas:
+                                        with st.expander(f"Klaster {p['cluster']}", expanded=True):
+                                            st.markdown(p["persona"])
+                    elif len(available_providers) == 1:
+                        provider = available_providers[0]
+                        st.markdown(f"### {provider}")
+                        personas = results[provider].get("personas", {})
+                        for y in sorted(personas.keys()):
+                            st.markdown(f"#### Tahun {y}")
+                            for p in personas[y]:
+                                with st.expander(f"Klaster {p['cluster']}", expanded=True):
+                                    st.markdown(p["persona"])
+                    else:
+                        st.info("Belum ada hasil. Klik 'Run Comparison' untuk memulai.")
+                else:
+                    st.info("Belum ada hasil perbandingan. Klik 'Run Comparison' untuk memulai.")
 
             # Clean up temp file if all done
             if st.session_state["deployment"]:

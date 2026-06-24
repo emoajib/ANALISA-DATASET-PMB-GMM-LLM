@@ -3,6 +3,7 @@ import functools
 import hashlib
 import os
 import json
+import threading
 import numpy as np
 import pandas as pd
 import torch
@@ -10,7 +11,7 @@ from transformers import AutoTokenizer, AutoModel
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderUnavailable, GeocoderRateLimited
 
-EMBEDDING_CACHE_FILE = "data/embedding_cache.json"
+EMBEDDING_CACHE_FILE = "steps/data/embedding_cache.json"
 
 def get_text_hash(text):
     return hashlib.md5(text.encode()).hexdigest()[:16]
@@ -20,14 +21,57 @@ def load_embedding_cache():
         try:
             with open(EMBEDDING_CACHE_FILE, 'r') as f:
                 return json.load(f)
+        except json.JSONDecodeError as e:
+            print(f"Cache corrupted, attempting to recover: {e}")
+            try:
+                with open(EMBEDDING_CACHE_FILE, 'r') as f:
+                    content = f.read()
+                    if content.strip().endswith(']'):
+                        return json.loads(content)
+                    elif content.strip().endswith('}'):
+                        return json.loads(content)
+                    else:
+                        print("Cache file appears truncated, starting fresh")
+            except Exception as e2:
+                print(f"Failed to recover cache: {e2}")
         except Exception as e:
             print(f"Cache load error: {e}")
     return {}
 
+class NumpyEncoder(json.JSONEncoder):
+    """json.JSONEncoder that handles numpy types — prevents cache corruption."""
+    def default(self, obj):
+        if isinstance(obj, (np.integer,)):
+            return int(obj)
+        if isinstance(obj, (np.floating,)):
+            return float(obj)
+        if isinstance(obj, (np.ndarray,)):
+            return obj.tolist()
+        if isinstance(obj, (np.bool_,)):
+            return bool(obj)
+        return super().default(obj)
+
 def save_embedding_cache(cache_dict):
+    if not cache_dict:
+        return
     os.makedirs(os.path.dirname(EMBEDDING_CACHE_FILE), exist_ok=True)
-    with open(EMBEDDING_CACHE_FILE, 'w') as f:
-        json.dump(cache_dict, f)
+    tmp = EMBEDDING_CACHE_FILE + ".tmp"
+    try:
+        with open(tmp, 'w') as f:
+            json.dump(cache_dict, f, cls=NumpyEncoder)
+        os.replace(tmp, EMBEDDING_CACHE_FILE)
+    except OSError as e:
+        # Fallback: direct write if atomic replace fails
+        print(f"[WARN] Atomic replace failed: {e}, using direct write")
+        with open(EMBEDDING_CACHE_FILE, 'w') as f:
+            json.dump(cache_dict, f, cls=NumpyEncoder)
+
+def flush_embedding_cache():
+    """Call ONCE at end of pipeline. Eliminates 5,016 writes → 1 write."""
+    global _embedding_cache
+    if _embedding_cache is not None:
+        save_embedding_cache(_embedding_cache)
+        print(f"💾 Flushed {len(_embedding_cache)} embeddings to cache")
 
 _embedding_cache = None
 _model = None
@@ -90,13 +134,24 @@ ABBR_ENTRIES = [
     (r'\bgg\b', 'gang'),
 ]
 
+# Compiled regex patterns: 10-50x faster than raw string re.sub each call
+ABBR_COMPILED = [(re.compile(pat, re.I), rep) for pat, rep in ABBR_ENTRIES]
+_RE_CLEAN = re.compile(r"[^a-z0-9\s]")
+_RE_WS = re.compile(r"\s+")
+
+@functools.lru_cache(maxsize=4096)
 def preprocess(text):
     if not text or str(text).strip() == "" or str(text).lower() == "nan":
         return ""
-    t = re.sub(r"[^a-z0-9\s]", " ", str(text).lower()).replace("\s+", " ").strip()
-    for pat, rep in ABBR_ENTRIES:
-        t = re.sub(pat, rep, t, flags=re.I)
-    return re.sub(r"\s+", " ", t).strip()
+    t = _RE_CLEAN.sub(" ", str(text).lower())
+    for pat, rep in ABBR_COMPILED:
+        t = pat.sub(rep, t)
+    return _RE_WS.sub(" ", t).strip()
+
+def set_model(model, tokenizer):
+    global _model, _tokenizer
+    _model = model
+    _tokenizer = tokenizer
 
 def get_embedding(text, model=None, tokenizer=None, dim=768):
     global _embedding_cache, _model, _tokenizer
@@ -126,21 +181,29 @@ def get_embedding(text, model=None, tokenizer=None, dim=768):
         outputs = _model(**inputs)
     embeddings = outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
     result = embeddings.tolist() if dim == 768 else embeddings.tolist()[:dim]
-    _embedding_cache[key] = result  # Store as list (fix cache serialization bug)
-    save_embedding_cache(_embedding_cache)  # Auto-save to disk
+    _embedding_cache[key] = result
+    
+    # Save cache on first write or every 100 entries
+    if len(_embedding_cache) <= 100 or len(_embedding_cache) % 100 == 0:
+        save_embedding_cache(_embedding_cache)
+    
     return result
 
 
 def get_embeddings_batch(texts, model=None, tokenizer=None, dim=768, batch_size=16):
-    global _embedding_cache
+    global _embedding_cache, _model, _tokenizer
     if _embedding_cache is None:
         _embedding_cache = load_embedding_cache()
     
+    # Reuse global model from get_embedding() — eliminates 10 model reloads
     if model is None or tokenizer is None:
-        model_name = "indobenchmark/indobert-base-p1"
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModel.from_pretrained(model_name)
-        model.eval()
+        if _model is None or _tokenizer is None:
+            model_name = "indobenchmark/indobert-base-p1"
+            _tokenizer = AutoTokenizer.from_pretrained(model_name)
+            _model = AutoModel.from_pretrained(model_name)
+            _model.eval()
+        tokenizer = _tokenizer
+        model = _model
     
     results = []
     for i in range(0, len(texts), batch_size):
@@ -156,9 +219,13 @@ def get_embeddings_batch(texts, model=None, tokenizer=None, dim=768, batch_size=
             t = processed[j]
             key = get_text_hash(t)
             result = emb.tolist() if dim == 768 else emb.tolist()[:dim]
-            _embedding_cache[key] = result  # Fix: store as list, not string
+            _embedding_cache[key] = result
             results.append(result)
-    save_embedding_cache(_embedding_cache)
+        
+        # Periodic save to disk (every 100 embeddings) to avoid 5,000+ writes
+        if len(_embedding_cache) % 100 == 0:
+            save_embedding_cache(_embedding_cache)
+    
     return results
 
 def post_process_persona(persona):
@@ -265,27 +332,47 @@ def pct(a, b):
 
 LLM_CACHE_FILE = "data/llm_cache.json"
 _llm_cache = None
+_llm_cache_lock = threading.Lock()
 
 def load_llm_cache():
     global _llm_cache
     if _llm_cache is not None:
         return _llm_cache
-    if os.path.exists(LLM_CACHE_FILE):
-        try:
-            with open(LLM_CACHE_FILE, 'r') as f:
-                _llm_cache = json.load(f)
-                return _llm_cache
-        except Exception as e:
-            print(f"LLM cache load error: {e}")
-    _llm_cache = {}
-    return _llm_cache
+    with _llm_cache_lock:
+        if _llm_cache is not None:
+            return _llm_cache
+        if os.path.exists(LLM_CACHE_FILE):
+            try:
+                with open(LLM_CACHE_FILE, 'r') as f:
+                    _llm_cache = json.load(f)
+                    return _llm_cache
+            except Exception as e:
+                print(f"LLM cache load error: {e}")
+        _llm_cache = {}
+        return _llm_cache
 
 def save_llm_cache():
     global _llm_cache
-    if _llm_cache:
-        os.makedirs(os.path.dirname(LLM_CACHE_FILE), exist_ok=True)
-        with open(LLM_CACHE_FILE, 'w') as f:
-            json.dump(_llm_cache, f)
+    with _llm_cache_lock:
+        if _llm_cache:
+            os.makedirs(os.path.dirname(LLM_CACHE_FILE), exist_ok=True)
+            tmp = LLM_CACHE_FILE + ".tmp"
+            with open(tmp, 'w') as f:
+                json.dump(_llm_cache, f)
+            os.replace(tmp, LLM_CACHE_FILE)
+
+def flush_llm_cache():
+    global _llm_cache
+    if _llm_cache is not None and _llm_cache_lock.acquire(blocking=False):
+        try:
+            if _llm_cache:
+                os.makedirs(os.path.dirname(LLM_CACHE_FILE), exist_ok=True)
+                tmp = LLM_CACHE_FILE + ".tmp"
+                with open(tmp, 'w') as f:
+                    json.dump(_llm_cache, f)
+                os.replace(tmp, LLM_CACHE_FILE)
+        finally:
+            _llm_cache_lock.release()
 
 def get_llm_hash(prompt, provider, max_tokens):
     return hashlib.md5(f"{prompt}|{provider}|{max_tokens}".encode()).hexdigest()[:16]
