@@ -2,16 +2,17 @@ import subprocess
 import os
 
 PROVIDERS = {
-    "Ollama": ["ollama", "run", "qwen2.5-coder:1.5b"],
+    "Ollama": ["ollama", "run"],
     "Gemini": ["gemini", "--skip-trust", "-p"],
     "Kilo": ["kilo"],
     "OpenCode": ["opencode"],
 }
 
-def generate(prompt, provider="Ollama", max_tokens=1500):
+def generate(prompt, provider="Ollama", max_tokens=1500, model=None):
     cmd = PROVIDERS.get(provider, PROVIDERS["Ollama"])
     if provider == "Ollama":
-        cmd = cmd + [prompt]
+        model = model or "llama3.2:latest"
+        cmd = cmd + [model, prompt]
     else:
         cmd = cmd + [prompt]
     try:

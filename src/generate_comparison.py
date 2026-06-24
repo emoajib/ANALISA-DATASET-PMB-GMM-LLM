@@ -34,7 +34,7 @@ def main():
     
     # Initialize pipeline (steps 1-8 only, we only need personas)
     logger.info("Initializing pipeline...")
-    pipeline = PMBAnalysisPipeline(str(DATA_FILE), llm_provider="Ollama")
+    pipeline = PMBAnalysisPipeline(str(DATA_FILE), llm_provider="Ollama", llm_model="llama3.2:latest")
     
     steps = [
         "business_understanding",

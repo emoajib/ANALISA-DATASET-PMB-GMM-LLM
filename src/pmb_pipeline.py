@@ -60,12 +60,12 @@ CC = ["#3B8BD4", "#1D9E75", "#E24B4A", "#BA7517", "#534AB7", "#993356"]
 
 
  
-def generate_llm_response(prompt, provider="Ollama", api_key=None, max_tokens=1500):
+def generate_llm_response(prompt, provider="Ollama", api_key=None, max_tokens=1500, model=None):
     cache = load_llm_cache()
     key = get_llm_hash(prompt, provider, max_tokens)
     if key in cache:
         return cache[key]
-    response = llm_provider.generate(prompt, provider, max_tokens)
+    response = llm_provider.generate(prompt, provider, max_tokens, model=model)
     if response and not response.startswith("[") and not response.startswith("Error"):
         cache[key] = response
     return response
@@ -73,9 +73,10 @@ def generate_llm_response(prompt, provider="Ollama", api_key=None, max_tokens=15
 
 # CRISP-DM Pipeline Class
 class PMBAnalysisPipeline:
-    def __init__(self, file_path, llm_provider="Ollama"):
+    def __init__(self, file_path, llm_provider="Ollama", llm_model=None):
         self.file_path = file_path
         self.llm_provider = llm_provider
+        self.llm_model = llm_model or "llama3.2:latest"
         self.raw = None
         self.by_year = None
         self.cols = None
@@ -582,12 +583,12 @@ class PMBAnalysisPipeline:
             top_kab = cl["topKab"][0][0] if cl["topKab"] else "Tidak spesifik"
             prompt = f"Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan atribut berikut: Nama: {top_nama}, Asal: {top_kab}, Program Studi: {top_prodi}, Jalur Penerimaan: {top_jalur}. Sertakan latar belakang keluarga, motivasi kuliah, aktivitas di kampus, dan prospek karir. Pastikan deskripsi realistis dan dalam bahasa Indonesia. Provide a complete, detailed analysis with no abbreviations or omissions."
             try:
-                response = generate_llm_response(prompt, provider, None, 1500)
+                response = generate_llm_response(prompt, provider, None, 1500, model=self.llm_model)
                 persona = post_process_persona(response)
             except Exception as e:
                 logger.warning(f"LLM failed at 1500 tokens: {e}, retrying with 2000 tokens")
                 try:
-                    response = generate_llm_response(prompt, provider, None, 2000)
+                    response = generate_llm_response(prompt, provider, None, 2000, model=self.llm_model)
                     persona = post_process_persona(response)
                 except Exception as e2:
                     logger.warning(f"LLM failed again: {e2}")
@@ -627,11 +628,11 @@ class PMBAnalysisPipeline:
             )
             prompt = f"Berikan analisis mendalam tentang perubahan kausal cluster mahasiswa dari tahun {y1} ke {y2} dengan ARI {ari}, mempertimbangkan fase {FASE[y1]} ke {FASE[y2]}. Jelaskan faktor-faktor yang mempengaruhi seperti kondisi ekonomi, kebijakan pendidikan, dan dampak terhadap pola rekrutmen mahasiswa di ITSNU Pekalongan. Sertakan rekomendasi strategis untuk penyesuaian program penerimaan. Provide a complete, detailed analysis with no abbreviations or omissions."
             try:
-                explanation = generate_llm_response(prompt, self.llm_provider, None, 1500)
+                explanation = generate_llm_response(prompt, self.llm_provider, None, 1500, model=self.llm_model)
             except Exception as e:
                 logger.warning(f"LLM failed at 1500 tokens: {e}, retrying with 2000 tokens")
                 try:
-                    explanation = generate_llm_response(prompt, self.llm_provider, None, 2000)
+                    explanation = generate_llm_response(prompt, self.llm_provider, None, 2000, model=self.llm_model)
                 except Exception as e2:
                     logger.warning(f"LLM failed again: {e2}")
                     explanation = f"""Transisi dari fase {FASE[y1]} ({y1}) ke fase {FASE[y2]} ({y2}) menunjukkan perubahan signifikan dalam pola pendaftaran mahasiswa ITSNU Pekalongan, dengan Adjusted Rand Index (ARI) sebesar {ari}. Fase Pre-COVID dicirikan oleh stabilitas demografis, sedangkan COVID Crisis menandai disrupsi akibat pembatasan mobilitas dan ketidakpastian ekonomi. Recovery mengindikasikan pemulihan dengan fokus pada kebijakan inklusif seperti KIPK. Analisis kausal mengidentifikasi korelasi antara kondisi makroekonomi dan preferensi akademik mahasiswa. Rekomendasi strategis meliputi diversifikasi channel rekrutmen dan penguatan program beasiswa untuk menarik mahasiswa dari segmen yang terdampak."""
@@ -643,7 +644,7 @@ class PMBAnalysisPipeline:
         logger.info("RINGKASAN NARATIF: Generate laporan otomatis")
         prompt = f"Buat ringkasan naratif lengkap dan detail tentang PMB ITSNU Pekalongan 2019-2024 dengan total {len(self.raw)} siswa, proyeksi {self.proj_2025} siswa untuk tahun 2025, rata-rata kesamaan embedding {self.avg_sim}, dan analisis stabilitas cluster berdasarkan ARI. Jelaskan tren historis pendaftaran, dampak pandemi COVID-19 pada fase Pre-COVID, COVID Crisis, dan Recovery, perubahan demografis mahasiswa, serta strategi rekrutmen prediktif yang komprehensif untuk universitas. Provide a complete, detailed analysis with no abbreviations or omissions."
         try:
-            self.narrative = generate_llm_response(prompt, self.llm_provider, None, 2000)
+            self.narrative = generate_llm_response(prompt, self.llm_provider, None, 2000, model=self.llm_model)
         except Exception as e:
             self.narrative = f"""Analisis komprehensif PMB ITSNU Pekalongan 2019-2024 mengungkap tren longitudinal dengan total {len(self.raw)} pendaftar, mencerminkan dampak pandemi COVID-19 pada pendidikan tinggi. Fase Pre-COVID (2019) menunjukkan baseline stabil dengan distribusi demografis yang konsisten, didominasi mahasiswa dari kabupaten Pekalongan dan Batang dengan preferensi program studi teknologi. Transisi ke fase COVID Crisis (2020-2021) menandai structural break dengan penurunan drastis pendaftar sebesar 40-50%, dikaitkan dengan pembatasan sosial dan ketidakpastian ekonomi. Fase Recovery (2022-2024) mengindikasikan pemulihan bertahap dengan rata-rata pendaftar {self.avg_rec} siswa per tahun, didukung oleh kebijakan pemerintah seperti KIPK dan Bidikmisi. Analisis embedding menggunakan IndoBERT menunjukkan kesamaan rata-rata {self.avg_sim} antar tahun, dengan ARI yang stabil pada fase recovery namun negatif pada transisi krisis. Proyeksi 2025 memperkirakan {self.proj_2025} pendaftar berdasarkan model regresi linier, dengan fokus rekrutmen pada cluster stabil yang menunjukkan preferensi terhadap program informatika dan jalur beasiswa. Strategi prediktif mencakup penguatan pemasaran digital, kolaborasi dengan sekolah menengah, dan pengembangan program inklusif untuk meningkatkan aksesibilitas pendidikan tinggi."""
 
@@ -692,11 +693,11 @@ class PMBAnalysisPipeline:
                 df = pd.read_csv(file_path)
                 prompt = f"Berikan penjelasan lengkap dan detail untuk {table_name} berdasarkan data berikut: {df.to_string()}. {prompt_text} Pastikan penjelasan lengkap, analisis mendalam, dan berikan kesimpulan yang jelas. Provide a complete, detailed analysis with no abbreviations or omissions."
                 try:
-                    return generate_llm_response(prompt, self.llm_provider, None, 2000)
+                    return generate_llm_response(prompt, self.llm_provider, None, 2000, model=self.llm_model)
                 except Exception as e:
                     logger.warning(f"LLM failed at 2000 tokens for {table_name}: {e}, retrying with 3000 tokens")
                     try:
-                        return generate_llm_response(prompt, self.llm_provider, None, 3000)
+                        return generate_llm_response(prompt, self.llm_provider, None, 3000, model=self.llm_model)
                     except Exception as e2:
                         logger.warning(f"LLM failed again for {table_name}: {e2}")
                         return f"Tabel {table_name} menyajikan data statistik penting dari analisis PMB menggunakan metodologi CRISP-DM. Data ini memerlukan interpretasi lebih lanjut untuk mengidentifikasi tren dan pola pendaftaran mahasiswa."
@@ -835,7 +836,7 @@ class PMBAnalysisPipeline:
             prompt = f"Analisis visual Gambar 4.1 sebagai diagram batang distribusi pendaftar PMB ITSNU Pekalongan 2019-2024. Fokus pada elemen visual: kode warna fase (Pre-COVID biru, COVID Crisis merah, Recovery hijau), tinggi bar setiap tahun, pola tren naik/turun, dampak visual COVID-19 sebagai penurunan drastis, dan recovery sebagai pemulihan bertahap. Jelaskan bagaimana visualisasi memperlihatkan structural break dan transisi fase. Berikan interpretasi visual detail untuk setiap bar tahun dan kesimpulan visual komprehensif. Provide a complete, detailed visual analysis with no abbreviations or omissions."
             try:
                 response = ollama.generate(
-                    model="llama3.2:3b", prompt=prompt, options={"num_predict": 2000}
+                    model=self.llm_model, prompt=prompt, options={"num_predict": 2000}
                 )
                 self.image_narratives["gambar_4_1"] = response["response"].strip()
             except Exception as e:
@@ -848,7 +849,7 @@ class PMBAnalysisPipeline:
             prompt = f"Analisis visual Gambar 4.3a yang menampilkan silhouette scores untuk berbagai nilai k dalam clustering. Fokus pada elemen visual: kurva silhouette per tahun, titik optimal k, perbandingan GMM vs K-Means, pola tren skor, dan bagaimana visualisasi membantu identifikasi kualitas cluster. Jelaskan perbedaan visual antara metode clustering dan implikasi untuk segmentasi mahasiswa. Provide a complete, detailed visual analysis with no abbreviations or omissions."
             try:
                 response = ollama.generate(
-                    model="llama3.2:3b", prompt=prompt, options={"num_predict": 2000}
+                    model=self.llm_model, prompt=prompt, options={"num_predict": 2000}
                 )
                 self.image_narratives["gambar_4_3a"] = response["response"].strip()
             except Exception as e:
@@ -861,7 +862,7 @@ class PMBAnalysisPipeline:
             prompt = f"Analisis visual Gambar 4.3c sebagai heatmap atau matriks ARI antar tahun. Fokus pada elemen visual: skala warna untuk nilai ARI (biru untuk tinggi, merah untuk rendah/negatif), pola diagonal, structural break sebagai area merah, stabilitas sebagai area biru, dan tren temporal. Jelaskan bagaimana visualisasi memperlihatkan dampak COVID-19 dan transisi fase. Provide a complete, detailed visual analysis with no abbreviations or omissions."
             try:
                 response = ollama.generate(
-                    model="llama3.2:3b", prompt=prompt, options={"num_predict": 2000}
+                    model=self.llm_model, prompt=prompt, options={"num_predict": 2000}
                 )
                 self.image_narratives["gambar_4_3c"] = response["response"].strip()
             except Exception as e:
@@ -874,7 +875,7 @@ class PMBAnalysisPipeline:
             prompt = f"Analisis visual Gambar 4.5 yang menunjukkan proyeksi pendaftar 2025. Fokus pada elemen visual: garis tren historis, titik proyeksi 2025, confidence interval jika ada, pola pertumbuhan, dan implikasi visual untuk perencanaan kampus. Jelaskan bagaimana visualisasi mendukung forecasting dan strategi rekrutmen. Provide a complete, detailed visual analysis with no abbreviations or omissions."
             try:
                 response = ollama.generate(
-                    model="llama3.2:3b", prompt=prompt, options={"num_predict": 2000}
+                    model=self.llm_model, prompt=prompt, options={"num_predict": 2000}
                 )
                 self.image_narratives["gambar_4_5"] = response["response"].strip()
             except Exception as e:
@@ -891,7 +892,7 @@ class PMBAnalysisPipeline:
                 prompt = f"Analisis visual scatter plot Gambar 4.2{chr(97 + i)} untuk tahun {y}, menampilkan clustering PCA mahasiswa. Fokus pada elemen visual: distribusi titik cluster, warna/shape untuk setiap cluster, centroid sebagai pusat cluster, dispersi titik, overlap antar cluster, dan pola geografis. Jelaskan bagaimana visualisasi memperlihatkan segmentasi mahasiswa berdasarkan profil demografis dan akademik. Provide a complete, detailed visual analysis with no abbreviations or omissions."
                 try:
                     response = ollama.generate(
-                        model="llama3.2:3b", prompt=prompt, options={"num_predict": 2000}
+                        model=self.llm_model, prompt=prompt, options={"num_predict": 2000}
                     )
                     self.image_narratives[scatter_key] = response["response"].strip()
                 except Exception as e:

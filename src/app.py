@@ -7,7 +7,7 @@ from functools import lru_cache
 from pmb_pipeline import PMBAnalysisPipeline, FASE
 from steps.utils import set_model
 from comparison import run_comparison, load_personas, clear_comparison
-from providers import PROVIDER_NAMES as COMPARISON_PROVIDERS
+from providers import PROVIDER_NAMES as COMPARISON_PROVIDERS, OLLAMA_MODELS, DEFAULT_OLLAMA_MODEL
 
 BASE_DIR = Path(__file__).parent.parent
 OUTPUTS_DIR = BASE_DIR / "outputs"
@@ -71,6 +71,10 @@ llm_provider_map = {
     "OpenCode CLI": "OpenCode",
 }
 llm_provider_key = llm_provider_map[llm_provider]
+
+llm_model = DEFAULT_OLLAMA_MODEL
+if llm_provider_key == "Ollama":
+    llm_model = st.sidebar.selectbox("Pilih Model Ollama:", OLLAMA_MODELS, index=0)
 
 # Initialize session state
 if "pipeline" not in st.session_state:
@@ -156,15 +160,17 @@ if uploaded_file:
 
     # Check if this is a new file or provider changed
     if (st.session_state.uploaded_file_name != file_name or
-        getattr(st.session_state, 'current_llm_provider', None) != llm_provider_key):
+        getattr(st.session_state, 'current_llm_provider', None) != llm_provider_key or
+        getattr(st.session_state, 'current_llm_model', None) != llm_model):
         # Reset all steps
         for step in step_names:
             st.session_state[step] = False
         st.session_state.uploaded_file_name = file_name
         st.session_state.current_llm_provider = llm_provider_key
+        st.session_state.current_llm_model = llm_model
         model, tokenizer = load_indobert_model()
         set_model(model, tokenizer)
-        st.session_state.pipeline = PMBAnalysisPipeline(file_name, llm_provider=llm_provider_key)
+        st.session_state.pipeline = PMBAnalysisPipeline(file_name, llm_provider=llm_provider_key, llm_model=llm_model)
 
     st.sidebar.subheader("Run Steps")
     for i, step_label in enumerate(crisp_dm_steps):
