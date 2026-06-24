@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import re
 import random
+import threading
 import concurrent.futures
 from pathlib import Path
 from sklearn.mixture import GaussianMixture
@@ -126,6 +127,7 @@ class PMBAnalysisPipeline:
         logger.info("Tabel 3.1 Spesifikasi Dataset: Nama (tekstual), Tahun (kategorikal), Asal Sekolah (tekstual), Program Studi (kategorikal), Kecamatan (kategorikal), Kabupaten (kategorikal), Alamat (tekstual), Jenis Jalur (kategorikal)")
         logger.info("Definisi fase temporal: Pre-COVID (2019): baseline normal; COVID Crisis (2020-2021): disrupsi pandemi; Recovery (2022-2024): pemulihan transformasi digital")
         all_rows = []
+        self._report_progress("Opening Excel file...", 5)
         xl = pd.ExcelFile(self.file_path)
         self.hs = [
             "Nama",
@@ -137,7 +139,9 @@ class PMBAnalysisPipeline:
             "Alamat",
             "Jenis Jalur",
         ]
-        for sn in xl.sheet_names:
+        sheets = xl.sheet_names
+        for si, sn in enumerate(sheets):
+            self._report_progress(f"Reading sheet {sn} ({si+1}/{len(sheets)})", 10 + int(si / len(sheets) * 50))
             df = xl.parse(sn, header=None)
             if df.empty:
                 continue
@@ -147,6 +151,7 @@ class PMBAnalysisPipeline:
                 all_rows.append(row_dict)
         if not all_rows:
             raise ValueError("Data kosong")
+        self._report_progress("Enriching rows with year detection...", 65)
         logger.info(f"Headers: {self.hs}")
         logger.info(f"First data row: {all_rows[0]}")
         enriched = [dict(r, _y=detect_year(r)) for r in all_rows if detect_year(r)]
@@ -176,6 +181,7 @@ class PMBAnalysisPipeline:
             raise ValueError("Kolom wajib tidak ditemukan")
         logger.info(f"Loaded {len(enriched)} rows from {len(xl.sheet_names)} sheets")
         logger.info(f"Headers: {self.hs}")
+        self._report_progress("Data collection completed", 100)
 
     # DATA UNDERSTANDING: Profil statistik deskriptif per periode
     def data_understanding(self):
@@ -222,8 +228,11 @@ class PMBAnalysisPipeline:
         # Fix H2: Use representative sample (min 100 data) instead of only 10
         sample_size = 100
         
-        for i in range(len(years) - 1):
+        total_pairs = len(years) - 1
+        for i in range(total_pairs):
             y1, y2 = years[i], years[i + 1]
+            pair_pct = 40 + (i + 1) / total_pairs * 20
+            self._report_progress(f"Embedding {y1}→{y2}", int(pair_pct))
             # Sample representative data
             sample1 = self.by_year[y1] if len(self.by_year[y1]) <= sample_size else random.sample(self.by_year[y1], sample_size)
             sample2 = self.by_year[y2] if len(self.by_year[y2]) <= sample_size else random.sample(self.by_year[y2], sample_size)
@@ -256,7 +265,10 @@ class PMBAnalysisPipeline:
                 kab_map = {(row["name"].strip().lower()): (row["lat"], row["long"]) for _, row in kab_df.iterrows()}
         except Exception as e:
             logger.warning(f"Geo data load error: {e}")
-        for r in self.raw:
+        total_raw = len(self.raw)
+        for idx, r in enumerate(self.raw):
+            if idx % 200 == 0:
+                self._report_progress(f"Geocoding {idx}/{total_raw}", int(60 + idx / total_raw * 10))
             kec = r.get(self.cols["kec"], "").strip().lower()
             kab = r.get(self.cols["kab"], "").strip().lower()
             coords = kec_map.get(kec) or kab_map.get(kab.replace("kabupaten", "").replace("kota", "").strip())
@@ -273,13 +285,15 @@ class PMBAnalysisPipeline:
         logger.info("Subproses D: Encoding kategorikal")
         self.label_encoders = {}
         ref2019 = self.by_year.get(2019, self.by_year[sorted(self.by_year.keys())[0]])
-        for key in ["prodi", "jalur", "kab"]:
+        for ki, key in enumerate(["prodi", "jalur", "kab"]):
             if self.cols[key]:
                 encoder = LabelEncoder()
                 values = [str(r.get(self.cols[key], "")).strip() for r in ref2019]
                 encoder.fit(values)
                 self.label_encoders[key] = encoder
-                for r in self.raw:
+                for idx, r in enumerate(self.raw):
+                    if idx % 200 == 0:
+                        self._report_progress(f"Encoding {key} {idx}/{total_raw}", int(70 + (ki + idx / total_raw) / 3 * 20))
                     val = str(r.get(self.cols[key], "")).strip()
                     if val not in encoder.classes_:
                         r[f"{key}_enc"] = encoder.transform(["Unknown"])[0] if "Unknown" in encoder.classes_ else -1
@@ -550,8 +564,11 @@ class PMBAnalysisPipeline:
         # Internal metrics per periode already in gmm_res
         # Stabilitas: ARI, Jaccard, Centroid Drift already computed
         # Komparatif: GMM vs K-Means per periode
+        self._report_progress("Evaluating GMM vs K-Means...", 10)
         self.kmeans_res = {}
-        for y in list(self.by_year.keys()):  # FIX: dict.keys() -> list() to avoid iteration error
+        years_eval = list(self.by_year.keys())
+        for yi, y in enumerate(years_eval):
+            self._report_progress(f"K-Means comparison {y} ({yi+1}/{len(years_eval)})", 20 + int(yi / len(years_eval) * 70))
             pts = [self.build_pt(r) for r in self.by_year[y]]
             scaled_pts = self.scaler.transform(pts)
             pca_pts = self.pca.transform(scaled_pts)
@@ -567,6 +584,7 @@ class PMBAnalysisPipeline:
                 "db": db_km,
             }
             logger.info(f"{y} GMM Sil: {self.gmm_res[y]['sil']}, KMeans Sil: {sil_km}")
+        self._report_progress("Evaluation completed", 100)
 
     def generate_personas_only(self, provider=None):
         if provider is None:
@@ -582,7 +600,10 @@ class PMBAnalysisPipeline:
                 tasks.append((y, cl))
         personas = {}
         total_tasks = len(tasks)
+        completed = 0
+        completed_lock = threading.Lock()
         def generate_persona(task):
+            nonlocal completed
             y, cl = task
             top_nama = cl["topNama"][0][0] if cl["topNama"] else "Tidak spesifik"
             top_prodi = cl["topProdi"][0][0] if cl["topProdi"] else "Tidak spesifik"
@@ -600,6 +621,9 @@ class PMBAnalysisPipeline:
                 except Exception as e2:
                     logger.warning(f"LLM failed again: {e2}")
                     persona = f"Mahasiswa ITSNU Pekalongan bernama {top_nama} dari {top_kab}, memilih prodi {top_prodi} melalui jalur {top_jalur}. Ia merupakan siswa berprestasi dengan motivasi kuat untuk berkarir di bidang teknologi, didukung oleh latar belakang pendidikan yang solid dari sekolah menengah di daerahnya."
+            with completed_lock:
+                completed += 1
+                self._report_progress(f"Persona {completed}/{total_tasks}", int(completed / total_tasks * 100))
             return (y, cl["ci"] + 1, persona)
         with concurrent.futures.ThreadPoolExecutor(max_workers=min(4, total_tasks)) as executor:
             futures = {executor.submit(generate_persona, task): task for task in tasks}
@@ -620,7 +644,13 @@ class PMBAnalysisPipeline:
         logger.info("Persona: Prompt terstruktur dari profil GMM, output <150 kata actionable")
         logger.info("Reasoning kausal: Integrasi ARI, drift, proporsi jalur, konteks historis")
         logger.info("Ringkasan: Temuan utama, implikasi manajemen, rekomendasi prioritas")
+        self._report_progress("Generating personas...", 5)
         self.personas = self.generate_personas_only(self.llm_provider)
+        self._report_progress("Causal trend analysis...", 60)
+        self.causal_trend_analysis()
+        self._report_progress("Narrative summary...", 85)
+        self.narrative_summary()
+        self._report_progress("LLM analysis completed", 100)
 
     def causal_trend_analysis(self):
         logger.info("ANALISIS TREN KAUSAL: Penalaran perubahan cluster antar tahun")
@@ -649,15 +679,20 @@ class PMBAnalysisPipeline:
 
     def narrative_summary(self):
         logger.info("RINGKASAN NARATIF: Generate laporan otomatis")
+        self._report_progress("Generating narrative summary...", 10)
         prompt = f"Buat ringkasan naratif lengkap dan detail tentang PMB ITSNU Pekalongan 2019-2024 dengan total {len(self.raw)} siswa, proyeksi {self.proj_2025} siswa untuk tahun 2025, rata-rata kesamaan embedding {self.avg_sim}, dan analisis stabilitas cluster berdasarkan ARI. Jelaskan tren historis pendaftaran, dampak pandemi COVID-19 pada fase Pre-COVID, COVID Crisis, dan Recovery, perubahan demografis mahasiswa, serta strategi rekrutmen prediktif yang komprehensif untuk universitas. Provide a complete, detailed analysis with no abbreviations or omissions."
         try:
+            self._report_progress("Calling LLM for summary...", 50)
             self.narrative = generate_llm_response(prompt, self.llm_provider, None, 2000, model=self.llm_model)
+            self._report_progress("Summary generated", 90)
         except Exception as e:
             self.narrative = f"""Analisis komprehensif PMB ITSNU Pekalongan 2019-2024 mengungkap tren longitudinal dengan total {len(self.raw)} pendaftar, mencerminkan dampak pandemi COVID-19 pada pendidikan tinggi. Fase Pre-COVID (2019) menunjukkan baseline stabil dengan distribusi demografis yang konsisten, didominasi mahasiswa dari kabupaten Pekalongan dan Batang dengan preferensi program studi teknologi. Transisi ke fase COVID Crisis (2020-2021) menandai structural break dengan penurunan drastis pendaftar sebesar 40-50%, dikaitkan dengan pembatasan sosial dan ketidakpastian ekonomi. Fase Recovery (2022-2024) mengindikasikan pemulihan bertahap dengan rata-rata pendaftar {self.avg_rec} siswa per tahun, didukung oleh kebijakan pemerintah seperti KIPK dan Bidikmisi. Analisis embedding menggunakan IndoBERT menunjukkan kesamaan rata-rata {self.avg_sim} antar tahun, dengan ARI yang stabil pada fase recovery namun negatif pada transisi krisis. Proyeksi 2025 memperkirakan {self.proj_2025} pendaftar berdasarkan model regresi linier, dengan fokus rekrutmen pada cluster stabil yang menunjukkan preferensi terhadap program informatika dan jalur beasiswa. Strategi prediktif mencakup penguatan pemasaran digital, kolaborasi dengan sekolah menengah, dan pengembangan program inklusif untuk meningkatkan aksesibilitas pendidikan tinggi."""
+        self._report_progress("Narrative summary completed", 100)
 
     # DEPLOYMENT: Formulasi strategi rekrutmen prediktif
     def deployment(self):
         logger.info("DEPLOYMENT: Prioritasi segmen dinamis, mapping channel, proyeksi 2025, personalisasi rekrutmen")
+        self._report_progress("Lifecycle analysis...", 5)
         # Prioritasi segmen, mapping channel, proyeksi
         max_k = max(self.gmm_res[y]["K"] for y in list(self.by_year.keys()))
         self.lifecycle = []
@@ -684,22 +719,34 @@ class PMBAnalysisPipeline:
                     else "🔄 Recovery",
                 }
             )
+        self._report_progress("Generating table narratives...", 20)
         # Generate narratives for tables and images
         self.generate_table_narratives()
-        # Flush LLM cache once at end of pipeline
-        flush_llm_cache()
+        self._report_progress("Saving outputs...", 80)
         # Save outputs
         self.save_outputs()
+        # Flush LLM cache once at end of pipeline
+        flush_llm_cache()
+        self._report_progress("Deployment completed", 100)
 
     def generate_table_narratives(self):
         logger.info("GENERATE TABLE NARRATIVES")
         self.table_narratives = {}
+        self.image_narratives = {}
+        _nc = [0]  # narrative counter (mutable for closure)
+        _total_narratives = 27  # upper bound: 11 table + 6 profile + 4 image + 6 scatter
+
+        def _narr_progress(msg):
+            _nc[0] += 1
+            pct = 20 + int(_nc[0] / _total_narratives * 55)
+            self._report_progress(f"{msg} ({_nc[0]}/{_total_narratives})", pct)
 
         def generate_narrative(table_name, file_path, prompt_text):
             if os.path.exists(file_path):
                 df = pd.read_csv(file_path)
                 prompt = f"Berikan penjelasan lengkap dan detail untuk {table_name} berdasarkan data berikut: {df.to_string()}. {prompt_text} Pastikan penjelasan lengkap, analisis mendalam, dan berikan kesimpulan yang jelas. Provide a complete, detailed analysis with no abbreviations or omissions."
                 try:
+                    _narr_progress(table_name)
                     return generate_llm_response(prompt, self.llm_provider, None, 2000, model=self.llm_model)
                 except Exception as e:
                     logger.warning(f"LLM failed at 2000 tokens for {table_name}: {e}, retrying with 3000 tokens")
@@ -708,6 +755,7 @@ class PMBAnalysisPipeline:
                     except Exception as e2:
                         logger.warning(f"LLM failed again for {table_name}: {e2}")
                         return f"Tabel {table_name} menyajikan data statistik penting dari analisis PMB menggunakan metodologi CRISP-DM. Data ini memerlukan interpretasi lebih lanjut untuk mengidentifikasi tren dan pola pendaftaran mahasiswa."
+            _narr_progress(f"{table_name} (no data)")
             return None
 
         # Narrative for Tabel 4.1
@@ -835,13 +883,10 @@ class PMBAnalysisPipeline:
             )
 
         # Generate image narratives - distinct from table narratives by focusing on visual elements
-        self.image_narratives = {}
-
-        # Generate image narratives using cached generate_llm_response
-        self.image_narratives = {}
 
         # Narrative for Gambar 4.1 - Visual bar chart analysis
         if os.path.exists(str(OUTPUTS_DIR / "tabel_4_1_distribusi.csv")):
+            _narr_progress("Gambar 4.1")
             df = pd.read_csv(str(OUTPUTS_DIR / "tabel_4_1_distribusi.csv"))
             prompt = f"Analisis visual Gambar 4.1 sebagai diagram batang distribusi pendaftar PMB ITSNU Pekalongan 2019-2024. Fokus pada elemen visual: kode warna fase (Pre-COVID biru, COVID Crisis merah, Recovery hijau), tinggi bar setiap tahun, pola tren naik/turun, dampak visual COVID-19 sebagai penurunan drastis, dan recovery sebagai pemulihan bertahap. Jelaskan bagaimana visualisasi memperlihatkan structural break dan transisi fase. Berikan interpretasi visual detail untuk setiap bar tahun dan kesimpulan visual komprehensif. Provide a complete, detailed visual analysis with no abbreviations or omissions."
             self.image_narratives["gambar_4_1"] = generate_llm_response(
@@ -850,6 +895,7 @@ class PMBAnalysisPipeline:
 
         # Narrative for Gambar 4.3a - Silhouette score visualization
         if os.path.exists(str(OUTPUTS_DIR / "tabel_4_5_kscan.csv")):
+            _narr_progress("Gambar 4.3a")
             df_kscan = pd.read_csv(str(OUTPUTS_DIR / "tabel_4_5_kscan.csv"))
             prompt = f"Analisis visual Gambar 4.3a yang menampilkan silhouette scores untuk berbagai nilai k dalam clustering. Fokus pada elemen visual: kurva silhouette per tahun, titik optimal k, perbandingan GMM vs K-Means, pola tren skor, dan bagaimana visualisasi membantu identifikasi kualitas cluster. Jelaskan perbedaan visual antara metode clustering dan implikasi untuk segmentasi mahasiswa. Provide a complete, detailed visual analysis with no abbreviations or omissions."
             self.image_narratives["gambar_4_3a"] = generate_llm_response(
@@ -858,6 +904,7 @@ class PMBAnalysisPipeline:
 
         # Narrative for Gambar 4.3c - ARI heatmap/matrix visualization
         if os.path.exists(str(OUTPUTS_DIR / "tabel_4_6_ari.csv")):
+            _narr_progress("Gambar 4.3c")
             df_ari = pd.read_csv(str(OUTPUTS_DIR / "tabel_4_6_ari.csv"))
             prompt = f"Analisis visual Gambar 4.3c sebagai heatmap atau matriks ARI antar tahun. Fokus pada elemen visual: skala warna untuk nilai ARI (biru untuk tinggi, merah untuk rendah/negatif), pola diagonal, structural break sebagai area merah, stabilitas sebagai area biru, dan tren temporal. Jelaskan bagaimana visualisasi memperlihatkan dampak COVID-19 dan transisi fase. Provide a complete, detailed visual analysis with no abbreviations or omissions."
             self.image_narratives["gambar_4_3c"] = generate_llm_response(
@@ -866,6 +913,7 @@ class PMBAnalysisPipeline:
 
         # Narrative for Gambar 4.5 - Projection visualization
         if os.path.exists(str(OUTPUTS_DIR / "tabel_4_16_prioritasi_2025.csv")):
+            _narr_progress("Gambar 4.5")
             df_proj = pd.read_csv(str(OUTPUTS_DIR / "tabel_4_16_prioritasi_2025.csv"))
             prompt = f"Analisis visual Gambar 4.5 yang menunjukkan proyeksi pendaftar 2025. Fokus pada elemen visual: garis tren historis, titik proyeksi 2025, confidence interval jika ada, pola pertumbuhan, dan implikasi visual untuk perencanaan kampus. Jelaskan bagaimana visualisasi mendukung forecasting dan strategi rekrutmen. Provide a complete, detailed visual analysis with no abbreviations or omissions."
             self.image_narratives["gambar_4_5"] = generate_llm_response(
@@ -875,6 +923,7 @@ class PMBAnalysisPipeline:
         # Narratives for scatter plots per year (Gambar 4.2a, 4.2b, etc.)
         years = sorted(self.by_year.keys())
         for i, y in enumerate(years):
+            _narr_progress(f"Gambar 4.2{chr(97 + i)}")
             scatter_key = f"gambar_4_2{chr(97 + i)}"
             csv_file = str(OUTPUTS_DIR / f"tabel_4_{9 + i}_profil_{y}.csv")
             if os.path.exists(csv_file):
