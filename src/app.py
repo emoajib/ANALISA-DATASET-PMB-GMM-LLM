@@ -40,6 +40,23 @@ def load_image_bytes(path):
 # Thesis Alignment Badge
 st.title("PMB ITSNU Analysis Dashboard")
 st.markdown("![98% Aligned with BAB IV](https://img.shields.io/badge/98%25-Aligned%20with%20BAB%20IV-brightgreen)")
+
+# Detect demo mode (Ollama server must be actually reachable)
+_ollama_available = False
+try:
+    import ollama
+    ollama.list()
+    _ollama_available = True
+except Exception:
+    pass
+
+if not _ollama_available:
+    st.info(
+        "🌐 **Demo Mode** — Ollama tidak terdeteksi. "
+        "LLM output akan di-load dari cache. "
+        "Pipeline langkah 9-10 dan Model Comparison akan menggunakan data pra-generasi.",
+    )
+
 st.markdown("---")
 
 st.sidebar.header("Upload Dataset")

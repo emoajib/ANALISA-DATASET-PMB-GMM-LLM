@@ -1,0 +1,103 @@
+{
+  "version": "1.0",
+  "personas": {
+    "2019": [
+      {
+        "cluster": 2,
+        "persona": "[Kilo error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error, check log file at /Users/salsabil/.local/share/kilo/log/2026-06-24T034800.log for more details\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TES"
+      },
+      {
+        "cluster": 4,
+        "persona": "[Kilo error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error, check log file at /Users/salsabil/.local/share/kilo/log/2026-06-24T034759.log for more details\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TES"
+      },
+      {
+        "cluster": 1,
+        "persona": "[Kilo error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error, check log file at /Users/salsabil/.local/share/kilo/log/2026-06-24T034800.log for more details\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TES"
+      }
+    ],
+    "2020": [
+      {
+        "cluster": 2,
+        "persona": "[Kilo error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error, check log file at /Users/salsabil/.local/share/kilo/log/2026-06-24T034801.log for more details\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TES"
+      },
+      {
+        "cluster": 5,
+        "persona": "[Kilo error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error, check log file at /Users/salsabil/.local/share/kilo/log/2026-06-24T034825.log for more details\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TES"
+      },
+      {
+        "cluster": 1,
+        "persona": "[Kilo error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error, check log file at /Users/salsabil/.local/share/kilo/log/2026-06-24T034824.log for more details\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TES"
+      }
+    ],
+    "2021": [
+      {
+        "cluster": 1,
+        "persona": "[Kilo error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error, check log file at /Users/salsabil/.local/share/kilo/log/2026-06-24T034826.log for more details\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TES"
+      },
+      {
+        "cluster": 2,
+        "persona": "[Kilo error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error, check log file at /Users/salsabil/.local/share/kilo/log/2026-06-24T034828.log for more details\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TES"
+      },
+      {
+        "cluster": 5,
+        "persona": "[Kilo error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error, check log file at /Users/salsabil/.local/share/kilo/log/2026-06-24T034849.log for more details\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TES"
+      }
+    ],
+    "2022": [
+      {
+        "cluster": 2,
+        "persona": "[Kilo error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error, check log file at /Users/salsabil/.local/share/kilo/log/2026-06-24T034849.log for more details\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TES"
+      },
+      {
+        "cluster": 5,
+        "persona": "[Kilo error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error, check log file at /Users/salsabil/.local/share/kilo/log/2026-06-24T034849.log for more details\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TES"
+      },
+      {
+        "cluster": 3,
+        "persona": "[Kilo error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error, check log file at /Users/salsabil/.local/share/kilo/log/2026-06-24T034850.log for more details\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TES"
+      }
+    ],
+    "2023": [
+      {
+        "cluster": 4,
+        "persona": "[Kilo error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error, check log file at /Users/salsabil/.local/share/kilo/log/2026-06-24T034913.log for more details\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TES"
+      },
+      {
+        "cluster": 2,
+        "persona": "[Kilo error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error, check log file at /Users/salsabil/.local/share/kilo/log/2026-06-24T034913.log for more details\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TES"
+      },
+      {
+        "cluster": 3,
+        "persona": "[Kilo error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error, check log file at /Users/salsabil/.local/share/kilo/log/2026-06-24T034913.log for more details\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TES"
+      }
+    ],
+    "2024": [
+      {
+        "cluster": 5,
+        "persona": "[Kilo error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error, check log file at /Users/salsabil/.local/share/kilo/log/2026-06-24T034916.log for more details\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TES"
+      },
+      {
+        "cluster": 6,
+        "persona": "[Kilo error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error, check log file at /Users/salsabil/.local/share/kilo/log/2026-06-24T034936.log for more details\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TES"
+      },
+      {
+        "cluster": 4,
+        "persona": "[Kilo error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error, check log file at /Users/salsabil/.local/share/kilo/log/2026-06-24T034936.log for more details\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TES"
+      }
+    ]
+  },
+  "metadata": {
+    "elapsed_seconds": 120.03,
+    "total_personas": 18,
+    "years": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "dataset_hash": "97ca911df1143a69"
+  },
+  "generated_at": 1782272982.588928
+}
