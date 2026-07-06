@@ -44,6 +44,7 @@ TABLES_DIR: Path = OUTPUT_DIR / "tables"
 FIGURES_DIR: Path = OUTPUT_DIR / "figures"
 CACHE_DIR: Path = OUTPUT_DIR / "cache"
 
+OUTPUTS_DIR: Path = OUTPUT_DIR  # alias for backward compat
 MASTER_DATASET: Path = RAW_DATA_DIR / "PMB_2019_2024.xlsx"
 EMBEDDING_CACHE: Path = PROCESSED_DATA_DIR / "embeddings" / "embedding_cache.json"
 LLM_CACHE: Path = CACHE_DIR / "llm_cache.json"

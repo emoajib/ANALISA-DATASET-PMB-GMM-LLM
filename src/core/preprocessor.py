@@ -1,19 +1,19 @@
-import re
 import functools
 import hashlib
-import os
 import json
+import os
+import re
 import threading
-from pathlib import Path
-import numpy as np
-import pandas as pd
-import torch
-from transformers import AutoTokenizer, AutoModel
-from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut, GeocoderUnavailable, GeocoderRateLimited
 
-_BASE_DIR = Path(__file__).parent.parent
-EMBEDDING_CACHE_FILE = str(_BASE_DIR / "src" / "steps" / "data" / "embedding_cache.json")
+import numpy as np
+import torch
+from geopy.exc import GeocoderRateLimited, GeocoderTimedOut, GeocoderUnavailable
+from geopy.geocoders import Nominatim
+from transformers import AutoModel, AutoTokenizer
+
+from src.config import CACHE_DIR
+
+EMBEDDING_CACHE_FILE = str(CACHE_DIR / "embeddings.json")
 
 def get_text_hash(text):
     return hashlib.md5(text.encode()).hexdigest()[:16]
@@ -21,12 +21,12 @@ def get_text_hash(text):
 def load_embedding_cache():
     if os.path.exists(EMBEDDING_CACHE_FILE):
         try:
-            with open(EMBEDDING_CACHE_FILE, 'r') as f:
+            with open(EMBEDDING_CACHE_FILE) as f:
                 return json.load(f)
         except json.JSONDecodeError as e:
             print(f"Cache corrupted, attempting to recover: {e}")
             try:
-                with open(EMBEDDING_CACHE_FILE, 'r') as f:
+                with open(EMBEDDING_CACHE_FILE) as f:
                     content = f.read()
                     if content.strip().endswith(']'):
                         return json.loads(content)
@@ -158,25 +158,25 @@ def set_model(model, tokenizer):
 
 def get_embedding(text, model=None, tokenizer=None, dim=768):
     global _embedding_cache, _model, _tokenizer
-    
+
     with _embedding_cache_lock:
         if _embedding_cache is None:
             _embedding_cache = load_embedding_cache()
-        
+
         t = preprocess(text) or "unknown"
         key = get_text_hash(t)
-        
+
         if key in _embedding_cache:
             emb = _embedding_cache[key]
             return emb if dim == 768 else emb[:dim]
-    
+
     # Load model only once (outside cache lock)
     if _model is None or _tokenizer is None:
         model_name = "indobenchmark/indobert-base-p1"
         _tokenizer = AutoTokenizer.from_pretrained(model_name)
         _model = AutoModel.from_pretrained(model_name)
         _model.eval()
-    
+
     inputs = _tokenizer(
         t, return_tensors="pt", truncation=True, max_length=512, padding=True
     )
@@ -184,12 +184,12 @@ def get_embedding(text, model=None, tokenizer=None, dim=768):
         outputs = _model(**inputs)
     embeddings = outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
     result = embeddings.tolist() if dim == 768 else embeddings.tolist()[:dim]
-    
+
     with _embedding_cache_lock:
         _embedding_cache[key] = result
         if len(_embedding_cache) <= 100 or len(_embedding_cache) % 100 == 0:
             save_embedding_cache(_embedding_cache)
-    
+
     return result
 
 
@@ -198,7 +198,7 @@ def get_embeddings_batch(texts, model=None, tokenizer=None, dim=768, batch_size=
     with _embedding_cache_lock:
         if _embedding_cache is None:
             _embedding_cache = load_embedding_cache()
-    
+
     # Reuse global model from get_embedding() — eliminates 10 model reloads
     if model is None or tokenizer is None:
         if _model is None or _tokenizer is None:
@@ -208,7 +208,7 @@ def get_embeddings_batch(texts, model=None, tokenizer=None, dim=768, batch_size=
             _model.eval()
         tokenizer = _tokenizer
         model = _model
-    
+
     results = []
     for i in range(0, len(texts), batch_size):
         batch = texts[i:i+batch_size]
@@ -226,11 +226,11 @@ def get_embeddings_batch(texts, model=None, tokenizer=None, dim=768, batch_size=
             with _embedding_cache_lock:
                 _embedding_cache[key] = result
             results.append(result)
-        
+
         with _embedding_cache_lock:
             if len(_embedding_cache) % 100 == 0:
                 save_embedding_cache(_embedding_cache)
-    
+
     return results
 
 def post_process_persona(persona):
@@ -335,7 +335,7 @@ def detect_year(row):
 def pct(a, b):
     return 0 if b == 0 else round(a / b * 100, 1)
 
-LLM_CACHE_FILE = str(_BASE_DIR / "data" / "llm_cache.json")
+LLM_CACHE_FILE = str(CACHE_DIR / "llm_responses.json")
 _llm_cache = None
 _llm_cache_lock = threading.Lock()
 
@@ -348,7 +348,7 @@ def load_llm_cache():
             return _llm_cache
         if os.path.exists(LLM_CACHE_FILE):
             try:
-                with open(LLM_CACHE_FILE, 'r') as f:
+                with open(LLM_CACHE_FILE) as f:
                     _llm_cache = json.load(f)
                     return _llm_cache
             except Exception as e:
