@@ -1,0 +1,103 @@
+{
+  "version": "1.0",
+  "personas": {
+    "2019": [
+      {
+        "cluster": 2,
+        "persona": "[Gemini error] Ripgrep is not available. Falling back to GrepTool.\nError when talking to Gemini API Full report available at: /var/folders/6n/1phx42_916v54l4smgltkqjr0000gn/T/gemini-client-error-Turn.run-sendMessage"
+      },
+      {
+        "cluster": 1,
+        "persona": "[Gemini error] Ripgrep is not available. Falling back to GrepTool.\nError when talking to Gemini API Full report available at: /var/folders/6n/1phx42_916v54l4smgltkqjr0000gn/T/gemini-client-error-Turn.run-sendMessage"
+      },
+      {
+        "cluster": 4,
+        "persona": "[Gemini error] Ripgrep is not available. Falling back to GrepTool.\nError when talking to Gemini API Full report available at: /var/folders/6n/1phx42_916v54l4smgltkqjr0000gn/T/gemini-client-error-Turn.run-sendMessage"
+      }
+    ],
+    "2020": [
+      {
+        "cluster": 2,
+        "persona": "[Gemini error] Ripgrep is not available. Falling back to GrepTool.\nError when talking to Gemini API Full report available at: /var/folders/6n/1phx42_916v54l4smgltkqjr0000gn/T/gemini-client-error-Turn.run-sendMessage"
+      },
+      {
+        "cluster": 5,
+        "persona": "[Gemini error] Ripgrep is not available. Falling back to GrepTool.\nError when talking to Gemini API Full report available at: /var/folders/6n/1phx42_916v54l4smgltkqjr0000gn/T/gemini-client-error-Turn.run-sendMessage"
+      },
+      {
+        "cluster": 1,
+        "persona": "[Gemini error] Ripgrep is not available. Falling back to GrepTool.\nError when talking to Gemini API Full report available at: /var/folders/6n/1phx42_916v54l4smgltkqjr0000gn/T/gemini-client-error-Turn.run-sendMessage"
+      }
+    ],
+    "2021": [
+      {
+        "cluster": 1,
+        "persona": "[Gemini error] Ripgrep is not available. Falling back to GrepTool.\nError when talking to Gemini API Full report available at: /var/folders/6n/1phx42_916v54l4smgltkqjr0000gn/T/gemini-client-error-Turn.run-sendMessage"
+      },
+      {
+        "cluster": 2,
+        "persona": "[Gemini error] Ripgrep is not available. Falling back to GrepTool.\nError when talking to Gemini API Full report available at: /var/folders/6n/1phx42_916v54l4smgltkqjr0000gn/T/gemini-client-error-Turn.run-sendMessage"
+      },
+      {
+        "cluster": 5,
+        "persona": "[Gemini error] Ripgrep is not available. Falling back to GrepTool.\nError when talking to Gemini API Full report available at: /var/folders/6n/1phx42_916v54l4smgltkqjr0000gn/T/gemini-client-error-Turn.run-sendMessage"
+      }
+    ],
+    "2022": [
+      {
+        "cluster": 2,
+        "persona": "[Gemini error] Ripgrep is not available. Falling back to GrepTool.\nError when talking to Gemini API Full report available at: /var/folders/6n/1phx42_916v54l4smgltkqjr0000gn/T/gemini-client-error-Turn.run-sendMessage"
+      },
+      {
+        "cluster": 3,
+        "persona": "[Gemini error] Ripgrep is not available. Falling back to GrepTool.\nError when talking to Gemini API Full report available at: /var/folders/6n/1phx42_916v54l4smgltkqjr0000gn/T/gemini-client-error-Turn.run-sendMessage"
+      },
+      {
+        "cluster": 5,
+        "persona": "[Gemini error] Ripgrep is not available. Falling back to GrepTool.\nError when talking to Gemini API Full report available at: /var/folders/6n/1phx42_916v54l4smgltkqjr0000gn/T/gemini-client-error-Turn.run-sendMessage"
+      }
+    ],
+    "2023": [
+      {
+        "cluster": 2,
+        "persona": "[Gemini error] Ripgrep is not available. Falling back to GrepTool.\nError when talking to Gemini API Full report available at: /var/folders/6n/1phx42_916v54l4smgltkqjr0000gn/T/gemini-client-error-Turn.run-sendMessage"
+      },
+      {
+        "cluster": 4,
+        "persona": "[Gemini error] Ripgrep is not available. Falling back to GrepTool.\nError when talking to Gemini API Full report available at: /var/folders/6n/1phx42_916v54l4smgltkqjr0000gn/T/gemini-client-error-Turn.run-sendMessage"
+      },
+      {
+        "cluster": 3,
+        "persona": "[Gemini error] Ripgrep is not available. Falling back to GrepTool.\nError when talking to Gemini API Full report available at: /var/folders/6n/1phx42_916v54l4smgltkqjr0000gn/T/gemini-client-error-Turn.run-sendMessage"
+      }
+    ],
+    "2024": [
+      {
+        "cluster": 5,
+        "persona": "[Gemini error] Ripgrep is not available. Falling back to GrepTool.\nError when talking to Gemini API Full report available at: /var/folders/6n/1phx42_916v54l4smgltkqjr0000gn/T/gemini-client-error-Turn.run-sendMessage"
+      },
+      {
+        "cluster": 4,
+        "persona": "[Gemini error] Ripgrep is not available. Falling back to GrepTool.\nError when talking to Gemini API Full report available at: /var/folders/6n/1phx42_916v54l4smgltkqjr0000gn/T/gemini-client-error-Turn.run-sendMessage"
+      },
+      {
+        "cluster": 6,
+        "persona": "[Gemini error] Ripgrep is not available. Falling back to GrepTool.\nError when talking to Gemini API Full report available at: /var/folders/6n/1phx42_916v54l4smgltkqjr0000gn/T/gemini-client-error-Turn.run-sendMessage"
+      }
+    ]
+  },
+  "metadata": {
+    "elapsed_seconds": 157.99,
+    "total_personas": 18,
+    "years": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "dataset_hash": "97ca911df1143a69"
+  },
+  "generated_at": 1782273020.2797499
+}

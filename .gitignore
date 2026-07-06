@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+# Environment
+.env
+.venv/
+venv/
+# IDE
+.vscode/
+.idea/
+.DS_Store
+# Thesis backups
+*_BACKUP_*
+*_BEFORE_*
+*_CORRUPTED*
+*.bak
+# Output caches
+data/processed/embeddings/*.json
+outputs/cache/*.json

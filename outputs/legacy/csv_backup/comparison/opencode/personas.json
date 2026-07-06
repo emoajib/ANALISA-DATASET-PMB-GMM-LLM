@@ -1,0 +1,103 @@
+{
+  "version": "1.0",
+  "personas": {
+    "2020": [
+      {
+        "cluster": 2,
+        "persona": "[OpenCode error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TESIS/DATASET/OLAH DATA/src/Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan a"
+      },
+      {
+        "cluster": 5,
+        "persona": "[OpenCode error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TESIS/DATASET/OLAH DATA/src/Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan a"
+      },
+      {
+        "cluster": 1,
+        "persona": "[OpenCode error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TESIS/DATASET/OLAH DATA/src/Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan a"
+      }
+    ],
+    "2019": [
+      {
+        "cluster": 1,
+        "persona": "[OpenCode error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TESIS/DATASET/OLAH DATA/src/Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan a"
+      },
+      {
+        "cluster": 4,
+        "persona": "[OpenCode error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TESIS/DATASET/OLAH DATA/src/Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan a"
+      },
+      {
+        "cluster": 2,
+        "persona": "[OpenCode error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TESIS/DATASET/OLAH DATA/src/Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan a"
+      }
+    ],
+    "2021": [
+      {
+        "cluster": 2,
+        "persona": "[OpenCode error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TESIS/DATASET/OLAH DATA/src/Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan a"
+      },
+      {
+        "cluster": 1,
+        "persona": "[OpenCode error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TESIS/DATASET/OLAH DATA/src/Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan a"
+      },
+      {
+        "cluster": 5,
+        "persona": "[OpenCode error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TESIS/DATASET/OLAH DATA/src/Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan a"
+      }
+    ],
+    "2022": [
+      {
+        "cluster": 5,
+        "persona": "[OpenCode error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TESIS/DATASET/OLAH DATA/src/Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan a"
+      },
+      {
+        "cluster": 2,
+        "persona": "[OpenCode error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TESIS/DATASET/OLAH DATA/src/Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan a"
+      },
+      {
+        "cluster": 3,
+        "persona": "[OpenCode error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TESIS/DATASET/OLAH DATA/src/Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan a"
+      }
+    ],
+    "2023": [
+      {
+        "cluster": 3,
+        "persona": "[OpenCode error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TESIS/DATASET/OLAH DATA/src/Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan a"
+      },
+      {
+        "cluster": 2,
+        "persona": "[OpenCode error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TESIS/DATASET/OLAH DATA/src/Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan a"
+      },
+      {
+        "cluster": 4,
+        "persona": "[OpenCode error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TESIS/DATASET/OLAH DATA/src/Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan a"
+      }
+    ],
+    "2024": [
+      {
+        "cluster": 5,
+        "persona": "[OpenCode error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TESIS/DATASET/OLAH DATA/src/Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan a"
+      },
+      {
+        "cluster": 4,
+        "persona": "[OpenCode error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TESIS/DATASET/OLAH DATA/src/Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan a"
+      },
+      {
+        "cluster": 6,
+        "persona": "[OpenCode error] \u001b[91m\u001b[1mError: \u001b[0mUnexpected error\n\nENAMETOOLONG: name too long, lstat '/Volumes/WORK/MTI UNSIBANK/TESIS/DATASET/OLAH DATA/src/Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan a"
+      }
+    ]
+  },
+  "metadata": {
+    "elapsed_seconds": 58.9,
+    "total_personas": 18,
+    "years": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "dataset_hash": "97ca911df1143a69"
+  },
+  "generated_at": 1782272921.216065
+}

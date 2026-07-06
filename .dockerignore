@@ -1,0 +1,13 @@
+*
+!src/
+!data/
+!requirements.txt
+!pyproject.toml
+.git/
+__pycache__/
+*.py[cod]
+.env
+.DS_Store
+*_BACKUP_*
+*_BEFORE_*
+docs/thesis/output/

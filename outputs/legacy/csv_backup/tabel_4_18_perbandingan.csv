@@ -1,0 +1,8 @@
+Dimensi,Strategi_Statis,Strategi_Adaptif
+Presisi profil segmen 2025,"Rendah — profil 2019 dari 146 pendaftar, tidak representatif",Tinggi — mengintegrasikan 2.362 data dari 6 periode
+Deteksi perubahan struktural,Tidak mampu — mengasumsikan stabilitas segmen,Mampu — 5 structural break terdeteksi otomatis
+Proyeksi tren 2025,Tidak tersedia,592 pendaftar berbasis tren Recovery
+Identifikasi D3 Akuntansi sbg segmen baru 2024,Tidak terdeteksi,Terdeteksi muncul sebagai prodi dominan di K2
+Interpretasi profil klaster,"Manual, memerlukan pakar, subjektif",Otomatis LLM dalam hitungan menit
+Reasoning kausal perubahan,Tidak tersedia,Otomatis — menjelaskan mengapa perubahan terjadi
+Ringkasan laporan manajemen,"Manual, bergantung analis",Otomatis — siap dipresentasikan langsung

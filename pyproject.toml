@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "tesis-gmm-llm"
+version = "2.0.0"
+description = "Segmentasi Probabilistik Mahasiswa GMM + LLM — ITSNU Pekalongan"
+requires-python = ">=3.11"
+dependencies = [
+    "streamlit>=1.32,<1.59",
+    "pandas>=2.2,<3.0",
+    "numpy>=1.26,<2.0",
+    "scikit-learn>=1.4,<2.0",
+    "matplotlib>=3.8,<4.0",
+    "torch>=2.2,<3.0",
+    "transformers>=4.39,<5.0",
+    "ollama>=0.1.9,<0.7",
+    "openpyxl>=3.1,<4.0",
+    "geopy>=2.4,<3.0",
+    "requests>=2.31,<3.0",
+    "python-dotenv>=1.0,<2.0",
+    "tqdm>=4.66,<5.0",
+    "joblib>=1.4,<2.0",
+    "python-docx>=1.2,<2.0",
+    "lxml>=5.0,<6.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["src.*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
