@@ -27,7 +27,7 @@ from src.llm import llm_provider
 logger = logging.getLogger(__name__)
 
 try:
-    from src.llm.hybrid_provider import create_hybrid_provider
+    from src.llm.provider import create_hybrid_provider
     _HYBRID_AVAILABLE = True
 except ImportError:
     _HYBRID_AVAILABLE = False
