@@ -156,5 +156,33 @@ for i, p in enumerate(paras):
 
 print(f"Seragamkan {cap_fixed2} caption: line=240 after=240")
 
+# ── 6. Body text spacing_after=0 and line=480 ──
+bab1_idx = None
+dp_idx = None
+for i, p in enumerate(paras):
+    t = p.text.strip()
+    if t == 'BAB I' and bab1_idx is None:
+        bab1_idx = i
+    if t.startswith('DAFTAR PUSTAKA'):
+        dp_idx = i
+
+if bab1_idx is not None and dp_idx is not None:
+    body_fixed = 0
+    for i in range(bab1_idx, dp_idx):
+        p = paras[i]
+        if p.style.name in ('Heading 1','Heading 2','Heading 3','List Paragraph'): continue
+        txt = p.text.strip()
+        if not txt or len(txt) < 30: continue
+        if txt.startswith(('Sumber:','Tabel ','Gambar ','Keterangan:','Catatan:')): continue
+        if p.style.name and 'toc' in p.style.name.lower(): continue
+        if re.match(r'^(Tabel|Gambar)\s+\d+\.\d+\s+', txt): continue
+        if re.match(r'^\(\w+\.\d+\)', txt): continue
+        if re.match(r'^\d+\.\d+\s+[A-Z]', txt): continue
+        
+        # Enforce spacing
+        set_spacing_full(p._element, line_val=480, after_val=0)
+        body_fixed += 1
+    print(f"Fixed {body_fixed} body paragraphs to line=480, after=0, before=0")
+
 doc.save(DOC)
 print(f"\nSaved: {DOC}")

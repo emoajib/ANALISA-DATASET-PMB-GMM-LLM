@@ -134,6 +134,7 @@ def step_spacing():
     total = 0
     skip = 0
     for i, p in enumerate(doc.paragraphs):
+        if p.text.strip() == 'DAFTAR PUSTAKA' or p.text.strip().startswith('DAFTAR PUSTAKA\n'): break
         if p.style.name.startswith('Heading'):
             skip += 1
             continue

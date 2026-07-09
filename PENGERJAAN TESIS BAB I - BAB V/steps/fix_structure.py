@@ -93,7 +93,7 @@ def main():
     
     # === C1: BAB V headings (dynamic detection) ===
     heading1_targets = {'BAB V', 'KESIMPULAN DAN SARAN'}
-    heading2_targets = {'5.1 Kesimpulan', '5.3 Saran'}
+    heading2_targets = {'5.1 Kesimpulan', '5.2 Saran', '5.3 Saran', '5.4 Saran'}
     
     for i, p in enumerate(doc.paragraphs):
         text = p.text.strip()
@@ -147,7 +147,7 @@ def main():
         text = p.text.strip()
         if text == '5.1 Kesimpulan':
             bab5_start = i
-        elif text == '5.3 Saran':
+        elif text in ('5.2 Saran', '5.3 Saran', '5.4 Saran'):
             bab5_end = i
         elif text == 'BAB V':
             if bab5_start is None:

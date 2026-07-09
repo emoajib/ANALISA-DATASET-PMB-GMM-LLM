@@ -191,6 +191,7 @@ for i, c in enumerate(children):
 
 justify_count = 0
 for i, c in enumerate(children):
+    if last_dp_idx is not None and i > last_dp_idx: break
     if c.tag != qn('w:p'): continue
     t = para_text(c)
     if not t: continue
@@ -234,9 +235,8 @@ for i, c in enumerate(children):
     t = para_text(c)
     if t.upper() in ('ABSTRAK', 'ABSTRACT'):
         old_style = get_style_name(c)
-        if old_style != H1_STYLE:
-            set_heading1(c)
-            changes.append(f'[{i}] "{t}" → Heading 1 (was "{old_style}")')
+        set_heading1(c)
+        changes.append(f'[{i}] "{t}" → Heading 1 (was "{old_style}")')
 
 # ═══════════════════════════════════════════════════════════════
 # FIX 4: Gambar captions → center
