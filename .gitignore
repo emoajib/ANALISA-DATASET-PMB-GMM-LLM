@@ -46,5 +46,5 @@ data/geo/geo_data/
 
 # Caches
 *cache.json
-llm_cache.json
-embedding_cache.json
+!data/llm_cache.json
+!src/steps/data/embedding_cache.json
