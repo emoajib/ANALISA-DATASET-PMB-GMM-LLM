@@ -1,0 +1,1455 @@
+i
+
+Kata Pengantar
+Puji syukur kami panjatkan kehadirat Allah SWT yang telah melimpahkan rahmat dan
+karunia-Nya, sehingga kami dapat menyelesaikan” Pedoman Bimbingan dan Penulisan
+Tesis Program Studi Magister Teknologi informasi, Fakultas Teknologi Informasi dan
+Industri, Universitas Stikubank Semarang” dengan baik.
+Tesis merupakan karya ilmiah yang disusun oleh mahasiswa Program Magister (S2)
+sebelum mereka dinyatakan lulus dari Program Magister Program Studi Teknologi
+Informasi. Pedoman Bimbingan dan Penulisan Tesis ini disusun sebagai panduan bagi para
+mahasiswa Program Studi Magister Teknologi Informasi Fakultas Teknologi Informasi dan
+Industri Universitas Stikubank Semarang dalam menyusun Tesisnya, sehingga diharapkan
+ada keseragaman format dan kualitas isi penelitian. Buku Pedoman ini ditekankan pada
+bagian-bagian Tesis yang harus ada, sistematika penulisan dan format-format penulisan
+untuk masing-masing bagian.
+Kami menyadari bahwa ilmu pengetahuan dan metodologinya senantiasa berkembang,
+maka di waktu mendatang buku ini perlu ditinjau untuk penyempurnaan. Mudah-mudahan
+hasilnya memadai untuk dapat meningkatkan Tesis mahasiswa yang selanjutnya dapat
+meningkatkan mutu pendidikan di Fakultas Teknologi Informasi dan Industri Universitas
+Stikubank Semarang.
+Semarang, Agustus 2025
+Tim Penyusun
+
+ii
+
+DAFTAR ISI
+
+1 Pendahuluan ............................................................................................................. 2
+Pengertian Umum ...................................................................................................... 2
+Tujuan Tesis ............................................................................................................... 4
+2 Tahapan Tesis ............................................................................................................ 5
+Alur Tesis ................................................................................................................... 5
+Syarat pengajuan Tesis ............................................................................................... 6
+Prosedur pengajuan Tesis ........................................................................................... 6
+Prosedur Bimbingan Tesis ........................................................................................... 6
+Prosedur Pengajuan Workshop 1 ................................................................................. 7
+Prosedur Pengajuan Ujian Tesis................................................................................... 7
+Prosedur Pengajuan Workshop 2 ................................................................................. 8
+Syarat diterimanya Tesis sebagai Syarat Kelulusan ....................................................... 8
+Penilaian Tesis ........................................................................................................... 9
+3 Penulisan Outline .................................................................................................... 10
+4 Kerangka Proposal Tesis .......................................................................................... 11
+5 Penulisan Laporan Tesis .......................................................................................... 14
+Tata Cara Penulisan .................................................................................................. 14
+Kerangka Tesis.......................................................................................................... 23
+Bagian Awal .......................................................................................................... 24
+Bagian Utama ....................................................................................................... 24
+Bagian Akhir ......................................................................................................... 24
+6 Penjelasan ............................................................................................................... 25
+Bagian Awal ............................................................................................................. 25
+Bagian Utama .......................................................................................................... 28
+Bagian Akhir ............................................................................................................. 36
+Lampiran ..................................................................................................................... 38
+
+1
+
+1 Pendahuluan
+Pengertian Umum
+1. Tesis merupakan salah satu bentuk karya ilmiah yang wajib dikerjakan bagi
+mahasiswa Program Studi Teknologi Informasi jenjang Strata 2 (S2), Fakultas
+Teknologi Informasi dan Industri UNISBANK Semarang. Tesis ini adalah salah satu
+syarat untuk memperoleh Gelar Magister Komputer (M. Kom). Tesis disusun
+dengan menggunakan prosedur, acuan dan kebenaran yang berlaku dalam dunia
+akademik.
+2. Dosen Pembimbing adalah Dosen Tetap Fakultas Teknologi Informasi Dan Industri
+Unisbank yang ditugaskan berdasarkan Surat Tugas Dekan Fakultas Teknologi
+Informasi Dan Industri dengan fungsi dan tugasnya melakukan pembimbingan
+kepada mahasiswa secara intensif dan terstruktur.
+3. Tim Dosen Penguji Tesis adalah anggota sidang penguji yang bertugas menguji dan
+memberikan penilaian ujian.
+4. Tim Dosen Penguji terdiri dari ketua, sekretaris dan 1 (satu) anggota.
+5. Kriteria kelulusan Tesis berdasarkan penilaian dari hasil ujian dan nilai selama
+proses bimbingan adalah: a. lulus tanpa revisi, b. lulus dengan revisi, atau c. gagal.
+6. Ujian Ulang Tesis adalah ujian yang dilakukan jika mahasiswa dinyatakan gagal
+dalam Ujian.
+7. Masa Revisi Tesis dilakukan setelah ujian dalam rentang 1 (satu) minggu.
+8. Masa Pengumpulan berkas Tesis adalah waktu pengumpulan berkas Laproan
+Tesis ke Perpustakaan, maksimal 2 minggu setelah dinyatakan Lulus.
+9. Artikel ilmiah adalah karya tulis yang berisi hasil penelitian, kajian pustaka, atau
+pemikiran ilmiah, yang disusun secara sistematis sesuai kaidah akademik, dan
+ditujukan untuk dipublikasikan dalam jurnal ilmiah, atau prosiding.
+10. Publikasi adalah upaya untuk menyebarluaskan hasil penelitian agar dapat
+memberikan kontribusi, baik pada pengembangan ilmu pengetahuan maupun
+
+2
+
+penerapan praktis di masyarakat. Hasil penelitian tesis dipublikasikan melalui
+bentuk Artikel Publikasi di Jurnal ilmiah.
+11. Jurnal ilmiah adalah publikasi berkala yang diterbitkan oleh lembaga akademik,
+asosiasi profesi, atau institusi penelitian, yang berfungsi sebagai sarana
+penyebaran ilmu pengetahuan.
+12. Plagiasi merupakan perbuatan secara sengaja atau tidak sengaja dalam
+memperoleh atau mencoba memperoleh kredit atau nilai untuk suatu karya
+ilmiah, dengan mengutip sebagian atau seluruh karya dan/atau karya ilmiah orang
+lain, tanpa menyatakan sumber secara tepat dan memadai (Lampiran Peraturan
+Menteri Riset, Teknologi, Dan Pendidikan Tinggi Republik Indonesia Nomor Tahun
+2015 Tentang Standar Nasional Pendidikan Tinggi). Hukuman bagi plagiat adalah
+gelar akademik, gelar vokasi, atau gelar profesi dinyatakan tidak sah dan dicabut
+oleh Perguruan Tinggi apabila karya ilmiah yang digunakan untuk memperoleh
+gelar akademik, gelar vokasi, atau gelar profesi terbukti merupakan hasil jiplakan
+atau plagiat, untuk itu Tesis perlu dikaukan proses cek plagiarism di perpustakaan.
+13. Aturan untuk prosedur dan tingkat plagiasi diatur dalam peraturan terpisah.
+14. Outline Tesis adalah kerangka atau rancangan awal penulisan tesis yang berfungsi
+sebagai peta jalan (roadmap) dalam proses penyusunan. Outline memuat
+gambaran sistematis mengenai isi tesis dari bab ke bab, sub-bab, hingga poin
+penting penelitian yang akan dikerjakan.
+15. Dosen Konsultan Gagasan adalah dosen yang ditunjuk dengan tugas memberikan
+arahan judul dan topik Tesis sesuai dengan kompetensinya, berkewajiban
+mengarahkan mahasiswa dalam menyusun outline, dan membantu mahasiswa
+dalam menentukan topik / judul yang original.
+16. Workshop 1 adalah Pra Thesis Symposium (PRATI) yang berupa kegiatan akademik
+berupa paparan proposal tesis oleh mahasiswa di hadapan tim dosen reviewer,
+dengan tujuan memperoleh masukan dan arahan dalam penyempurnaan
+pelaksanaan penelitian.
+
+3
+
+17. Workshop 2 adalah Innovation Thesis Summit (INTIS), kegiatan akademik berupa
+paparan hasil penelitian tesis oleh mahasiswa di hadapan tim dosen reviewer,
+untuk mendapatkan evaluasi, umpan balik, serta validasi hasil penelitian, dan
+perencanaan penelitian lanjutan.
+18. Tim Dosen Reviewer adalah dosen yang ditugaskan untuk memberikan penilaian,
+kritik konstruktif, serta rekomendasi perbaikan terhadap proposal maupun hasil
+penelitian tesis mahasiswa. Tim Dosen Reviewer terdiri dari Pembimbing, 2 Dosen
+Reviewer.
+19. Lembar Bimbingan adalah formulir berupa isian perkembangan progres tesis
+mahasiswa, dan sebagai bukti mahasiswa benar-benar melakukan bimbingan
+kepada Dosen Pembimbing.
+Tujuan Tesis
+Tujuan Tesis adalah membuktikan kemampuan mahasiswa agar secara mandiri
+mampu menerapkan kemampuan bernalar akademik dalam mengidentifikasi
+permasalahan, melakukan literasi studi, mencari pemecahan masalah, melakukan
+penyelesaian masalah, dan mampu mengkomunikasikannya secara tertulis dalam
+bentuk proposal, dan laporan Tesis, serta mampu mengkomunikan secara lisan pada
+Workshop 1 dan Workshop 2.
+
+4
+
+2 Tahapan Tesis
+
+Alur Tesis
+
+5
+
+Syarat pengajuan Tesis
+1. Berstatus mahasiswa aktif pada semester saat Tesis diajukan.
+2. Telah selesai 2 semester dengan 30 SKS, dan IPK minimal 3.00.
+3. Sudah/Sedang menempuh kuliah Metodologi Penelitian dengan minimal nilai B.
+Prosedur pengajuan Tesis
+1. Mahasiswa telah mengikuti Pembekelan Tesis dan hadir Worksop 2 sebagai
+peserta minimal 1 kali.
+2. Dekan menugaskan Dosen Konsultan Gagasan Tesis.
+3. Mahasiswa membuat Outline Tesis dan di konsultasikan kepada Dosen Konsultan
+Gagasan Tesis, hingga memperoleh persetujuan.
+4. Mahasiswa mendaftar Tesis dengan melampirkan Outline Tesis yang telah di
+setujui
+Link:
+
+Dosen
+
+Konsultan
+
+FORMULIR
+
+PENGAJUAN
+
+Gagasan
+OUTLINE
+
+Tesis
+SKRIPSI
+
+melalui
+DAN
+
+TESIS
+
+(https://docs.google.com/forms/d/e/1FAIpQLSeTT7Jgw0761noQb7zj7cf8gnGI7Y
+R_Wy5fmn-yB8aimkHMqA/viewform).
+5. Waktu penyusunan Outline hingga pendaftaran Tesis adalah 1 bulan (akhir
+September/Maret).
+6. Penetapan Dosen Pembimbing Tesis (1 minggu) setelah batas waktu Pendaftaran
+Tesis di tutup.
+Prosedur Bimbingan Tesis
+1. Mahasiswa melakukan bimbingan dengan Dosen Pembimbing untuk menyusun
+Proposal Tesis termasuk Bab 1, 2, dan 3 Tesis dalam waktu 1 bulan setelah
+Penetapan Dosen Pembimbing Tesis.
+2. Mahasiswa mendaftar Workshop 1, dengan melampirkan Proposal Tesis yang
+telah di setujui Dosen Pembimbing.
+
+6
+
+3. Mahasiwa memaparkan Proposal dalam Workshop 1 kepada Tim Reviewer sesuai
+jadwal.
+4. Mahasiswa melanjutkan bimbingan Tesis (Bab 4, 5, dst.) berdasar saran dari
+reviewer
+
+dengan
+
+mengkonsultasikan
+
+kepada
+
+Dosen
+
+Pembiming,
+
+dan
+
+mempersiapkan artikel publikasi.
+5. Mahasiswa yang sudah mendapatkan persetujuan Dosen Pembimbing dalam
+penyelesaian Tesis, dan Letter of Acceptance (LoA) dari Jurnal diperkenankan
+mendaftar Ujian Tesis melalui SmartCampus.
+6. Proses bimbingan yang dilakukan wajib di catat dalam Lembar Catatan Bimbingan,
+dengan jumlah minimal bimbingan 8 (delapan) kali.
+7. Penulisan Tesis disesuaikan dengan aturan dan petunjuk yang disediakan.
+Prosedur Pengajuan Workshop 1
+1. Mahasiswa telah menyelesaikan Proposal Tesis dan di setujui Pembimbing.
+2. Mahasiswa
+Link:
+
+mendaftar
+
+FORMULIR
+
+Workshop
+
+PENGAJUAN
+
+OUTLINE
+
+1
+SKRIPSI
+
+melalui
+DAN
+
+TESIS
+
+(https://docs.google.com/forms/d/e/1FAIpQLSeTT7Jgw0761noQb7zj7cf8gnGI7Y
+R_Wy5fmn-yB8aimkHMqA/viewform) dengan melampirkan Proposal Tesis.
+3. Mahasiwa memaparkan Proposal dalam Workshop 1 kepada Tim Reviewer sesuai
+jadwal, melalui slide Presentasi.
+4. Mahasiswa mendapatkan umpan balik untuk perbaikan/penyempurnaan
+pengerjaan Tesis.
+Prosedur Pengajuan Ujian Tesis
+1. Mahasiswa telah memiliki LoA dari Artikel Publikasi, dengan Jurnal tempat
+Publikasi sesuai dengan Ketentuan, dan telah mendapatkan persetujuan dari
+Dosen Pembimbing.
+
+7
+
+2. Mahasiwa telah menyelesesaikan Laporan Tesis lengkap (Cover s.d Lampiran),
+slide presentasi, video presentasi, jumlah bimbingan minimal 8 kali, poster
+publikasi.
+3. Mahasiswa mendaftar Ujian Tesis melalui Smart Campuss, dan membayar biaya
+ujian Tesis (jika ada).
+4. Mahasiswa akan menerima jadwal Penilaian Tesis setelah admin Akademik
+menyatakan berkas lengkap.
+5. Mahasiswa melakukan revisi Tesis (jika ada).
+6. Mahasiswa
+
+melakukan pemberkasan
+
+Laporan
+
+Tesis sesuai
+
+ketentuan
+
+Perpustakaan Universitas Stikubank, maksimal 2 minggu setelah nilai Tesis keluar.
+7. Mahasiswa mengupload bukti pengumpulan berkas Perpustakaan melalui
+SmartCampuss.
+Prosedur Pengajuan Workshop 2
+1. Mahasiswa yang telah memiliki LoA dari artikel Publikasi, berhak mengikuti
+Workshop 2.
+2. Mahasiswa yang telah mendaftar Ujian Tesis, secara otomatis terdaftar sebagai
+peserta Workshop 2.
+3. Mahasiswa mendapatkan jadwal Workshop 2.
+4. Mahasiwa memaparkan Proposal dalam Workshop 2 kepada Tim Reviewer sesuai
+jadwal, melalui slide Presentasi.
+5. Mahasiswa mendapatkan umpan balik untuk saran pengembangan Penelitian
+Lanjutan.
+Syarat diterimanya Tesis sebagai Syarat Kelulusan
+1. Tesis memiliki susunan lengkap sesuai dengan ketentuan penulisan.
+2. Tesis telah mendapatkan Persetujuan yang sah dari Dosen Pembimbing.
+3. Tesis telah mendapatkan Pengesahan dari Tim Penguji, dan Dekan.
+
+8
+
+4. Tesis telah dipublikasikan (minimal dalam bentuk LoA), dan mendapatkan
+persetujuan dari Dosen Pembimbing.
+5. Tesis telah diserahkan di Perpustakaan dengan lengkap, sesuai aturan
+perpustakaan, dan dengan ketentuan prosentase plagiasi minimum.
+Penilaian Tesis
+Penilaian Tesis Program Studi Teknologi Informasi Jenjang Strata-2 (S2) dilakukan
+dengan berdasar Surat Keputusan Rektor No. 081/J.01/UNISBANK/SK/XI/2023
+tanggal
+
+20
+
+November
+
+2023.
+
+(Link:
+
+https://drive.google.com/file/d/1YG76WZrUIe2iSZsVOjy66vNkkTWepvsc/view)
+Kategori
+Jurnal
+Internasional
+Bereputasi
+
+Jenis Publikasi
+Jurnal Scopus Q1–Q4 / WoS SCI/SCIE
+
+Nilai
+A
+
+Jurnal Internasional lain (DOAJ, Copernicus, A
+ProQuest, EBSCO, dll.)
+Jurnal Nasional SINTA 1 – 2
+A
+Terakreditasi
+SINTA 3
+A
+
+Jurnal Nasional
+non-Sinta
+Conference
+/
+Prosiding
+Internasional
+
+Conference
+Prosiding
+Nasional
+
+SINTA 4
+
+A-
+
+SINTA 5 – 6
+
+x
+
+Tidak Terakreditasi / hanya ber-ISSN
+
+x
+
+Prosiding
+Internasional
+bereputasi
+(Scopus/WoS, IEEE, Springer, Elsevier, dll.)
+dengan penyelenggara Prosiding yang kredibel.
+Prosiding Internasional dengan ISBN/ISSN,
+non-Scopus, dengan penyelenggara yang
+kredibel.
+/ Prosiding Nasional Terakreditasi / berISSN/ISBN
+Prosiding Nasional non-terakreditasi
+
+9
+
+A
+
+Keterangan
+Diijinkan
+(Disarankan)
+Diijinkan
+(Disarankan)
+Diijinkan
+(Boleh)
+Diijinkan
+(Minimal)
+Diiijinkan
+(Minimal)
+Tidak
+Diijinkan
+Tidak
+Diijinkan
+Diijinkan
+(Disarankan)
+
+A
+
+Diijinkan
+(Boleh)
+
+x
+
+Tidak
+Diijinkan
+Tidak
+Diijinkan
+
+x
+
+3 Penulisan Outline
+Sebaiknya mahasiswa mulai melakukan Systematic Literature Review (SLR)
+dengan mencari beberapa artikel pendukung utama masalah Tesis pada Jurnal
+ilmiah, dan menemukan celah riset yang terkait dengan tema Tesis. Jika
+memungkinkan melakukan Preliminary Research. Jika tema telah ditemukan,
+mahasiswa kemudian menuliskannya ke dalam format dasar pra-proposal yang
+disebut OUTLINE. Format outline dapat dilihat pada Lampiran.
+Outline mengandung lima unsur penting yaitu:
+1. Cover Judul rencana Tesis.
+2. Latar Belakang Permasalahan berisi tentang penjelasan mengenai gambaran
+permasalahan dan alasan pemilihan masalah.
+3. Perumusan Masalah berisi tentang pengungkapan secara jelas permasalahan
+yang akan diteliti, atau “Gap Research” dari penelitian sebelumnya.
+4. Batasan Masalah berisi tentang pembatasan mengenai masalah yang akan diteliti
+sedemikian rupa sehingga tidak terlalu luas.
+5. Tujuan dan Manfaat berisi tentang perumusan mengenai hal-hal yang akan
+dicapai dan manfaat yang dapat diambil.
+6. Usulan Pemecahan Masalah berisi tentang usulan pemecahan masalah yang
+akan dilaksanakan, dapat ditambahkan gambar untuk mempermudah gambaran
+penjelasan.
+7. Daftar Pustaka Sementara berisi tentang pustaka yang dipergunakan pada saat
+penyusunan outline.
+8. Persetujuan Outline dan Kesediaan Sebagai Dosen Pembimbing, dituliskan di
+akhir Outline sesuai template.
+Jumlah halaman Outline biasanya 2 – 3 lembar. Outline harus ditandatangani oleh
+Konsultan Gagasan sebelum divalidasi oleh Kaprodi untuk kemudian didaftarkan ke
+SmartCampuss.
+
+10
+
+4 Kerangka Proposal Tesis
+Proposal tesis adalah dokumen penjabaran dari Outline yang merinci rencana
+penelitian yang akan dilakukan untuk menyelesaikan Tesis. Pembuatan proposal Tesis
+mengikuti prosedur.
+Proposal jadi akan diuji oleh Tim Dosen Reviewer untuk disetujui dan dibimbing lebih
+lanjut. Berikut unsur pokok yang harus dicantumkan dalam proposal Tesis:
+1. Halaman judul.
+2. Halaman Persetujuan Dosen Pembimbing.
+Halaman ini berisi: Judul, NIM, Nama Mahasiswa, Tanggal Disetujui, Tanda
+Tangan Pembimbing, dan Nama Pembimbing Lengkap dengan NIDN.
+3. Halaman gambaran umum penelitian Tesis.
+4. Bab 1: Latar Belakang.
+Bagian ini berisi keterangan mengenai:
+i. Gambaran permasalahan
+ii. Alasan pemilihan permasalahan (mengapa tertarik untuk mengambil
+masalah ini.
+iii. Pengertian istilah teknis (jika ada).
+iv. Identifikasi permasalahan yang ditemui secara umum, apa adanya,
+namun tidak membuat kesimpulan.
+•
+
+Perumusan Masalah.
+Bagian ini menjelaskan mengenai masalah yang akan dibahas pada
+penulisan Tesis. Di sini dijelaskan juga mengenai batasan masalah yang
+akan dikerjakan dalam penulisan skripsi.
+
+•
+
+Tujuan dan Manfaat Penelitian.
+Tujuan adalah hal-hal yang akan dicapai pada penulisan ini sedangkan
+manfaat adalah hal-hal yang terjadi apabila tujuan tercapai. Tujuan
+
+11
+
+penelitian harus dinyatakan secara eksplisit, sejalan, dan selaras dengan
+permasalahan penelitian.
+5. Bab 2: Tinjauan Pustaka
+Bagian ini memuat uraian sistematis tentang informasi hasil penelitian
+terdahulu (Jurnal dengan jumlah minimal 8 dengan batas waktu publikasi
+maksimal 5 tahun terakhir) yang disajikan dalam pustaka dan
+menghubungkannya dengan masalah penelitian yang akan diteliti. Fakta-fakta
+yang dikemukakan sejauh mungkin diacu dari sumber aslinya, dengan
+mengikuti cara sitasi format sitasi sistem American Psychological Association
+(APA). Penggunaan reference manager (mendeley / zotero / endnote)
+merupakan keharusan.
+6. Bab 3: Metode Penelitian.
+Bagian ini memberikan gambaran umum mengenai bagaimana penelitian
+akan dilakukan. Hal-hal yang perlu dijelaskan di sini meliputi, antara lain:
+a. Perumusan obyek penelitian.
+b. Reseacrh Framework.
+c. Reseacrh Design.
+d. Metode Analisis.
+e. Performance Metrik.
+7. Jadwal Penelitian.
+Pada bagian ini menjelaskan rencana jadwal yang dibuat secara cermat,
+dengan mempertimbangkan kelayakannya. Jadwal penelitian memuat hal
+sebagai berikut:
+a. Tahap-tahap penelitian yang akan dilakukan.
+b. Rincian kegiatan dan target luaran untuk setiap tahap. Supaya cepat
+dipahami, seyogyanya jadwal disajikan dalam bentuk matriks / Gant
+Chart.
+c. Waktu yang diperlukan untuk melaksanakan tiap-tiap tahap.
+
+12
+
+8. Daftar Pustaka
+Bagian ini secara cermat memuat pustaka yang digunakan dalam dokumen
+usulan penelitian (Proposal). Penulisan daftar pustaka/Bibliography mengikuti
+sistem American Psychological Association (APA).
+
+13
+
+5 Penulisan Laporan Tesis
+Tata Cara Penulisan
+Berikut ini merupakan panduan yang digunakan untuk menulis laporan tesis.
+1. Layout dan Pencetakan
+• Kertas yang digunakan cetak adalah jenis HVS putih 80-gram dan tidak bolakbalik.
+• Ukuran kertas untuk pengetikan naskah Tesis dan sampul adalah kertas ukuran
+A-4 (21 cm x 29,7 cm).
+
+• Sampul dibuat dengan jilid hard cover.
+• Warna Sampul disesuaikan dengan ketentuan Universitas.
+• Jumlah Halaman Naskah Laporan Tesis adalah jumlah halaman yang wajar,
+sekitar 150 – 200 halaman.
+2. Jenis dan Ukuran Huruf
+Aturan jenis dan ukuran huruf pengetikan naskah laporan penelitian Tesis adalah
+sebagai berikut:
+• Tulisan yang tercetak pada bagian sampul (cover) sama dengan halaman judul,
+dengan font Times New Roman Bold ukuran 12 spasi 1, ditata rapi sesuai
+contoh di lampiran.
+• Abstrak diketik dengan font Times New Roman ukuran 12 spasi 1.
+• Naskah diketik dengan font Times New Roman ukuran 12 spasi 2.
+
+14
+
+• Huruf miring (italic) digunakan untuk rujukan tertentu tanpa garis bawah,
+misalnya dalam penulisan nama orang asing, metode atau istilah asing,
+Lambang, huruf Yunani atau simbol-simbol.
+• Judul bab dan sub bab ditulis dengan tebal (bold).
+3. Bilangan dan Satuan
+Aturan penulisan bilangan dan satuan dalam pengetikan naskah laporan penelitian
+Tesis adalah sebagai berikut:
+• Bilangan diketik dengan angka, kecuali pada permulaan kalimat, misalnya “10g”
+harus ditulis dengan teks “Sepuluh gram”.
+• Bilangan desimal menggunakan koma, misalnya: panjang sisi 10,9 cm.
+• Satuan dan satuan metrik internasional dinyatakan dengan satuan resmi tanpa
+diikuti titik, misalnya m, g, kg, dll.
+4. Jarak Baris
+Jarak antar baris dibuat 2 spasi, kecuali: abstrak, kutipan langsung, judul tabel dan
+judul gambar yang lebih dari 1 baris, serta daftar pustaka diketik dengan jarak 1
+spasi. Pastikan tidak ada “Space before dan after paragraf”.
+
+5. Batas Tepi Halaman
+Batas-batas pengetikan ditinjau dari tepi kertas diatur sebagai berikut: Tepi atas
+(top margin): 4 cm, Tepi bawah (bottom margin): 3 cm, Tepi kiri (left margin): 4 cm,
+Tepi kanan (right margin): 3 cm.
+
+15
+
+6. Pengisian Ruangan
+Pengisian ketikan pada halaman naskah harus diisi penuh (justify, rata kanan dan
+kiri), artinya pengetikan harus dimulai dari batas tepi kiri sampai batas tepi kanan,
+dan jangan ada ruangan yang kosong, kecuali jika memulai alinea baru,
+penamaan tabel, gambar, sub judul, atau hal-hal khusus, misalnya batas akhir
+alinea. Alinea baru dimulai pada ketukan ke-6 dari batas tepi kiri.
+
+7. Judul Bab, Sub Bab, Anak Sub Bab
+Tiap bab dalam Tesis biasanya disusun secara bertingkat, dari yang paling besar
+sampai bagian-bagian yang lebih kecil. Cara untuk membedakan tingkatantingkatan tersebut dapat dilakukan dengan dua alternatif, yaitu:
+a. Alternatif Pertama
+Peringkat 1 (Judul Bab)
+•
+
+Ditulis dengan angka Romawi besar: I, II, III, IV, dst.
+
+•
+
+Judul ditulis huruf kapital semua.
+
+•
+
+Diletakkan di tengah halaman (center, rata tengah).
+
+•
+
+Tidak diakhiri dengan titik.
+
+Peringkat 2 (Sub Judul Bab)
+•
+
+Ditulis dengan huruf besar (A, B, C, …).
+
+•
+
+Diletakkan di tepi kiri (left margin).
+
+16
+
+•
+
+Paragraf isi subbab dimulai pada ketukan ke-6 (indentasi ±1 tab).
+
+•
+
+Baris berikutnya langsung rata kiri (tanpa indent).
+
+Peringkat 3 (Sub dari Peringkat 2)
+•
+
+Ditulis dengan angka Arab (1, 2, 3, …).
+
+•
+
+Mulai dari ketukan ke-6 (sama dengan subbab).
+
+•
+
+Isi paragraf juga dimulai dari ketukan ke-6, baris berikutnya langsung ke tepi
+kiri.
+
+Peringkat 4 (Sub dari Peringkat 3)
+•
+
+Ditulis dengan huruf kecil (a, b, c, …).
+
+•
+
+Ditulis mulai dari ketukan ke-6.
+
+•
+
+Isi paragraf sama seperti sebelumnya (paragraf dimulai di ketukan ke-6, baris
+berikutnya rata kiri).
+
+17
+
+b. Alternatif Kedua
+Peringkat 1 (Judul Bab)
+•
+
+Menggunakan angka Romawi besar (I, II, III, …).
+
+•
+
+Judul ditulis dengan huruf kapital semua (ALL CAPS).
+
+•
+
+Diletakkan simetris (center) di tengah halaman.
+
+•
+
+Tidak diakhiri dengan titik.
+
+Peringkat 2 (Sub Judul Bab)
+•
+
+Ditulis dengan angka 2 digit (contoh: 1.1, 1.2, 1.3).
+
+•
+
+Ditulis rata kiri.
+
+•
+
+Huruf kapital hanya di setiap awal kata (Title Case).
+
+Peringkat 3 (Sub dari Sub Judul)
+•
+
+Ditulis dengan angka 3 digit (contoh: 1.1.1, 1.1.2, 1.1.3).
+
+•
+
+Rata kiri.
+
+•
+
+Huruf kapital di setiap awal kata.
+
+Peringkat 4 (Sub dari Peringkat 3)
+•
+
+Ditulis dengan angka 4 digit (contoh: 1.1.1.1, 1.1.1.2).
+
+•
+
+Rata kiri.
+
+•
+
+Huruf kapital di setiap awal kata.
+
+18
+
+Untuk mempermudah gunakan styles yang ada di aplikasi:
+
+8. Bahasa yang dipakai
+Bahasa yang dipakai ialah Ejaan Bahasa Indonesia yang Disempurnakan dan/atau
+boleh menggunakan Bahasa Inggris. Aturan dan tata bahasa yang digunakan dalam
+Tesis adalah SPOK dengan tidak banyak frasa dalam kalimat. Adapun jumlah frasa
+yang digunakan tidak lebih dari 3 frasa dalam satu kalimat. Jika lebih dapat
+dipenggal menjadi 2 kalimat.
+Aturan
+Menggunakan
+SPOK (Subjek –
+Predikat – Objek –
+Keterangan)
+
+Kalimat Contoh
+Peneliti melakukan analisis
+data pada bulan Juli.
+
+19
+
+Keterangan
+Kalimat
+sederhana
+dengan SPOK.
+
+Tidak lebih dari 3
+frasa
+
+Mahasiswa menyusun tesis
+dengan bimbingan dosen
+pembimbing.
+
+Jika lebih dari 3
+frasa
+(kurang
+diperkenankan)
+
+Peneliti yang berasal dari
+Universitas
+Stikubank
+Semarang melakukan analisis
+data kuantitatif terhadap
+responden
+mahasiswa
+program magister pada bulan
+Juli 2025.
+Peneliti
+berasal
+dari Dipenggal menjadi 2
+Universitas
+Stikubank kalimat sesuai aturan.
+Semarang. Peneliti melakukan
+analisis
+data
+kuantitatif
+terhadap
+responden
+mahasiswa program magister
+pada bulan Juli 2025.
+
+Setelah dipenggal
+(sudah benar)
+
+Mengandung 3 frasa:
+Mahasiswa
+(S),
+menyusun tesis (P+O),
+dengan
+bimbingan
+dosen pembimbing (K).
+Kalimat terlalu panjang,
+lebih dari 3 frasa.
+
+9. Kata Ganti Orang
+Dalam menulis kalimat tidak boleh menampilkan kata ganti orang pertama atau
+orang kedua (saya, aku, kami, kita, engkau, dan lain-lain), tetapi kalimatnya dibuat
+dalam bentuk pasif. Penulisan kata ganti orang hanya diperbolehkan pada
+penyajian ucapan terima kasih dan pada kata pengantar, dimana kata “saya”
+diganti dengan kata “penulis”.
+Contoh Kalimat dalam Isi Tesis (Pasif, tanpa kata ganti orang):
+1. Data dikumpulkan melalui wawancara dengan 30 responden.
+2. Analisis dilakukan menggunakan metode regresi linier berganda.
+3. Pengujian hipotesis dilaksanakan dengan bantuan perangkat lunak SPSS.
+4. Instrumen penelitian divalidasi melalui uji validitas dan reliabilitas.
+5. Hasil penelitian dibandingkan dengan studi terdahulu yang relevan.
+Contoh Kalimat di Ucapan Terima Kasih / Kata Pengantar (boleh menggunakan
+kata “penulis”):
+
+20
+
+1. Penulis mengucapkan terima kasih kepada dosen pembimbing atas
+bimbingan yang telah diberikan.
+2. Penulis menyampaikan apresiasi kepada keluarga atas dukungan moral dan
+doa yang selalu diberikan.
+3. Penulis berterima kasih kepada rekan-rekan mahasiswa yang telah
+membantu dalam pengumpulan data.
+10. Istilah Asing
+Istilah yang dipakai ialah istilah Indonesia atau yang sudah di-Indonesiakan atau
+dibakukan. Jika harus memakai istilah asing harus diberi “tanda petik” pada istilah
+tersebut atau diketik miring.
+11. Penomoran Halaman
+Penomoran halaman pada penulisan Tesis diatur sebagai berikut:
+a. Bagian awal Tesis, mulai dari kata pengantar sampai abstrak diberi nomor
+halaman dengan angka Romawi kecil (i, ii, dst) yang ditempatkan pada kanan
+bawah.
+b. Bagian utama dan bagian akhir, mulai dari pendahuluan (Bab I) sampai
+halaman terakhir (Kesimpulan dan Saran) memakai nomor arab (1,2, dst)
+sebagai nomor halaman dan ditempatkan pada kanan bawah.
+
+12. Penomoran Tabel dan Gambar
+A. Tabel
+1. Nomor tabel, format x.y (x = nomor bab, y = urutan tabel).
+2. Judul tabel di atas tabel, rata tengah, tanpa titik di akhir.
+
+21
+
+3. Font Times New Roman 10, jarak judul ke tabel 1 spasi.
+4. Jika tabel melebar, gunakan landscape.
+5. Jika tabel panjang, boleh lanjut halaman, gunakan tulisan “Tabel x.y
+Lanjutan” tanpa judul lagi.
+6. Jika lebih dari 2 halaman, taruh di lampiran.
+7. Jarak tabel dengan teks utama: 1 spasi sebelum dan sesudah tabel.
+8. Letak tabel simetris (tengah halaman).
+
+B. Gambar
+1. Semua jenis (grafik, bagan, foto, peta) disebut Gambar.
+2. Nomor gambar dengan format x.y (x = nomor bab, y = urutan gambar).
+3. Judul gambar di bawah gambar, rata tengah, tanpa titik di akhir.
+4. Font Times New Roman 10, jarak gambar ke judul 1 spasi.
+5. Jarak gambar dari teks utama: 1 spasi sebelum, 1 spasi sesudah.
+6. Gambar tidak boleh terpotong.
+7. Jika melebar, gunakan landscape.
+8. Jika terlalu besar, taruh di lampiran.
+9. Grafik harus jelas, boleh pakai warna jika perlu.
+10. Letak gambar simetris (tengah halaman).
+11. Jika dari sumber lain, tuliskan sumber.
+
+13. Lambang Satuan dan Singkatan
+Satuan pengukuran harus dituliskan secara baku, misalnya km/jam, joule/detik.
+Singkatan hanya boleh digunakan jika memang sudah dikenal secara umum atau
+disebutkan terlebih dahulu pada bagian sebelumnya secara jelas.
+
+22
+
+14. Penulisan rumus atau persamaan
+Persamaan atau rumus-rumus matematika harus diketik dengan fasilitas
+Equation Editor atau MathType, bukan diketik manual seperti teks biasa.
+Persamaan yang ditampilkan diletakkan di tengah-tengah baris tersendiri.
+Diberi nomor urut dengan format (x. y), dimana x adalah angka Romawi nomor
+urut bab dan y adalah angka arab nomor urut persamaan.
+
+15. Penulisan Sitasi / Kutipan
+Sitasi / kutipan ditulis mengikuti aturan sitasi sistem American Psychological
+Association (APA) dan wajib menggunakan perangkat lunak manajer referensi
+(mendely / zotero / endnote / etc.)
+16. Penulisan Daftar Pustaka / Bibliography
+Daftar Pustaka / Bibliography ditulis mengikuti aturan Daftar Pustaka / Bibliography
+sistem American Psychological Association (APA) dan wajib menggunakan
+perangkat lunak manajer referensi (mendely / zotero / endnote / etc.)
+
+Kerangka Tesis
+Kerangka tesis adalah kerangka kerja yang mengorganisir struktur Tesis. Tesis dibagi
+menjadi tiga bagian: Bagian Awal, Bagian Utama, Bagian Akhir.
+
+23
+
+Bagian Awal
+a. Halaman Sampul / Cover
+b. Halaman Judul
+c. Halaman Persetujuan
+d. Halaman Pengesahan
+e. Halaman Persembahan (bila diperlukan)
+f. Halaman Pernyataan Keaslian Tulisan
+g. Halaman Kata Pengantar
+h. Halaman Daftar Isi
+i. Halaman Daftar Tabel
+j. Halaman Daftar Gambar
+k. Halaman Daftar Lampiran (bila diperlukan)
+l. Halaman Daftar Lambang, Simbol, dan Singkatan
+m. Abstrak
+Bagian Utama
+1. BAB I. PENDAHULUAN
+2. BAB II. STUDI PUSTAKA
+3. BAB III s/d N. METODE PENELITIAN
+4. BAB N+1. PEMBAHASAN
+5. BAB N+2. KESIMPULAN
+Bagian Akhir
+a. Daftar Pustaka
+b. Lampiran-Lampiran
+Bagian ini dijelaskan lebih lanjut pada bagian Penjelasan
+
+24
+
+6 Penjelasan
+Bagian Awal
+Bagian awal terdiri dari:
+a. Halaman Sampul / Cover
+Halaman sampul terdiri atas dua jenis, yang pertama adalah sampul depan (luar)
+berlaminasi (hard cover), dan yang kedua adalah halaman sampul dalam
+berwarna putih kertas HVS 80 gram.
+Halaman sampul depan harus sama dengan halaman sampul dalam.
+Halaman sampul (depan dan dalam) berisi:
+1. Judul Tesis, dibuat singkat dan jelas. Judul tesis dalam 2 bahasa (Inggris
+dan Indonesia)
+2. Tulisan huruf kapital “TESIS”.
+3. Nama Mahasiswa, ditulis dengan lengkap tanpa singkatan dan tanpa gelar.
+4. NIM (Nomor Induk Mahasiswa) ditulis lengkap dengan titik
+5. ID Tesis (Lihat di SmartCampuss).
+6. Logo atau lambang UNISBANK Semarang, berwarna dengan ukuran 4 cm
+X 4 cm.
+7. Nama Program Studi, Fakultas Teknologi Informasi dan Industri,
+UNISBANK Semarang.
+8. Tahun Lulus Ujian
+Semua bagian (1- 8) ditulis dengan cetak tebal (bold) huruf besar/capital dalam
+font Times New Roman ukuran 12 spasi 1, kecuali “oleh” ditulis dalam huruf kecil
+font Times New Roman ukuran 12. Komposisi huruf dan tata letak di masingmasing bagian diatur secara sistematis, rapi dan serasi.
+
+25
+
+Contoh ada di lampiran
+b. Halaman Judul
+Halaman judul Tesis berisi tulisan yang sama dengan halaman sampul, hanya
+lambang digantikan oleh keterangan tentang maksud Tesis tersebut, yaitu
+“Disusun untuk memenuhi syarat mencapai gelar Magister Komputer (M. Kom)
+pada Program Studi Teknologi Informasi Jenjang Program Strata-2”.
+Contoh ada di lampiran
+c. Halaman Persetujuan
+Halaman Persetujuan diperoleh dari SmartCampuss dan di tandatangan oleh
+mahasiswa. Contoh ada di lampiran
+d. Halaman Pengesahan
+Halaman Halaman Pengesahan Tesis diperoleh dari SmartCampuss dan di
+tandatangan oleh mahasiswa. Contoh ada di lampiran
+e. Halaman Persembahan (bila diperlukan)
+f. Halaman Pernyataan Keaslian Tulisan
+Pernyataan Keaslian di peroleh dari SmartCampuss dan di tandatangan
+bermaterai oleh mahasiswa. Contoh ada di lampiran
+g. Halaman Kata Pengantar
+
+26
+
+h. Halaman Daftar Isi
+Halaman Daftar isi mohon di generate secara otomatis dengan menggunakan
+fasilitas dari MsWord.
+
+Contoh ada di lampiran
+i. Halaman Daftar Tabel
+j. Halaman Daftar Gambar
+k. Halaman Daftar Lampiran (bila diperlukan)
+l. Halaman Daftar Lambang, Simbol, dan Singkatan
+m. Abstrak
+Abstrak merupakan uraian singkat tetapi lengkap yang meliputi pokok
+permasalahan, tujuan penelitian, cara penelitian dan hasil penelitian. Abstrak tidak
+ada kutipan (acuan) dari pustaka, dan merupakan hasil pemikiran murni dari
+penulis. Tujuan penelitian diambil atau disarikan dari tujuan penelitian dalam bab
+pendahuluan. Cara penelitian disarikan dari metode penelitian dan hasil penelitian
+dari kesimpulan. Umumnya abstrak terdiri atas 1 alinea dan panjangnya tidak lebih
+dari 1 halaman dengan ketikan satu spasi.
+
+27
+
+Abstrak ditulis dalam bahasa Indonesia dan inggris, yang berisi ringkasan
+permasalahan, metodologi dan hasil penelitian, yang disertai dengan 5 (lima)
+kata kunci.
+Contoh ada di lampiran
+Bagian Utama
+Bagian Utama Tesis terdiri dari:
+1. BAB I. PENDAHULUAN
+Pendahuluan adalah bab pertama dari Tesis yang mengantarkan pembaca
+untuk dapat menjawab pertanyaan apa yang diteliti, untuk apa dan mengapa
+penelitian itu dilakukan. Oleh karena itu, bab pendahuluan ini pada dasarnya
+memuat hal-hal sebagai berikut:
+1. Latar Belakang Masalah
+Latar Belakang Masalah adalah bagian yang menjelaskan mengapa suatu
+topik penting untuk diteliti. Dalam bagian ini, penulis harus menunjukkan
+alasan logis dan bukti nyata bahwa penelitian yang dilakukan memang
+perlu dilakukan.
+Ada dua cara dalam menyusun latar belakang:
+1. Dari teori ke fakta, dimulai dari penjelasan teori atau konsep, lalu
+dibuktikan dengan kenyataan di lapangan.
+2. Dari fakta ke teori, dimulai dari permasalahan nyata yang ada di
+lapangan, lalu dikaitkan dengan teori atau konsep yang relevan.
+Dalam latar belakang harus ada:
+•
+
+Idealitas (kondisi yang seharusnya terjadi)
+
+•
+
+Masalah atau gap (kesenjangan antara harapan dan
+kenyataan)
+
+•
+
+Urgensi penelitian (pentingnya penelitian ini dilakukan) yang
+akan mengarah pada judul penelitian.
+
+28
+
+Tips penulisan: mulai dari hal yang umum lalu mengerucut ke hal yang
+khusus sesuai fokus penelitian.
+2. Rumusan Permasalahan
+Rumusan masalah merupakan bagian terpenting dari bab pendahuluan
+yang umumnya dibaca terlebih dahulu oleh pembaca Tesis. Melalui
+pernyataan
+
+masalah
+
+dapat
+
+secara
+
+singkat
+
+diketahui
+
+hal
+
+apa
+
+permasalahan penelitian dalam Tesis. Pernyataan masalah dapat
+berupa pertanyaan-pertanyaan yang dicari jawabannya melalui
+kegiatan ilmiah yang dilakukan. Pernyataan masalah dapat pula berupa
+pernyataan-pernyataan tentang sesuatu persoalan (yang merupakan
+rincian dari permasalahan yang akan dikaji) dan yang diikuti dengan
+pernyataan-pernyataan tujuan, keinginan atau harapan yang merupakan
+jawaban atas persoalan yang dikemukakan
+3. Batasan Masalah (bila diperlukan)
+Batasan masalah diberikan jika penelitian memerlukan batasan-batasan
+permasalahan pada penelitian sekiranya tidak akan memperluas ruang
+lingkup penelitian. Batasan masalah ini juga diperlukan untuk lebih
+mengarahkan atau memfokuskan penelitian
+4. Hipotesis (bila diperlukan)
+Secara prosedural hipotesis penelitian diajukan setelah peneliti
+melakukan kajian pustaka atau dari empiris, karena hipotesis penelitian
+adalah rangkuman dari kesimpulan-kesimpulan teoritis yang diperoleh dari
+kajian pustaka dan dari empiris. Hipotesis merupakan jawaban sementara
+dari masalah penelitian yang secara teoritis dianggap paling mungkin dan
+paling tinggi tingkat kebenarannya. Rumusan hipotesis yang baik
+hendaknya:
+•
+
+Menyatakan pertautan antara dua variabel atau lebih.
+
+•
+
+Dituangkan dalam bentuk kalimat pernyataan.
+
+29
+
+•
+
+Dirumuskan secara singkat, padat dan jelas.
+
+•
+
+Dapat diuji secara empiris
+
+5. Tujuan dan Manfaat Penelitian
+Tujuan penelitian harus menyebutkan secara khas tujuan yang ingin
+dicapai. Dalam beberapa hal tujuan penelitian sudah tersirat di dalam judul
+penelitian. Tujuan penelitian wajib disesuaikan dengan pernyataan
+masalah.
+Tujuan Penelitian
+•
+
+Menjawab pertanyaan penelitian atau memecahkan masalah yang
+sudah dirumuskan.
+
+•
+
+Bersifat spesifik, jelas, dan langsung berkaitan dengan rumusan
+masalah.
+
+•
+
+Ibaratnya, tujuan = "Apa yang ingin dicapai oleh peneliti dari penelitian
+ini?"
+
+Manfaat penelitian atau pentingnya penelitian terutama ditujukan bagi
+pengembangan ilmu atau pelaksanaan pembangunan dalam arti luas.
+Dengan kata lain, kegunaan penelitian berisi alasan kelayakan atas
+masalah yang diteliti. Dari uraian dalam bagian ini, diharapkan dapat
+disimpulkan bahwa penelitian terhadap masalah yang dipilih memang
+layak untuk dilakukan. Manfaat penelitian menyatakan secara eksplisit
+berbagai pihak yang dapat memanfaatkan atau diberi manfaat oleh hasil
+dari penelitian yang dilakukan, serta menyatakan secara eksplisit jenis
+manfaat yang diperoleh.
+6. Metode Penelitian
+Metode penelitian adalah suatu bagian penting dimana bagian ini
+menguraikan langkah-langkah dan pendekatan yang akan digunakan dalam
+menjalankan penelitian secara garis besar. Sub-bab ini memberikan
+
+30
+
+gambaran singkat tentang bagaimana penelitian akan dilakukan, metode
+yang akan digunakan, serta alasan di balik pemilihan metode tersebut.
+Sub bab ini dapat mencakup hal-hal seperti berikut ini:
+•
+
+Rancangan penelitian (reseacrh framework, dan research design);
+
+•
+
+Sample dan Populasi (bila melakukan penelitian yang berkaitan
+dengan populasi dan sample).
+
+•
+
+Instrumen penelitian (tergantung jenis penelitiannya).
+
+•
+
+Pengumpulan data.
+
+•
+
+Metode Analisis Data.
+
+•
+
+Performance Metrik.
+
+Hal-hal yang disajikan dalam sub bab ini merupakan gambaran umum,
+pada kenyataannya dapat berbeda dan tergantung dari jenis penelitian yang
+dilakukan. Sub-bab ini bertujuan untuk membantu pembaca memahami
+landasan dan strategi penelitian yang akan dilakukan, serta memberikan
+dasar bagi interpretasi hasil penelitian.
+7. Sistematika Penulisan
+Sistematika penulisan diberikan untuk menyajikan outline penulisan Tesis,
+yang meliputi susunan bab dan topik-topik yang dituliskan dengan
+penjelasan singkat berupa 2 – 3 kalimat.
+2. BAB II. STUDI PUSTAKA
+Bagian studi pustaka adalah dasar teori dan referensi ilmiah yang digunakan
+untuk menjelaskan alur pikir penelitian. Tujuannya untuk menunjukkan:
+1. Sejauh mana penelitian tentang topik yang sama sudah dilakukan.
+2. Alasan kenapa penelitian ini penting (apa yang belum dibahas oleh
+penelitian sebelumnya).
+3. Landasan teori yang digunakan untuk menganalisis masalah dalam tesis.
+
+31
+
+Sumber yang Digunakan
+• Jurnal penelitian (utama).
+• Laporan penelitian.
+• Buku teks.
+• Prosiding seminar/diskusi ilmiah.
+• Terbitan resmi pemerintah/lembaga.
+
+Utamakan sumber primer (jurnal atau hasil penelitian langsung).
+Syarat Sumber Pustaka
+1. Mutakhir & berkualitas, hindari sumber lama yang sudah tidak relevan.
+2. Relevan, harus ada kaitan langsung dengan masalah penelitian.
+Langkah dalam Kajian Teori
+1. Memetakan konsep, memahami teori-teori yang terkait dengan topik.
+2. Membahas teori secara sistematis sesuai disiplin ilmu (misalnya
+Informatika).
+3. Mengintegrasikan teori dan hasil penelitian terdahulu → mencari
+persamaan atau perbedaan, serta menghasilkan dasar untuk hipotesis
+atau argumen penelitian.
+Catatan Penting
+• Banyaknya referensi tidak menjamin kualitas. Yang lebih penting adalah
+
+kualitas dan relevansi sumber dengan masalah yang diteliti.
+• Tesis yang bagus adalah tesis yang bisa mengaitkan teori dengan masalah
+
+penelitian secara logis, bukan hanya mencantumkan banyak daftar
+pustaka.
+Contoh sederhana:
+Jika topik penelitian tentang “Sistem Rekomendasi Berbasis Machine
+Learning”, maka studi pustaka bisa berisi:
+•
+
+Teori tentang machine learning.
+
+32
+
+•
+
+Metode-metode sistem rekomendasi (misalnya collaborative
+filtering, content-based filtering).
+
+•
+
+Penelitian terdahulu tentang sistem rekomendasi di bidang
+pendidikan, e-commerce, atau kesehatan.
+
+•
+
+Celah penelitian (gap), misalnya belum ada penelitian yang
+menggabungkan metode X dan Y untuk meningkatkan akurasi.
+
+3. BAB III s/d N. METODE PENELITIAN
+Bab ini secara umum membahas metode penelitian yang digunakan sebagai
+pedoman dalam melaksanakan penelitian secara sistematis, sehingga hasil
+yang diperoleh dapat dipertanggungjawabkan secara ilmiah. Adapun ruang
+lingkup pembahasan dalam bab ini mencakup beberapa hal penting, yaitu:
+1. Rancangan Penelitian (Research Framework dan Research Design).
+Rancangan penelitian merupakan kerangka konseptual yang
+menggambarkan hubungan antarvariabel yang diteliti. Desain penelitian
+adalah rencana atau prosedur yang menghubungkan filosofi penelitian
+dengan strategi pengumpulan serta analisis data (input – proses – output).
+Rancangan ini dapat berbentuk penelitian kuantitatif, kualitatif, maupun
+campuran (mixed methods), yang dipilih sesuai dengan tujuan penelitian.
+2. Populasi dan Sampel.
+Apabila penelitian dilakukan dengan melibatkan responden, maka perlu
+dijelaskan mengenai populasi dan sampel penelitian. Populasi adalah
+keseluruhan subjek penelitian yang memiliki karakteristik tertentu,
+sedangkan sampel adalah bagian dari populasi yang dianggap dapat
+mewakili. Pemilihan sampel dapat dilakukan dengan metode probability
+sampling atau non-probability sampling, tergantung pada jenis penelitian
+dan tujuan analisis.
+3. Instrumen Penelitian.
+Instrumen penelitian merupakan alat yang digunakan untuk
+
+33
+
+mengumpulkan data, yang dapat berupa kuesioner, wawancara, pedoman
+observasi, maupun dokumentasi. Menurut Arikunto (2019), instrumen
+yang baik harus memenuhi kriteria validitas dan reliabilitas, sehingga data
+yang diperoleh benar-benar menggambarkan kondisi yang diteliti.
+Pemilihan instrumen sangat bergantung pada pendekatan penelitian yang
+digunakan.
+4. Teknik Pengumpulan Data.
+Teknik pengumpulan data menjelaskan prosedur peneliti dalam
+memperoleh data yang diperlukan. Metode yang digunakan dapat berupa
+observasi, wawancara, dokumentasi, atau penyebaran angket/kuesioner.
+Pada bagian ini, peneliti perlu menjelaskan secara rinci bagaimana data
+dikumpulkan, siapa sumber data, serta prosedur pelaksanaan
+pengumpulan data.
+5. Metode Analisis Data.
+Analisis data adalah proses mengolah data yang telah terkumpul agar
+dapat ditarik kesimpulan penelitian. Untuk penelitian kuantitatif, analisis
+dapat menggunakan teknik statistik deskriptif maupun inferensial,
+sementara pada penelitian kualitatif, analisis dilakukan melalui proses
+reduksi data, penyajian data, dan penarikan kesimpulan (Miles &
+Huberman, 1994). Pemilihan metode analisis data harus sesuai dengan
+tujuan, hipotesis, dan rancangan penelitian yang ditetapkan.
+6. Metrik Performansi.
+Metrik performansi penelitian adalah serangkaian indikator kuantitatif
+maupun kualitatif yang digunakan untuk mengevaluasi pencapaian,
+kualitas, relevansi, dan dampak dari suatu kegiatan penelitian
+
+34
+
+4. BAB N+1. PEMBAHASAN
+Bab Hasil dan Pembahasan pada penelitian ini berfungsi untuk menguraikan
+serta menganalisis temuan penelitian secara menyeluruh. Pada bagian ini, hasil
+yang diperoleh dari penelitian tidak hanya dipaparkan secara deskriptif, tetapi
+juga dianalisis melalui pendekatan teoritis maupun praktis. Analisis dapat
+dilakukan secara kualitatif, kuantitatif, maupun statistik, sesuai dengan
+metode penelitian yang digunakan.
+Setiap hasil yang diperoleh dari uji coba metode utama dalam penelitian harus
+dikaji secara mendalam. Hal ini mencakup kelebihan, kelemahan, serta
+performa dari masing-masing metode. Selanjutnya, hasil tersebut perlu
+dibandingkan dengan hasil uji coba metode lain yang juga digunakan dalam
+penelitian. Perbandingan ini penting agar dapat diketahui sejauh mana metode
+yang dipilih lebih unggul atau relevan dalam konteks penelitian, terutama dalam
+perspektif Ilmu Teknologi Informasi.
+Selain membandingkan antar metode, pembahasan juga sebaiknya mengacu
+pada hasil penelitian terdahulu yang memiliki kesamaan topik atau metode.
+Dengan cara ini, penelitian dapat menunjukkan posisi kontribusinya, apakah
+memperkuat, memperluas, atau bahkan menyanggah temuan sebelumnya.
+Pembahasan hasil penelitian harus bersifat integratif, artinya tidak sekadar
+menampilkan data mentah, melainkan dilakukan elaborasi saintifik yang
+menyatukan data empiris dengan teori, konsep, maupun tema-tema ilmu yang
+relevan. Proses integrasi ini menjadikan penelitian memiliki nilai ilmiah yang
+kuat, kontekstual dengan bidang Informatika, serta bermanfaat dalam
+memperkaya khazanah pengetahuan maupun praktik penerapannya.
+Dengan demikian, Bab Hasil dan Pembahasan berperan sebagai jembatan
+antara temuan penelitian dengan landasan teori, serta memberikan gambaran
+yang jelas mengenai kontribusi ilmiah penelitian yang dilakukan.
+
+35
+
+5. BAB N+2. KESIMPULAN
+Kesimpulan berisi dua pokok tulisan yang harus dinyatakan secara terpisah
+pada sub bab tersendiri di bab terakhir, yaitu sebagai berikut:
+•
+
+Kesimpulan merupakan pernyataan singkat dan tepat yang dijabarkan dari
+hasil penelitian pada pembahasan untuk menjawab pernyataan masalah
+secara singkat dan jelas, atau untuk membuktikan kebenaran hipotesis, jika
+ada, sekaligus untuk menjawab tujuan penelitian.
+
+•
+
+Saran dibuat berdasarkan pengalaman dan pertimbangan penulis. Saran
+ditujukan kepada para peneliti dalam bidang sejenis yang ingin melanjutkan
+atau mengembangkan penelitian yang sudah diselesaikan, atau kepada
+pengguna hasil penelitian dalam rangka pemanfaatan penelitian
+
+Bagian Akhir
+Bagian akhir terdiri dari:
+c. Daftar Pustaka
+Bahan pustaka yang dimasukkan dalam daftar pustaka harus sudah disebutkan
+dalam teks. Artinya, semua bahan pustaka yang disebutkan dalam Tesis harus
+dicantumkan dalam daftar pustaka, yang ditampilkan melalui rujukan atau
+penyebutan langsung dalam kalimat. Sebaliknya, bahan pustaka yang hanya
+dipakai sebagai bahan bacaan tetapi tidak dirujuk dalam teks tidak dimasukkan
+dalam daftar pustaka.
+d. Lampiran-Lampiran
+Lampiran dipakai untuk menempatkan data atau keterangan lain yang berfungsi
+untuk melengkapi uraian yang telah disajikan dalam bagian utama Tesis.
+Lampiran-lampiran
+
+ini hendaknya
+
+berisi
+
+keterangan-keterangan
+
+yang
+
+dipandang penting untuk Tesis, misalnya:
+instrumen penelitian, data mentah hasil penelitian, rumus-rumus statistik yang
+digunakan, hasil perhitungan statistik, hasil komputasi, surat izin dan tanda
+
+36
+
+bukti telah melaksanakan pengumpulan data penelitian, lembar bimbingan,
+bukti turnitin, LoA, dan artikel publikasi.
+Lembar Bimbingan Tesis adalah Bukti administratif bahwa mahasiswa benarbenar melakukan bimbingan rutin sesuai aturan kampus, Catatan
+perkembangan dari tahap awal (penyusunan proposal), pelaksanaan
+penelitian, analisis data, hingga penulisan laporan akhir, untuk Kontrol kualitas
+agar dosen pembimbing dan program studi bisa memantau kemajuan
+mahasiswa, dan Persyaratan ujian tesis/disertasi, dengan minimal 8 kali
+bimbingan. Lembar Bimbingan Tesis wajib di tandatangani oleh Pembimbing.
+Halaman daftar lampiran didahului oleh suatu perkataan LAMPIRAN yang
+ditempatkan di tengah-tengah halaman.
+
+37
+
+Lampiran
+
+38
+
+Contoh Cover Outline
+PENGEMBANGAN MODEL PREDIKSI SAHAM PERBANKAN INDONESIA
+DENGAN OPTIMASI ALGORITMA LONG SHORT-TERM MEMORY (LSTM)
+DEVELOPMENT OF AN INDONESIAN BANKING STOCK PREDICTION
+MODEL USING AN OPTIMIZED LONG SHORT-TERM MEMORY (LSTM)
+ALGORITHM
+< 3 kali enter >
+OUTLINE TESIS
+< 5 kali enter >
+Ukuran 4 x 4
+
+< 2 kali enter >
+Oleh:
+[NAMA]
+[NIM]
+
+FAKULTAS TEKNOLOGI INFORMASI DAN INDUSTRI
+UNIVERSITAS STIKUBANK (UNISBANK)
+SEMARANG
+[TAHUN PENGAJUAN]
+
+39
+
+OUTLINE TESIS
+
+1. Judul
+……………………………………………………………………………………………………………..
+2. Latar Belakang Permasalahan
+……………………………………………………………………………………………………………..
+3. Perumusan Masalah
+……………………………………………………………………………………………………………..
+4. Batasan Masalah
+……………………………………………………………………………………………………………..
+5. Tujuan dan Manfaat
+……………………………………………………………………………………………………………..
+6. Usulan Pemecahan Masalah.
+……………………………………………………………………………………………………………..
+7. Daftar Pustaka Sementara.
+……………………………………………………………………………………………………………..
+Diajukan oleh,
+
+Disetujui oleh:
+Tanggal:
+
+[NAMA LENGKAP]
+
+[DOSEN GAGASAN]
+
+[NIM]
+
+[NIDN]
+
+40
+
+Contoh Cover Proposal / Naskah Tesis
+PENGEMBANGAN MODEL PREDIKSI SAHAM PERBANKAN INDONESIA
+DENGAN OPTIMASI ALGORITMA LONG SHORT-TERM MEMORY (LSTM)
+DEVELOPMENT OF AN INDONESIAN BANKING STOCK PREDICTION
+MODEL USING AN OPTIMIZED LONG SHORT-TERM MEMORY (LSTM)
+ALGORITHM
+< 3 kali enter >
+TESIS
+< 5 kali enter >
+
+Ukuran 4 x 4
+
+< 2 kali enter >
+Oleh:
+DIDIK NUGROHO
+23.01.85.0018
+
+FAKULTAS TEKNOLOGI INFORMASI DAN INDUSTRI
+UNIVERSITAS STIKUBANK (UNISBANK)
+SEMARANG
+[TAHUN PENGAJUAN PROPOSAL / TAHUN LULUS TESIS]
+
+41
+
+Contoh Halaman Judul Proposal / Naskah Tesis
+PENGEMBANGAN MODEL PREDIKSI SAHAM PERBANKAN INDONESIA
+DENGAN OPTIMASI ALGORITMA LONG SHORT-TERM MEMORY (LSTM)
+DEVELOPMENT OF AN INDONESIAN BANKING STOCK PREDICTION
+MODEL USING AN OPTIMIZED LONG SHORT-TERM MEMORY (LSTM)
+ALGORITHM
+< 3 kali enter >
+TESIS
+Disusun untuk memenuhi syarat
+mencapai gelar Magister Komputer (M. Kom)
+pada Program Studi Teknologi Informasi
+Jenjang Program Strata-2
+< 11 kali enter >
+
+Oleh:
+DIDIK NUGROHO
+23.01.85.0018
+
+FAKULTAS TEKNOLOGI INFORMASI DAN INDUSTRI
+UNIVERSITAS STIKUBANK (UNISBANK)
+SEMARANG
+2025
+
+42
+
+Diperoleh dari: Setelah diseujui Dosen → Download Smart Campus → Dicetak → Di
+tandatangan Mahasiswa → Discan → Dimasukkan ke Naskah Tesis
+
+43
+
+Diperoleh dari: Setelah Penilaian Tesis Keluar → Download Smart Campus → Dicetak →
+Discan → Dimasukkan ke Naskah Tesis
+
+44
+
+Diperoleh dari: Setelah Penilaian Tesis Keluar → Download Smart Campus → Dicetak →
+Discan → Dimasukkan ke Naskah Tesis
+
+45
+
+46
+
+47
+
+48
+
+49
+
+50
+
+51
+
+52
+
+53
+
+54
+
+

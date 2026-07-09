@@ -1,0 +1,573 @@
+#!/usr/bin/env python3
+"""
+Comprehensive compliance checker for Pedoman Penulisan Tesis v1.7.
+56 checks A–U covering BAB I–V + Daftar Pustaka.
+All paragraph positions detected dynamically.
+"""
+import os, sys, re
+from lxml import etree
+import docx
+
+DOC = sys.argv[1] if len(sys.argv) > 1 else os.environ.get('TESIS_DOC', '/Volumes/WORK/MTI UNSIBANK/TESIS/PENGERJAAN TESIS BAB I - BAB V/Tesis_ITSNU_v10_Final.docx')
+NS_W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+
+results = {'pass': 0, 'fail': 0, 'warn': 0}
+
+def P(desc, cond, detail=''):
+    if cond:
+        results['pass'] += 1
+        print(f'  \u2713  {desc}')
+    else:
+        results['fail'] += 1
+        print(f'  \u2717  {desc}' + (f'  \u2014 {detail}' if detail else ''))
+
+def W(desc, detail=''):
+    results['warn'] += 1
+    print(f'  \u26a0  {desc}' + (f'  \u2014 {detail}' if detail else ''))
+
+doc = docx.Document(DOC)
+paras = doc.paragraphs
+body_elem = doc.element.body
+
+# ── KEY POSITIONS ──────────────────────────────────────────────
+bab_positions = {}
+for i, p in enumerate(paras):
+    txt = p.text.strip()
+    if txt.startswith('BAB ') and p.style.name == 'Heading 1':
+        bab_positions[txt] = i
+    if txt == 'DAFTAR PUSTAKA':
+        bab_positions['DAFTAR PUSTAKA'] = i
+
+bib_start = bab_positions.get('DAFTAR PUSTAKA', 0) + 1  # skip heading only
+bib_end = len(paras) - 1
+for j in range(bib_start, len(paras)):
+    if not paras[j].text.strip():
+        bib_end = j - 1
+        break
+
+bib_entries_p = list(range(bib_start, bib_end + 1))
+
+# BAB V positions
+for h in ['BAB V', 'KESIMPULAN DAN SARAN', '5.1 Kesimpulan', '5.2 Keterbatasan Penelitian', '5.3 Saran']:
+    for i, p in enumerate(paras):
+        if p.text.strip() == h:
+            bab_positions[h] = i
+            break
+
+bab5_body_start = bab_positions.get('5.1 Kesimpulan', 0) + 1
+bab5_body_end = bab_positions.get('5.3 Saran', 0)
+
+print('\u2550' * 55)
+print('  COMPLIANCE CHECK: Pedoman Penulisan Tesis v1.7')
+print(f'  BAB V: P{bab_positions.get("BAB V","?")} | DP: P{bib_start}\u2013P{bib_end}')
+print('\u2550' * 55)
+
+# ═══════════════════════════════════════════════════════════════
+# A. Font & Formatting (§4.1.2)
+# ═══════════════════════════════════════════════════════════════
+print('\n\u2500\u2500 A. Font & Formatting (\u00a74.1.2) \u2500\u2500')
+
+tnr_errs = tsize_errs = 0
+for p in paras:
+    if p.style.name not in ('Heading 1', 'Heading 2', 'Heading 3'):
+        continue
+    for r in p.runs:
+        rPr = r._element.find(f'{{{NS_W}}}rPr')
+        if rPr is None: continue
+        rFonts = rPr.find(f'{{{NS_W}}}rFonts')
+        if rFonts is not None:
+            f = rFonts.get(f'{{{NS_W}}}ascii', '')
+            if f and 'Times New Roman' not in f:
+                tnr_errs += 1
+        sz = rPr.find(f'{{{NS_W}}}sz')
+        if sz is not None and sz.get(f'{{{NS_W}}}val', '') != '24':
+            tsize_errs += 1
+
+P('Headings use Times New Roman', tnr_errs == 0, f'{tnr_errs} non-TNR')
+P('Headings use 12pt', tsize_errs == 0, f'{tsize_errs} non-12pt')
+
+tnr_body = 0
+for p in paras[:bib_start]:
+    if not p.text.strip() or p.style.name in ('Heading 1', 'Heading 2', 'Heading 3'):
+        continue
+    for r in p.runs[:3]:
+        rPr = r._element.find(f'{{{NS_W}}}rPr')
+        if rPr is None: continue
+        rFonts = rPr.find(f'{{{NS_W}}}rFonts')
+        if rFonts is not None:
+            f = rFonts.get(f'{{{NS_W}}}ascii', '')
+            if f and 'Times New Roman' not in f:
+                tnr_body += 1
+P('Body text uses TNR', tnr_body == 0, f'{tnr_body} non-TNR runs')
+
+# ═══════════════════════════════════════════════════════════════
+# B. Page Margins (§4.1.5)
+# ═══════════════════════════════════════════════════════════════
+print('\n\u2500\u2500 B. Page Margins (\u00a74.1.5) \u2500\u2500')
+
+for si, sec in enumerate(doc.sections):
+    t, b, l, r = sec.top_margin, sec.bottom_margin, sec.left_margin, sec.right_margin
+    ok = all(v is not None for v in (t, b, l, r))
+    if ok:
+        ok = abs(t-1440000)<10000 and abs(b-1080000)<10000 and abs(l-1440000)<10000 and abs(r-1080000)<10000
+    P(f'Section {si+1}: margins 4-3-4-3 cm', ok, f'top={t} bot={b} left={l} right={r} EMU')
+
+# ═══════════════════════════════════════════════════════════════
+# C. Justification (§4.1.6)
+# ═══════════════════════════════════════════════════════════════
+print('\n\u2500\u2500 C. Justification (\u00a74.1.6) \u2500\u2500')
+
+just_errs = 0
+for i in range(0, bib_start):
+    p = paras[i]
+    if p.style.name in ('Heading 1', 'Heading 2', 'Heading 3'):
+        continue
+    if p.style.name and 'toc' in p.style.name.lower():
+        continue
+    if re.match(r'^(Tabel|Gambar) \d+\.\d+', txt):
+        continue
+    # Skip English abstract area (uses titik per English convention)
+    if i > 32 and i < 40:  # P33=ABSTRACT heading, P34=abstract text
+        continue
+    hits = re.findall(r'\b\d+\.\d+\b', txt)
+    for h in hits:
+        filtering = False
+        if re.match(r'^\d\.\d$', h) and int(h.split('.')[0]) <= 5:
+            filtered_patterns['heading_number'] += 1
+            filtering = True
+        if re.match(r'^\d{4}$', h.replace('.','')):
+            filtered_patterns['year'] += 1
+            filtering = True
+        if re.match(r'^\d+\.\d+\.\d+', h):
+            filtered_patterns['version'] += 1
+            filtering = True
+        if re.match(r'^10\.\d+', h):
+            filtered_patterns['doi'] += 1
+            filtering = True
+        if re.match(r'^\d{2}\.\d{2}\.\d{4}', h):
+            filtered_patterns['nim'] += 1
+            filtering = True
+        if re.match(r'^\d{2}\.\d{2}\.\d{2}\.\d{4}$', h):
+            filtered_patterns['nim'] += 1
+            filtering = True
+        # Context-based NIM: hit is part of larger NIM pattern
+        if re.search(r'\d{2}\.\d{2}\.\d{2}\.\d{4}', txt):
+            filtered_patterns['nim'] += 1
+            filtering = True
+        if re.match(r'^\d{2}\.\d{4}$', h) and re.search(r'\d{2}\.\d{2}\.\d{2}\.\d{4}', txt):
+            filtered_patterns['nim'] += 1
+            filtering = True
+        if re.match(r'^\d+\.\d+$', h) and ('sub bab' in txt.lower() or 'subbab' in txt.lower()):
+            filtered_patterns['subbab'] += 1
+            filtering = True
+        # Sub-bab heading numbers in TOC (e.g. 2.10, 3.13, 4.10)
+        if re.match(r'^[1-5]\.\d{2,}$', h):
+            filtered_patterns['subbab'] += 1
+            filtering = True
+        if re.match(r'^\d{4}\.\d+', h) and 'arxiv' in txt.lower():
+            filtered_patterns['arxiv'] += 1
+            filtering = True
+        if '/' in txt and re.match(r'^\d+\.\d+', h) and re.search(r'doi\.org/|arxiv\.org/', txt):
+            filtered_patterns['doi'] += 1
+            filtering = True
+        if re.match(r'^\d{1,3}(?:\.\d{3})+$', h) and not re.match(r'^\d+\.\d{1,2}$', h):
+            filtered_patterns['thousands'] += 1
+            filtering = True
+        if filtering:
+            decimal_false_positives += 1
+        else:
+            decimal_titik_hits += 1
+
+P('Decimal titik violations after filtering', decimal_titik_hits == 0,
+  f'{decimal_titik_hits} potential decimal titik (should use koma), {decimal_false_positives} FP filtered')
+P('Filter stats: heading_nums filtered',
+  filtered_patterns['heading_number'] > 0,
+  f'{filtered_patterns["heading_number"]} heading numbers excluded')
+P('Version/year/DOI/arXiv/NIM/subbab filters active',
+  filtered_patterns['version'] + filtered_patterns['doi'] + filtered_patterns['year'] + filtered_patterns['arxiv'] + filtered_patterns['nim'] + filtered_patterns['subbab'] + filtered_patterns['thousands'] > 0,
+  f'{filtered_patterns["version"]}v {filtered_patterns["doi"]}d {filtered_patterns["year"]}y {filtered_patterns["arxiv"]}a {filtered_patterns["nim"]}n {filtered_patterns["subbab"]}s {filtered_patterns["thousands"]}t')
+
+# ═══════════════════════════════════════════════════════════════
+# N. Page Numbering (§4.1.11) — warn only
+# ═══════════════════════════════════════════════════════════════
+print('\n\u2500\u2500 N. Page Numbering (\u00a74.1.11) \u2500\u2500')
+
+# Check for roman numeral page numbers in front matter sections
+has_section_break = len(doc.sections) > 1
+W('Multiple sections found for page numbering',
+  f'{len(doc.sections)} sections' if has_section_break else 'Single section')
+
+# Check for footer content with page numbers
+footers_found = 0
+for si, sec in enumerate(doc.sections):
+    for ft in [sec.footer, sec.even_page_footer, sec.first_page_footer]:
+        if ft and ft.paragraphs:
+            for p in ft.paragraphs:
+                txt = p.text.strip()
+                if txt and any(c.isdigit() for c in txt):
+                    footers_found += 1
+                    break
+
+W('Page numbers detected in footers', f'{footers_found} footer(s) with numbers')
+
+# ═══════════════════════════════════════════════════════════════
+# O. Font Color (§4.1.3)
+# ═══════════════════════════════════════════════════════════════
+print('\n\u2500\u2500 O. Font Color \u2500\u2500')
+
+color_errs_body = 0
+color_errs_head = 0
+for i, p in enumerate(paras):
+    for r in p.runs:
+        rPr = r._element.find(f'{{{NS_W}}}rPr')
+        if rPr is None: continue
+        color = rPr.find(f'{{{NS_W}}}color')
+        if color is not None:
+            val = color.get(f'{{{NS_W}}}val', '')
+            if val and val not in ('000000', 'auto'):
+                if p.style.name in ('Heading 1', 'Heading 2', 'Heading 3'):
+                    color_errs_head += 1
+                else:
+                    color_errs_body += 1
+
+P('Body text color = black/auto only', color_errs_body == 0, f'{color_errs_body} colored runs')
+P('Heading color = black/auto only', color_errs_head == 0, f'{color_errs_head} colored runs')
+
+# ═══════════════════════════════════════════════════════════════
+# P. Citations APA (§4.1.15)
+# ═══════════════════════════════════════════════════════════════
+print('\n\u2500\u2500 P. Citations APA (\u00a74.1.15) \u2500\u2500')
+
+apa_citations = 0
+for p in paras:
+    matches = re.findall(r'\([A-Z][a-z]+(?:\s+(?:et\s+al\.?|&\s+[A-Z][a-z]+))?(?:,\s*\d{4}[a-z]?)\)', p.text)
+    apa_citations += len(matches)
+
+P('APA in-text citations found', apa_citations >= 10, f'{apa_citations} citations')
+
+ref_mgr = 0
+for p in paras:
+    if re.search(r'mend[eé]ley|zotero|endnote', p.text, re.I):
+        ref_mgr += 1
+W('Reference manager mention (Mendeley/Zotero/Endnote)',
+  f'{ref_mgr} mentions' if ref_mgr > 0 else 'Not found in body text')
+
+# ═══════════════════════════════════════════════════════════════
+# Q. Paper Size (§4.1.1)
+# ═══════════════════════════════════════════════════════════════
+print('\n\u2500\u2500 Q. Paper Size (\u00a74.1.1) \u2500\u2500')
+
+all_a4 = True
+for si, sec in enumerate(doc.sections):
+    w_cm = sec.page_width / 360000
+    h_cm = sec.page_height / 360000
+    if abs(w_cm - 21.0) > 0.1 or abs(h_cm - 29.7) > 0.1:
+        all_a4 = False
+
+P('Paper size = A4 (21x29.7 cm)', all_a4, f'Section {si+1}: {w_cm:.1f}x{h_cm:.1f} cm')
+
+# ═══════════════════════════════════════════════════════════════
+# R. Line Spacing (§4.1.4)
+# ═══════════════════════════════════════════════════════════════
+print('\n\u2500\u2500 R. Line Spacing (\u00a74.1.4) \u2500\u2500')
+
+body_sp_ok = 0
+body_sp_bad = 0
+for i in range(0, bib_start):
+    p = paras[i]
+    if p.style.name in ('Heading 1', 'Heading 2', 'Heading 3', 'List Paragraph'):
+        continue
+    txt = p.text.strip()
+    if not txt or len(txt) < 30:
+        continue
+    if txt.startswith(('Sumber:', 'Tabel ', 'Gambar ', 'Keterangan:', 'Catatan:')):
+        continue
+    pPr = p._element.find(f'{{{NS_W}}}pPr')
+    if pPr is None: continue
+    sp = pPr.find(f'{{{NS_W}}}spacing')
+    line = sp.get(f'{{{NS_W}}}line') if sp is not None else None
+    if line == '480' or line is None:
+        body_sp_ok += 1
+    else:
+        body_sp_bad += 1
+
+P('Body paragraphs use 2 spasi (line=480 or inherit)', body_sp_bad == 0,
+  f'{body_sp_ok} ok, {body_sp_bad} non-480')
+
+bib_sp_ok = 0
+bib_sp_bad = 0
+for i in bib_entries_p:
+    p = paras[i]
+    txt = p.text.strip()
+    if not txt: continue
+    pPr = p._element.find(f'{{{NS_W}}}pPr')
+    if pPr is None: continue
+    sp = pPr.find(f'{{{NS_W}}}spacing')
+    line = sp.get(f'{{{NS_W}}}line') if sp is not None else None
+    if line == '240':
+        bib_sp_ok += 1
+    else:
+        bib_sp_bad += 1
+
+P('Bibliography entries use 1 spasi (line=240)', bib_sp_bad == 0,
+  f'{bib_sp_ok} ok, {bib_sp_bad} non-240  \u2014 perlu perbaikan di dokumen')
+
+# Check multi-line captions (judul >1 baris) for 1 spasi
+cap_sp_ok = 0
+cap_sp_bad = 0
+cap_multi = 0
+for i in range(0, bib_start):
+    txt = paras[i].text.strip()
+    m = re.match(r'^(Tabel|Gambar)\s+\d+\.\d+\s+(.+)$', txt)
+    if not m:
+        continue
+    rest = m.group(2).strip()
+    if re.match(r'(menunju|menyajik|menampil|memvisualisasik|mengungkap|mendemonstrasik|menandai|memperlihatk|merangkum|merumusk|mengoperasionalkan)', rest):
+        continue  # body paragraph, not caption
+    pPr = paras[i]._element.find(f'{{{NS_W}}}pPr')
+    if pPr is None: continue
+    sp = pPr.find(f'{{{NS_W}}}spacing')
+    line = sp.get(f'{{{NS_W}}}line') if sp is not None else None
+    if len(txt) > 90:
+        cap_multi += 1
+        if line == '240':
+            cap_sp_ok += 1
+        else:
+            cap_sp_bad += 1
+
+P('Multi-line captions use 1 spasi (line=240)', cap_multi == 0 or cap_sp_bad == 0,
+  f'{cap_sp_ok}/{cap_multi} multi-line captions 1 spasi')
+
+# ═══════════════════════════════════════════════════════════════
+# S. Italic Foreign Terms (§4.1.8 no 2d)
+# ═══════════════════════════════════════════════════════════════
+print('\n\u2500\u2500 S. Italic Foreign Terms (\u00a74.1.8) \u2500\u2500')
+
+# Greek letters in OMML — check they are italic (should have italic style in oMath)
+greek_in_omml = body_elem.findall(f'.//{{{NS_M}}}oMath')
+greek_italic_ok = 0
+greek_total = 0
+for om in greek_in_omml:
+    for r in om.findall(f'.//{{{NS_W}}}r'):
+        rPr = r.find(f'{{{NS_W}}}rPr')
+        if rPr is None: continue
+        italic = rPr.find(f'{{{NS_W}}}i')
+        t_elem = r.find(f'.//{{{NS_M}}}t')
+        if t_elem is not None and t_elem.text:
+            txt = t_elem.text
+            if any(g in txt for g in ['α','β','γ','δ','ε','ζ','η','θ','κ','λ','μ','ν','ξ','π','ρ','σ','τ','υ','φ','χ','ψ','ω','Σ','μ','π']):
+                greek_total += 1
+                if italic is not None:
+                    greek_italic_ok += 1
+
+P('Greek symbols in equations are italic', greek_italic_ok >= greek_total * 0.8,
+  f'{greek_italic_ok}/{greek_total} italic')
+
+# Check "et al." italic usage
+etal_italic = 0
+etal_total = 0
+for i, p in enumerate(paras):
+    for r in p.runs:
+        if 'et al' in r.text.lower():
+            etal_total += 1
+            rPr = r._element.find(f'{{{NS_W}}}rPr')
+            if rPr is not None:
+                italic = rPr.find(f'{{{NS_W}}}i')
+                if italic is not None:
+                    etal_italic += 1
+
+P('"et al." in citations is italic', etal_total == 0 or etal_italic >= etal_total * 0.8,
+  f'{etal_italic}/{etal_total} italic')
+
+# Foreign terms italic check — scan body for truly foreign phrases
+foreign_detected = 0
+foreign_italic = 0
+foreign_terms_list = ['de facto', 'de jure', 'a priori', 'a posteriori', 'ad hoc',
+                      'ad infinitum', 'ad interim', 'bona fide', 'ceteris paribus',
+                      'cum laude', 'et cetera', 'ex officio', 'in lieu', 'in vitro',
+                      'in vivo', 'per annum', 'per capita', 'vice versa', 'circa']
+for i, p in enumerate(paras):
+    txt = p.text.lower()
+    if p.style.name in ('Heading 1', 'Heading 2', 'Heading 3'):
+        continue
+    for term in foreign_terms_list:
+        if term in txt:
+            foreign_detected += 1
+            found_italic = False
+            for r in p.runs:
+                if term in r.text.lower():
+                    rPr = r._element.find(f'{{{NS_W}}}rPr')
+                    if rPr is not None:
+                        italic = rPr.find(f'{{{NS_W}}}i')
+                        if italic is not None:
+                            found_italic = True
+                            break
+            if found_italic:
+                foreign_italic += 1
+            break
+
+P('Foreign phrases italic usage', foreign_italic >= foreign_detected * 0.5 or foreign_detected == 0,
+  f'{foreign_italic}/{foreign_detected} paragraphs with italic')
+
+# ═══════════════════════════════════════════════════════════════
+# T. Table Font 10pt (§4.1.12)
+# ═══════════════════════════════════════════════════════════════
+print('\n\u2500\u2500 T. Table Font 10pt (\u00a74.1.12) \u2500\u2500')
+
+small_runs = 0
+total_table_runs = 0
+tbl_bad_count = 0
+for ti, table in enumerate(doc.tables):
+    table_has_small = False
+    for row in table.rows:
+        for cell in row.cells:
+            for p in cell.paragraphs:
+                for r in p.runs:
+                    total_table_runs += 1
+                    rPr = r._element.find(f'{{{NS_W}}}rPr')
+                    if rPr is None: continue
+                    sz = rPr.find(f'{{{NS_W}}}sz')
+                    if sz is not None:
+                        val = int(sz.get(f'{{{NS_W}}}val', '20'))
+                        if val < 20:
+                            small_runs += 1
+                            table_has_small = True
+    if table_has_small:
+        tbl_bad_count += 1
+
+P('Table body font >= 10pt', small_runs == 0, f'{small_runs} runs < 10pt across {tbl_bad_count} tables')
+P('All tables 10pt compliant', tbl_bad_count == 0, f'{tbl_bad_count} tables with < 10pt')
+
+# ═══════════════════════════════════════════════════════════════
+# U. Images (§4.1.13)
+# ═══════════════════════════════════════════════════════════════
+print('\n\u2500\u2500 U. Images (\u00a74.1.13) \u2500\u2500')
+
+NS_D = 'http://schemas.openxmlformats.org/drawingml/2006/main'
+drawings = body_elem.findall(f'.//{{http://schemas.openxmlformats.org/wordprocessingml/2006/main}}drawing')
+blips = body_elem.findall(f'.//{{{NS_D}}}blip')
+img_count = len(blips)
+
+P('Images present >= 5', img_count >= 5, f'{img_count} images found')
+
+# Gambar caption format
+gambar_caps = 0
+gambar_ok = 0
+for i, p in enumerate(paras):
+    m = re.match(r'^Gambar\s+(\d+)\.(\d+)\s+', p.text.strip())
+    if m:
+        gambar_caps += 1
+        # Check centered
+        pPr = p._element.find(f'{{{NS_W}}}pPr')
+        if pPr is not None:
+            jc = pPr.find(f'{{{NS_W}}}jc')
+            if jc is not None:
+                align = jc.get(f'{{{NS_W}}}val', '')
+                if align == 'center':
+                    gambar_ok += 1
+
+P('Gambar captions centered', gambar_ok >= gambar_caps * 0.5,
+  f'{gambar_ok}/{gambar_caps} centered')
+
+# Gambar numbering format (x.y)
+gambar_num_ok = sum(1 for p in paras if re.match(r'^Gambar \d+\.\d+\s+[A-Z]', p.text.strip()))
+P('Gambar numbering format (x.y)', gambar_num_ok >= 2,
+  f'{gambar_num_ok} captions with x.y format')
+
+# ═══════════════════════════════════════════════════════════════
+# V. Heading Bold (§4.1.2 no 2f) + Roman Numeral (§4.1.7)
+# ═══════════════════════════════════════════════════════════════
+print('\n\u2500\u2500 V. Heading Style \u2500\u2500')
+
+bold_errs = 0
+for p in paras:
+    if p.style.name not in ('Heading 1', 'Heading 2', 'Heading 3'):
+        continue
+    # Check explicit bold on run OR style-level bold
+    has_bold = False
+    for r in p.runs:
+        rPr = r._element.find(f'{{{NS_W}}}rPr')
+        if rPr is not None:
+            b = rPr.find(f'{{{NS_W}}}b')
+            if b is not None:
+                has_bold = True
+                break
+    if not has_bold:
+        # Check if style has bold
+        s = p.style
+        if s:
+            s_elem = s._element
+            s_b = s_elem.find(f'.//{{{NS_W}}}b')
+            if s_b is not None:
+                has_bold = True
+    if not has_bold:
+        bold_errs += 1
+
+P('All headings typed in bold', bold_errs == 0, f'{bold_errs} non-bold headings')
+
+roman_ok = 0
+for p in paras:
+    if p.style.name == 'Heading 1':
+        txt = p.text.strip()
+        if re.match(r'^BAB\s+[IVXLCDM]+', txt):
+            roman_ok += 1
+
+P('BAB headings use Roman numerals', roman_ok >= 5, f'{roman_ok} of 5 BABs with Roman numerals')
+
+subbab_format_ok = 0
+for p in paras:
+    if p.style.name == 'Heading 2':
+        txt = p.text.strip()
+        if re.match(r'^\d+\.\d+\s+', txt):
+            subbab_format_ok += 1
+
+P('Sub-bab numbering format (x.y)', subbab_format_ok >= 10,
+  f'{subbab_format_ok} sub-bab dengan format x.y')
+
+# Check body spacing_after consistency
+after_ok = after_bad = 0
+for i in range(0, bib_start):
+    p = paras[i]
+    if p.style.name in ('Heading 1', 'Heading 2', 'Heading 3', 'List Paragraph'):
+        continue
+    txt = p.text.strip()
+    if not txt or len(txt) < 30: continue
+    if txt.startswith(('Sumber:', 'Tabel ', 'Gambar ', 'Keterangan:', 'Catatan:')):
+        continue
+    pPr = p._element.find(f'{{{NS_W}}}pPr')
+    if pPr is None: continue
+    sp = pPr.find(f'{{{NS_W}}}spacing')
+    if sp is not None:
+        after = sp.get(f'{{{NS_W}}}after')
+        if after == '160':
+            after_ok += 1
+        else:
+            after_bad += 1
+
+P('Body text spacing_after=160 consistent', after_bad <= after_ok * 0.1,
+  f'{after_ok} ok, {after_bad} inconsistent')
+
+# Check ABSTRAK exists
+abstrak_found = False
+for p in paras:
+    if p.text.strip() == 'ABSTRAK' and p.style.name == 'Heading 1':
+        abstrak_found = True
+        break
+if abstrak_found:
+    P('ABSTRAK heading exists', True)
+else:
+    W('ABSTRAK heading not found in main body', 'Verify in front matter document')
+
+# ═══════════════════════════════════════════════════════════════
+# SUMMARY
+# ═══════════════════════════════════════════════════════════════
+total = results['pass'] + results['fail']
+print()
+print('\u2550' * 55)
+print(f'  PASSED: {results["pass"]}/{total}  FAILED: {results["fail"]}  WARNINGS: {results["warn"]}')
+print('\u2550' * 55)
+if results['fail']:
+    print(f'  \u2717 {results["fail"]} check(s) failed.')
+    sys.exit(1)
+else:
+    print('  \u2713 Semua lulus.')

@@ -1,0 +1,2874 @@
+!pip install transformers==4.38.2 torch scikit-learn pandas \
+             openpyxl xlrd geopy matplotlib seaborn scipy \
+             adjustText xlsxwriter -q
+
+print("✅ Semua library berhasil diinstall")
+
+import os, re, warnings, json
+import numpy as np
+import pandas as pd
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import matplotlib.gridspec as gridspec
+import seaborn as sns
+from pathlib import Path
+from scipy.spatial.distance import cdist
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.mixture import GaussianMixture
+from sklearn.metrics import (silhouette_score, calinski_harabasz_score,
+                             adjusted_rand_score)
+from sklearn.metrics.pairwise import cosine_similarity
+
+warnings.filterwarnings("ignore")
+np.random.seed(42)
+matplotlib.rcParams.update({
+    "font.family": "DejaVu Sans",
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+    "figure.dpi": 150,
+    "savefig.bbox": "tight",
+    "savefig.dpi": 200,
+})
+
+# ── Konstanta Global ─────────────────────────────────────────────────────
+FASE = {
+    2019: "Pre-COVID",
+    2020: "COVID Crisis", 2021: "COVID Crisis",
+    2022: "Recovery",    2023: "Recovery",    2024: "Recovery",
+}
+FASE_COL  = {"Pre-COVID": "#3B8BD4", "COVID Crisis": "#E24B4A", "Recovery": "#1D9E75"}
+CL_COLORS = ["#3B8BD4","#1D9E75","#E24B4A","#BA7517","#534AB7","#993556"]
+OUTPUT_DIR = Path("output_bab4")
+OUTPUT_DIR.mkdir(exist_ok=True)
+
+print("✅ Import selesai | Output folder:", OUTPUT_DIR.resolve())
+
+from google.colab import files
+
+print("⬆️  Upload file: DATASET PMB ITSNUPKL20192024_FIX.xls")
+uploaded = files.upload()
+FNAME = list(uploaded.keys())[0]
+print(f"✅ File diterima: {FNAME}")
+
+# Baca semua sheet, gabungkan
+xf   = pd.ExcelFile(FNAME)
+dfs  = []
+for sn in xf.sheet_names:
+    df_s = pd.read_excel(FNAME, sheet_name=sn, dtype=str)
+    df_s["_sheet"] = sn
+    dfs.append(df_s)
+    print(f"   Sheet '{sn}': {len(df_s)} baris, {len(df_s.columns)} kolom")
+
+raw = pd.concat(dfs, ignore_index=True)
+raw.columns = [str(c).strip() for c in raw.columns]   # strip whitespace
+print(f"\n📦 Total baris gabungan: {len(raw):,}")
+print(f"📋 Kolom: {list(raw.columns)}")
+
+def detect_col(cols, patterns, label=""):
+    for p in patterns:
+        found = [c for c in cols if re.search(p, c, re.I)]
+        if found:
+            print(f"   {label:12} → '{found[0]}'")
+            return found[0]
+    print(f"   {label:12} → ⚠️  TIDAK TERDETEKSI – pilih manual")
+    return None
+
+print("🔍 Auto-deteksi kolom:")
+COLS = dict(
+    tahun   = detect_col(raw.columns, [r"tahun",r"year",r"angkatan",r"^ta[_\s]",r"periode"], "Tahun"),
+    prodi   = detect_col(raw.columns, [r"prodi",r"program.studi",r"jurusan",r"program"], "Prodi"),
+    jalur   = detect_col(raw.columns, [r"jalur",r"jenis.jalur",r"jenis"], "Jalur"),
+    kab     = detect_col(raw.columns, [r"kabupaten",r"\bkab\b",r"kota"], "Kabupaten"),
+    kec     = detect_col(raw.columns, [r"kecamatan",r"\bkec\b"], "Kecamatan"),
+    sekolah = detect_col(raw.columns, [r"sekolah",r"asal.sekolah",r"nama.sekolah"], "Sekolah"),
+    alamat  = detect_col(raw.columns, [r"alamat",r"address",r"domisili"], "Alamat"),
+)
+
+# ── EDIT MANUAL JIKA KOLOM SALAH DETEKSI ────────────────────────────────
+# Hapus tanda # dan ganti nilainya jika perlu:
+# COLS["prodi"]   = "NAMA_KOLOM_ASLI"
+# COLS["jalur"]   = "NAMA_KOLOM_ASLI"
+# COLS["kab"]     = "NAMA_KOLOM_ASLI"
+
+# Ekstrak tahun
+def extract_year(row):
+    candidates = [COLS["tahun"]] + list(raw.columns) if COLS["tahun"] else list(raw.columns)
+    for col in candidates:
+        try:
+            y = int(str(row[col]).strip()[:4])
+            if 2019 <= y <= 2024:
+                return y
+        except Exception:
+            pass
+    return None
+
+raw["_tahun"] = raw.apply(extract_year, axis=1)
+raw = raw[raw["_tahun"].notna()].copy()
+raw["_tahun"] = raw["_tahun"].astype(int)
+
+print(f"\n📅 Distribusi per tahun:")
+DIST = raw["_tahun"].value_counts().sort_index()
+for y, n in DIST.items():
+    print(f"   {y}  [{FASE[y]:12}]  → {n:4d} pendaftar")
+print(f"   TOTAL               → {len(raw):,}")
+
+ABBR = {
+    r"\bjl\b":  "jalan",    r"\bds\b":  "desa",
+    r"\bkec\b": "kecamatan",r"\bkel\b": "kelurahan",
+    r"\bkab\b": "kabupaten",r"\brt\b":  "rukun tetangga",
+    r"\brw\b":  "rukun warga",r"\bgg\b": "gang",
+    r"\bno\b":  "nomor",    r"\bsmk\b": "sekolah menengah kejuruan",
+    r"\bsma\b": "sekolah menengah atas",
+    r"\bma\b":  "madrasah aliyah",
+    r"\bmts\b": "madrasah tsanawiyah",
+    r"\bmi\b":  "madrasah ibtidaiyah",
+    r"\bsd\b":  "sekolah dasar",
+    r"\bsmp\b": "sekolah menengah pertama",
+    r"\bpkl\b": "pekalongan",
+    r"\bbth\b": "batang",
+    r"\bpml\b": "pemalang",
+}
+
+def preprocess_text(text):
+    if pd.isna(text) or str(text).strip() in ("", "nan", "-", "0"):
+        return ""
+    t = str(text).lower()
+    t = re.sub(r"[^a-z0-9\s]", " ", t)
+    t = re.sub(r"\s+", " ", t).strip()
+    for pat, rep in ABBR.items():
+        t = re.sub(pat, rep, t)
+    return t
+
+TEXT_COLS = {k: COLS[k] for k in ("sekolah", "alamat", "kab", "kec") if COLS.get(k)}
+for key, col in TEXT_COLS.items():
+    raw[f"_clean_{key}"] = raw[col].apply(preprocess_text)
+    print(f"✅ Preprocessing '{col}' selesai")
+
+# Tabel 4.3 – contoh normalisasi
+print("\n📋 TABEL 4.3 – Contoh Normalisasi Text Preprocessing:")
+samples = raw[[COLS["sekolah"], "_clean_sekolah"]].drop_duplicates().head(8) if COLS.get("sekolah") else pd.DataFrame()
+if not samples.empty:
+    samples.columns = ["Teks Asli", "Hasil Preprocessing"]
+    print(samples.to_string(index=False))
+    samples.to_excel(OUTPUT_DIR / "tabel_4_3_preprocessing.xlsx", index=False)
+
+import torch
+from transformers import AutoTokenizer, AutoModel
+
+MODEL_NAME = "indobenchmark/indobert-base-p1"
+print(f"📥 Memuat IndoBERT: {MODEL_NAME}")
+print("   (Download ~500 MB, makan waktu 2–5 menit...)\n")
+
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+bert_model = AutoModel.from_pretrained(MODEL_NAME)
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+bert_model = bert_model.to(DEVICE).eval()
+print(f"✅ IndoBERT dimuat di: {DEVICE}")
+
+def get_embeddings(texts, batch_size=64, max_len=64):
+    """Mean-pooling IndoBERT embedding."""
+    all_emb = []
+    texts = [t if t.strip() else "[UNK]" for t in texts]
+    for i in range(0, len(texts), batch_size):
+        batch = texts[i : i + batch_size]
+        enc = tokenizer(
+            batch, padding=True, truncation=True,
+            max_length=max_len, return_tensors="pt"
+        )
+        enc = {k: v.to(DEVICE) for k, v in enc.items()}
+        with torch.no_grad():
+            out = bert_model(**enc)
+        mask = enc["attention_mask"].unsqueeze(-1).float()
+        emb  = (out.last_hidden_state * mask).sum(1) / mask.sum(1)
+        all_emb.append(emb.cpu().numpy())
+        if (i // batch_size) % 10 == 0:
+            print(f"   batch {i//batch_size+1}/{(len(texts)+batch_size-1)//batch_size} ...")
+    return np.vstack(all_emb)   # (N, 768)
+
+# Gabungkan teks untuk embedding
+def build_text(row):
+    parts = []
+    for k in ("sekolah", "kab", "kec", "alamat"):
+        v = row.get(f"_clean_{k}", "")
+        if v:
+            parts.append(v)
+    return " ".join(parts) or "tidak diketahui"
+
+raw["_text_emb"] = raw.apply(build_text, axis=1)
+print(f"\n⚙️  Mengekstrak embedding untuk {len(raw):,} baris...")
+EMB_MATRIX = get_embeddings(raw["_text_emb"].tolist())   # (N, 768)
+print(f"✅ Embedding shape: {EMB_MATRIX.shape}")
+
+# Simpan embedding (agar tidak perlu ulang)
+np.save(OUTPUT_DIR / "indobert_embeddings.npy", EMB_MATRIX)
+print(f"💾 Embedding disimpan: {OUTPUT_DIR}/indobert_embeddings.npy")
+
+# ── Tabel 4.3a: Cosine Similarity antar periode ─────────────────────────
+print("\n📋 TABEL 4.3a – Cosine Similarity Antar Periode:")
+print(f"{'Transisi':>12}  {'Cosine Sim':>10}  {'Kategori':>10}")
+print("-" * 40)
+years_sorted = sorted(raw["_tahun"].unique())
+sim_results  = []
+for i in range(len(years_sorted) - 1):
+    y1, y2 = years_sorted[i], years_sorted[i + 1]
+    idx1 = raw[raw["_tahun"] == y1].index[:100]
+    idx2 = raw[raw["_tahun"] == y2].index[:100]
+    pos1 = [raw.index.get_loc(j) for j in idx1]
+    pos2 = [raw.index.get_loc(j) for j in idx2]
+    sim  = float(cosine_similarity(EMB_MATRIX[pos1], EMB_MATRIX[pos2]).mean())
+    cat  = "Stabil" if sim > 0.85 else "Moderat" if sim > 0.70 else "Rendah"
+    sim_results.append({"Transisi": f"{y1}→{y2}", "Cosine Sim": round(sim, 4), "Kategori": cat})
+    print(f"   {y1}→{y2}  {sim:>10.4f}  {cat:>10}")
+
+df_sim = pd.DataFrame(sim_results)
+df_sim.to_excel(OUTPUT_DIR / "tabel_4_3a_cosine_similarity.xlsx", index=False)
+avg_sim = df_sim["Cosine Sim"].mean()
+print(f"\n   Rata-rata Cosine Similarity: {avg_sim:.4f}")
+
+print("⚙️  Encoding kategorikal...")
+
+# Fit encoder HANYA pada 2019
+REF_YEAR  = 2019
+ref_mask  = raw["_tahun"] == REF_YEAR
+ENCODERS  = {}
+for key in ("prodi", "jalur", "kab"):
+    col = COLS.get(key)
+    if not col:
+        continue
+    enc = LabelEncoder()
+    enc.fit(raw.loc[ref_mask, col].fillna("Unknown"))
+    ENCODERS[key] = enc
+    print(f"   LabelEncoder '{key}': {len(enc.classes_)} kelas")
+
+def safe_encode(enc, series):
+    known = set(enc.classes_)
+    mapped = series.fillna("Unknown").apply(
+        lambda x: x if x in known else "Unknown"
+    )
+    if "Unknown" not in known:
+        enc.classes_ = np.append(enc.classes_, "Unknown")
+    return enc.transform(mapped)
+
+cat_arrays = []
+for key, enc in ENCODERS.items():
+    col = COLS[key]
+    arr = safe_encode(enc, raw[col]).reshape(-1, 1)
+    cat_arrays.append(arr)
+
+CAT_FEATURES = np.hstack(cat_arrays).astype(float)   # (N, n_cat)
+X_FULL = np.hstack([EMB_MATRIX, CAT_FEATURES])        # (N, 768+n_cat)
+print(f"\n✅ Feature matrix shape: {X_FULL.shape}")
+print(f"   (768 IndoBERT embedding + {CAT_FEATURES.shape[1]} kategorikal)")
+
+print("⚙️  Encoding kategorikal...")
+
+# Fit encoder HANYA pada 2019
+REF_YEAR  = 2019
+ref_mask  = raw["_tahun"] == REF_YEAR
+ENCODERS  = {}
+for key in ("prodi", "jalur", "kab"):
+    col = COLS.get(key)
+    if not col:
+        continue
+    enc = LabelEncoder()
+    enc.fit(raw.loc[ref_mask, col].fillna("Unknown"))
+    ENCODERS[key] = enc
+    print(f"   LabelEncoder '{key}': {len(enc.classes_)} kelas")
+
+def safe_encode(enc, series):
+    known = set(enc.classes_)
+    mapped = series.fillna("Unknown").apply(
+        lambda x: x if x in known else "Unknown"
+    )
+    if "Unknown" not in known:
+        enc.classes_ = np.append(enc.classes_, "Unknown")
+    return enc.transform(mapped)
+
+cat_arrays = []
+for key, enc in ENCODERS.items():
+    col = COLS[key]
+    arr = safe_encode(enc, raw[col]).reshape(-1, 1)
+    cat_arrays.append(arr)
+
+CAT_FEATURES = np.hstack(cat_arrays).astype(float)   # (N, n_cat)
+X_FULL = np.hstack([EMB_MATRIX, CAT_FEATURES])        # (N, 768+n_cat)
+print(f"\n✅ Feature matrix shape: {X_FULL.shape}")
+print(f"   (768 IndoBERT embedding + {CAT_FEATURES.shape[1]} kategorikal)")
+
+print("⚙️  Encoding kategorikal...")
+
+# Fit encoder HANYA pada 2019
+REF_YEAR  = 2019
+ref_mask  = raw["_tahun"] == REF_YEAR
+ENCODERS  = {}
+for key in ("prodi", "jalur", "kab"):
+    col = COLS.get(key)
+    if not col:
+        continue
+    enc = LabelEncoder()
+    enc.fit(raw.loc[ref_mask, col].fillna("Unknown"))
+    ENCODERS[key] = enc
+    print(f"   LabelEncoder '{key}': {len(enc.classes_)} kelas")
+
+def safe_encode(enc, series):
+    known = set(enc.classes_)
+    mapped = series.fillna("Unknown").apply(
+        lambda x: x if x in known else "Unknown"
+    )
+    if "Unknown" not in known:
+        enc.classes_ = np.append(enc.classes_, "Unknown")
+    return enc.transform(mapped)
+
+cat_arrays = []
+for key, enc in ENCODERS.items():
+    col = COLS[key]
+    arr = safe_encode(enc, raw[col]).reshape(-1, 1)
+    cat_arrays.append(arr)
+
+CAT_FEATURES = np.hstack(cat_arrays).astype(float)   # (N, n_cat)
+X_FULL = np.hstack([EMB_MATRIX, CAT_FEATURES])        # (N, 768+n_cat)
+print(f"\n✅ Feature matrix shape: {X_FULL.shape}")
+print(f"   (768 IndoBERT embedding + {CAT_FEATURES.shape[1]} kategorikal)")
+
+print("⚙️  Encoding kategorikal...")
+
+# Fit encoder HANYA pada 2019
+REF_YEAR  = 2019
+ref_mask  = raw["_tahun"] == REF_YEAR
+ENCODERS  = {}
+for key in ("prodi", "jalur", "kab"):
+    col = COLS.get(key)
+    if not col:
+        continue
+    enc = LabelEncoder()
+    enc.fit(raw.loc[ref_mask, col].fillna("Unknown"))
+    ENCODERS[key] = enc
+    print(f"   LabelEncoder '{key}': {len(enc.classes_)} kelas")
+
+def safe_encode(enc, series):
+    known = set(enc.classes_)
+    mapped = series.fillna("Unknown").apply(
+        lambda x: x if x in known else "Unknown"
+    )
+    if "Unknown" not in known:
+        enc.classes_ = np.append(enc.classes_, "Unknown")
+    return enc.transform(mapped)
+
+cat_arrays = []
+for key, enc in ENCODERS.items():
+    col = COLS[key]
+    arr = safe_encode(enc, raw[col]).reshape(-1, 1)
+    cat_arrays.append(arr)
+
+CAT_FEATURES = np.hstack(cat_arrays).astype(float)   # (N, n_cat)
+X_FULL = np.hstack([EMB_MATRIX, CAT_FEATURES])        # (N, 768+n_cat)
+print(f"\n✅ Feature matrix shape: {X_FULL.shape}")
+print(f"   (768 IndoBERT embedding + {CAT_FEATURES.shape[1]} kategorikal)")
+
+print("⚙️  Encoding kategorikal...")
+
+# Fit encoder HANYA pada 2019
+REF_YEAR  = 2019
+ref_mask  = raw["_tahun"] == REF_YEAR
+ENCODERS  = {}
+for key in ("prodi", "jalur", "kab"):
+    col = COLS.get(key)
+    if not col:
+        continue
+    enc = LabelEncoder()
+    enc.fit(raw.loc[ref_mask, col].fillna("Unknown"))
+    ENCODERS[key] = enc
+    print(f"   LabelEncoder '{key}': {len(enc.classes_)} kelas")
+
+def safe_encode(enc, series):
+    known = set(enc.classes_)
+    mapped = series.fillna("Unknown").apply(
+        lambda x: x if x in known else "Unknown"
+    )
+    if "Unknown" not in known:
+        enc.classes_ = np.append(enc.classes_, "Unknown")
+    return enc.transform(mapped)
+
+cat_arrays = []
+for key, enc in ENCODERS.items():
+    col = COLS[key]
+    arr = safe_encode(enc, raw[col]).reshape(-1, 1)
+    cat_arrays.append(arr)
+
+CAT_FEATURES = np.hstack(cat_arrays).astype(float)   # (N, n_cat)
+X_FULL = np.hstack([EMB_MATRIX, CAT_FEATURES])        # (N, 768+n_cat)
+print(f"\n✅ Feature matrix shape: {X_FULL.shape}")
+print(f"   (768 IndoBERT embedding + {CAT_FEATURES.shape[1]} kategorikal)")
+
+print("⚙️  Encoding kategorikal...")
+
+# Fit encoder HANYA pada 2019
+REF_YEAR  = 2019
+ref_mask  = raw["_tahun"] == REF_YEAR
+ENCODERS  = {}
+for key in ("prodi", "jalur", "kab"):
+    col = COLS.get(key)
+    if not col:
+        continue
+    enc = LabelEncoder()
+    enc.fit(raw.loc[ref_mask, col].fillna("Unknown"))
+    ENCODERS[key] = enc
+    print(f"   LabelEncoder '{key}': {len(enc.classes_)} kelas")
+
+def safe_encode(enc, series):
+    known = set(enc.classes_)
+    mapped = series.fillna("Unknown").apply(
+        lambda x: x if x in known else "Unknown"
+    )
+    if "Unknown" not in known:
+        enc.classes_ = np.append(enc.classes_, "Unknown")
+    return enc.transform(mapped)
+
+cat_arrays = []
+for key, enc in ENCODERS.items():
+    col = COLS[key]
+    arr = safe_encode(enc, raw[col]).reshape(-1, 1)
+    cat_arrays.append(arr)
+
+CAT_FEATURES = np.hstack(cat_arrays).astype(float)   # (N, n_cat)
+X_FULL = np.hstack([EMB_MATRIX, CAT_FEATURES])        # (N, 768+n_cat)
+print(f"\n✅ Feature matrix shape: {X_FULL.shape}")
+print(f"   (768 IndoBERT embedding + {CAT_FEATURES.shape[1]} kategorikal)")
+
+print("⚙️  Encoding kategorikal...")
+
+# Fit encoder HANYA pada 2019
+REF_YEAR  = 2019
+ref_mask  = raw["_tahun"] == REF_YEAR
+ENCODERS  = {}
+for key in ("prodi", "jalur", "kab"):
+    col = COLS.get(key)
+    if not col:
+        continue
+    enc = LabelEncoder()
+    enc.fit(raw.loc[ref_mask, col].fillna("Unknown"))
+    ENCODERS[key] = enc
+    print(f"   LabelEncoder '{key}': {len(enc.classes_)} kelas")
+
+def safe_encode(enc, series):
+    known = set(enc.classes_)
+    mapped = series.fillna("Unknown").apply(
+        lambda x: x if x in known else "Unknown"
+    )
+    if "Unknown" not in known:
+        enc.classes_ = np.append(enc.classes_, "Unknown")
+    return enc.transform(mapped)
+
+cat_arrays = []
+for key, enc in ENCODERS.items():
+    col = COLS[key]
+    arr = safe_encode(enc, raw[col]).reshape(-1, 1)
+    cat_arrays.append(arr)
+
+CAT_FEATURES = np.hstack(cat_arrays).astype(float)   # (N, n_cat)
+X_FULL = np.hstack([EMB_MATRIX, CAT_FEATURES])        # (N, 768+n_cat)
+print(f"\n✅ Feature matrix shape: {X_FULL.shape}")
+print(f"   (768 IndoBERT embedding + {CAT_FEATURES.shape[1]} kategorikal)")
+
+!pip install transformers==4.38.2 torch scikit-learn pandas \
+             openpyxl xlrd geopy matplotlib seaborn scipy \
+             adjustText xlsxwriter -q
+
+print("✅ Semua library berhasil diinstall")
+
+import os, re, warnings, json
+import numpy as np
+import pandas as pd
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import matplotlib.gridspec as gridspec
+import seaborn as sns
+from pathlib import Path
+from scipy.spatial.distance import cdist
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.mixture import GaussianMixture
+from sklearn.metrics import (silhouette_score, calinski_harabasz_score,
+                             adjusted_rand_score)
+from sklearn.metrics.pairwise import cosine_similarity
+
+warnings.filterwarnings("ignore")
+np.random.seed(42)
+matplotlib.rcParams.update({
+    "font.family": "DejaVu Sans",
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+    "figure.dpi": 150,
+    "savefig.bbox": "tight",
+    "savefig.dpi": 200,
+})
+
+# ── Konstanta Global ─────────────────────────────────────────────────────
+FASE = {
+    2019: "Pre-COVID",
+    2020: "COVID Crisis", 2021: "COVID Crisis",
+    2022: "Recovery",    2023: "Recovery",    2024: "Recovery",
+}
+FASE_COL  = {"Pre-COVID": "#3B8BD4", "COVID Crisis": "#E24B4A", "Recovery": "#1D9E75"}
+CL_COLORS = ["#3B8BD4","#1D9E75","#E24B4A","#BA7517","#534AB7","#993556"]
+OUTPUT_DIR = Path("output_bab4")
+OUTPUT_DIR.mkdir(exist_ok=True)
+
+print("✅ Import selesai | Output folder:", OUTPUT_DIR.resolve())
+
+from google.colab import files
+
+print("⬆️  Upload file: DATASET PMB ITSNUPKL20192024_FIX.xls")
+uploaded = files.upload()
+FNAME = list(uploaded.keys())[0]
+print(f"✅ File diterima: {FNAME}")
+
+# Baca semua sheet, gabungkan
+xf   = pd.ExcelFile(FNAME)
+dfs  = []
+for sn in xf.sheet_names:
+    # Read without header initially, then set columns from the first row
+    df_s = pd.read_excel(FNAME, sheet_name=sn, dtype=str, header=None)
+    # Set the columns using the first row, then drop the first row
+    df_s.columns = df_s.iloc[0]
+    df_s = df_s[1:].reset_index(drop=True)
+    df_s["_sheet"] = sn
+    dfs.append(df_s)
+    print(f"   Sheet '{sn}': {len(df_s)} baris, {len(df_s.columns)} kolom")
+
+raw = pd.concat(dfs, ignore_index=True)
+raw.columns = [str(c).strip() for c in raw.columns]   # strip whitespace
+print(f"\n📦 Total baris gabungan: {len(raw):,}")
+print(f"📋 Kolom: {list(raw.columns)}")
+
+def detect_col(cols, patterns, label=""):
+    for p in patterns:
+        found = [c for c in cols if re.search(p, c, re.I)]
+        if found:
+            print(f"   {label:12} → '{found[0]}'")
+            return found[0]
+    print(f"   {label:12} → ⚠️  TIDAK TERDETEKSI – pilih manual")
+    return None
+
+print("🔍 Auto-deteksi kolom:")
+COLS = dict(
+    tahun   = detect_col(raw.columns, [r"tahun",r"year",r"angkatan",r"^ta[_
+]",r"periode"], "Tahun"),
+    prodi   = detect_col(raw.columns, [r"prodi",r"program.studi",r"jurusan",r"program"], "Prodi"),
+    jalur   = detect_col(raw.columns, [r"jalur",r"jenis.jalur",r"jenis"], "Jalur"),
+    kab     = detect_col(raw.columns, [r"kabupaten",r"\bkab\b",r"kota"], "Kabupaten"),
+    kec     = detect_col(raw.columns, [r"kecamatan",r"\bkec\b"], "Kecamatan"),
+    sekolah = detect_col(raw.columns, [r"sekolah",r"asal.sekolah",r"nama.sekolah"], "Sekolah"),
+    alamat  = detect_col(raw.columns, [r"alamat",r"address",r"domisili"], "Alamat"),
+)
+
+# ── EDIT MANUAL JIKA KOLOM SALAH DETEKSI ────────────────────────────────
+# Hapus tanda # dan ganti nilainya jika perlu:
+COLS["tahun"]   = "TAHUN"
+COLS["prodi"]   = "PRODI"
+COLS["jalur"]   = "JALUR"
+COLS["kab"]     = "KABUPATEN"
+COLS["kec"]     = "KECAMATAN"
+COLS["sekolah"] = "SEKOLAH"
+COLS["alamat"]  = "ALAMAT"
+
+# Ekstrak tahun
+def extract_year(row):
+    candidates = [COLS["tahun"]] + list(raw.columns) if COLS["tahun"] else list(raw.columns)
+    for col in candidates:
+        try:
+            y = int(str(row[col]).strip()[:4])
+            if 2019 <= y <= 2024:
+                return y
+        except Exception:
+            pass
+    return None
+
+raw["_tahun"] = raw.apply(extract_year, axis=1)
+raw = raw[raw["_tahun"].notna()].copy()
+raw["_tahun"] = raw["_tahun"].astype(int)
+
+print(f"\n📅 Distribusi per tahun:")
+DIST = raw["_tahun"].value_counts().sort_index()
+for y, n in DIST.items():
+    print(f"   {y}  [{FASE[y]:12}]  → {n:4d} pendaftar")
+print(f"   TOTAL               → {len(raw):,}")
+
+def detect_col(cols, patterns, label=""):
+    for p in patterns:
+        found = [c for c in cols if re.search(p, c, re.I)]
+        if found:
+            print(f"   {label:12} → '{found[0]}'")
+            return found[0]
+    print(f"   {label:12} → ⚠️  TIDAK TERDETEKSI – pilih manual")
+    return None
+
+print("🔍 Auto-deteksi kolom:")
+COLS = dict(
+    tahun   = detect_col(raw.columns, [r"tahun",r"year",r"angkatan",r"^ta[_
+]",r"periode"], "Tahun"),
+    prodi   = detect_col(raw.columns, [r"prodi",r"program.studi",r"jurusan",r"program"], "Prodi"),
+    jalur   = detect_col(raw.columns, [r"jalur",r"jenis.jalur",r"jenis"], "Jalur"),
+    kab     = detect_col(raw.columns, [r"kabupaten",r"\bkab\b",r"kota"], "Kabupaten"),
+    kec     = detect_col(raw.columns, [r"kecamatan",r"\bkec\b"], "Kecamatan"),
+    sekolah = detect_col(raw.columns, [r"sekolah",r"asal.sekolah",r"nama.sekolah"], "Sekolah"),
+    alamat  = detect_col(raw.columns, [r"alamat",r"address",r"domisili"], "Alamat"),
+)
+
+# ── EDIT MANUAL JIKA KOLOM SALAH DETEKSI ────────────────────────────────
+# Hapus tanda # dan ganti nilainya jika perlu:
+COLS["tahun"]   = "TAHUN"
+COLS["prodi"]   = "PRODI"
+COLS["jalur"]   = "JALUR"
+COLS["kab"]     = "KABUPATEN"
+COLS["kec"]     = "KECAMATAN"
+COLS["sekolah"] = "SEKOLAH"
+COLS["alamat"]  = "ALAMAT"
+
+# Ekstrak tahun
+def extract_year(row):
+    candidates = [COLS["tahun"]] + list(raw.columns) if COLS["tahun"] else list(raw.columns)
+    for col in candidates:
+        try:
+            y = int(str(row[col]).strip()[:4])
+            if 2019 <= y <= 2024:
+                return y
+        except Exception:
+            pass
+    return None
+
+raw["_tahun"] = raw.apply(extract_year, axis=1)
+raw = raw[raw["_tahun"].notna()].copy()
+raw["_tahun"] = raw["_tahun"].astype(int)
+
+print(f"\n📅 Distribusi per tahun:")
+DIST = raw["_tahun"].value_counts().sort_index()
+for y, n in DIST.items():
+    print(f"   {y}  [{FASE[y]:12}]  → {n:4d} pendaftar")
+print(f"   TOTAL               → {len(raw):,}")
+
+def detect_col(cols, patterns, label=""):
+    for p in patterns:
+        found = [c for c in cols if re.search(p, c, re.I)]
+        if found:
+            print(f"   {label:12} → '{found[0]}'")
+            return found[0]
+    print(f"   {label:12} → ⚠️  TIDAK TERDETEKSI – pilih manual")
+    return None
+
+print("🔍 Auto-deteksi kolom:")
+COLS = dict(
+    tahun   = detect_col(raw.columns, [r"tahun",r"year",r"angkatan",r"^ta[_
+]",r"periode"], "Tahun"),
+    prodi   = detect_col(raw.columns, [r"prodi",r"program.studi",r"jurusan",r"program"], "Prodi"),
+    jalur   = detect_col(raw.columns, [r"jalur",r"jenis.jalur",r"jenis"], "Jalur"),
+    kab     = detect_col(raw.columns, [r"kabupaten",r"\bkab\b",r"kota"], "Kabupaten"),
+    kec     = detect_col(raw.columns, [r"kecamatan",r"\bkec\b"], "Kecamatan"),
+    sekolah = detect_col(raw.columns, [r"sekolah",r"asal.sekolah",r"nama.sekolah"], "Sekolah"),
+    alamat  = detect_col(raw.columns, [r"alamat",r"address",r"domisili"], "Alamat"),
+)
+
+# ── EDIT MANUAL JIKA KOLOM SALAH DETEKSI ────────────────────────────────
+# Hapus tanda # dan ganti nilainya jika perlu:
+COLS["tahun"]   = "TAHUN"
+COLS["prodi"]   = "PRODI"
+COLS["jalur"]   = "JALUR"
+COLS["kab"]     = "KABUPATEN"
+COLS["kec"]     = "KECAMATAN"
+COLS["sekolah"] = "SEKOLAH"
+COLS["alamat"]  = "ALAMAT"
+
+# Ekstrak tahun
+def extract_year(row):
+    candidates = [COLS["tahun"]] + list(raw.columns) if COLS["tahun"] else list(raw.columns)
+    for col in candidates:
+        try:
+            y = int(str(row[col]).strip()[:4])
+            if 2019 <= y <= 2024:
+                return y
+        except Exception:
+            pass
+    return None
+
+raw["_tahun"] = raw.apply(extract_year, axis=1)
+raw = raw[raw["_tahun"].notna()].copy()
+raw["_tahun"] = raw["_tahun"].astype(int)
+
+print(f"\n📅 Distribusi per tahun:")
+DIST = raw["_tahun"].value_counts().sort_index()
+for y, n in DIST.items():
+    print(f"   {y}  [{FASE[y]:12}]  → {n:4d} pendaftar")
+print(f"   TOTAL               → {len(raw):,}")
+
+def detect_col(cols, patterns, label=""):
+    for p in patterns:
+        found = [c for c in cols if re.search(p, c, re.I)]
+        if found:
+            print(f"   {label:12} → '{found[0]}'")
+            return found[0]
+    print(f"   {label:12} → ⚠️  TIDAK TERDETEKSI – pilih manual")
+    return None
+
+print("🔍 Auto-deteksi kolom:")
+COLS = dict(
+    tahun   = detect_col(raw.columns, [r"tahun",r"year",r"angkatan",r"^ta[_\s]",r"periode"], "Tahun"),
+    prodi   = detect_col(raw.columns, [r"prodi",r"program.studi",r"jurusan",r"program"], "Prodi"),
+    jalur   = detect_col(raw.columns, [r"jalur",r"jenis.jalur",r"jenis"], "Jalur"),
+    kab     = detect_col(raw.columns, [r"kabupaten",r"\bkab\b",r"kota"], "Kabupaten"),
+    kec     = detect_col(raw.columns, [r"kecamatan",r"\bkec\b"], "Kecamatan"),
+    sekolah = detect_col(raw.columns, [r"sekolah",r"asal.sekolah",r"nama.sekolah"], "Sekolah"),
+    alamat  = detect_col(raw.columns, [r"alamat",r"address",r"domisili"], "Alamat"),
+)
+
+# ── EDIT MANUAL JIKA KOLOM SALAH DETEKSI ────────────────────────────────
+# Hapus tanda # dan ganti nilainya jika perlu:
+COLS["tahun"]   = "TAHUN"
+COLS["prodi"]   = "PRODI"
+COLS["jalur"]   = "JALUR"
+COLS["kab"]     = "KABUPATEN"
+COLS["kec"]     = "KECAMATAN"
+COLS["sekolah"] = "SEKOLAH"
+COLS["alamat"]  = "ALAMAT"
+
+# Ekstrak tahun
+def extract_year(row):
+    candidates = [COLS["tahun"]] + list(raw.columns) if COLS["tahun"] else list(raw.columns)
+    for col in candidates:
+        try:
+            y = int(str(row[col]).strip()[:4])
+            if 2019 <= y <= 2024:
+                return y
+        except Exception:
+            pass
+    return None
+
+raw["_tahun"] = raw.apply(extract_year, axis=1)
+raw = raw[raw["_tahun"].notna()].copy()
+raw["_tahun"] = raw["_tahun"].astype(int)
+
+print(f"\n📅 Distribusi per tahun:")
+DIST = raw["_tahun"].value_counts().sort_index()
+for y, n in DIST.items():
+    print(f"   {y}  [{FASE[y]:12}]  → {n:4d} pendaftar")
+print(f"   TOTAL               → {len(raw):,}")
+
+def detect_col(cols, patterns, label=""):
+    for p in patterns:
+        found = [c for c in cols if re.search(p, c, re.I)]
+        if found:
+            print(f"   {label:12} → '{found[0]}'")
+            return found[0]
+    print(f"   {label:12} → ⚠️  TIDAK TERDETEKSI – pilih manual")
+    return None
+
+print("🔍 Auto-deteksi kolom:")
+COLS = dict(
+    tahun   = detect_col(raw.columns, [r"tahun",r"year",r"angkatan",r"^ta[_\s]",r"periode"], "Tahun"),
+    prodi   = detect_col(raw.columns, [r"prodi",r"program.studi",r"jurusan",r"program"], "Prodi"),
+    jalur   = detect_col(raw.columns, [r"jalur",r"jenis.jalur",r"jenis"], "Jalur"),
+    kab     = detect_col(raw.columns, [r"kabupaten",r"\bkab\b",r"kota"], "Kabupaten"),
+    kec     = detect_col(raw.columns, [r"kecamatan",r"\bkec\b"], "Kecamatan"),
+    sekolah = detect_col(raw.columns, [r"sekolah",r"asal.sekolah",r"nama.sekolah"], "Sekolah"),
+    alamat  = detect_col(raw.columns, [r"alamat",r"address",r"domisili"], "Alamat"),
+)
+
+# ── EDIT MANUAL JIKA KOLOM SALAH DETEKSI ────────────────────────────────
+# Hapus tanda # dan ganti nilainya jika perlu:
+COLS["tahun"]   = "TAHUN"
+COLS["prodi"]   = "PRODI"
+COLS["jalur"]   = "JALUR"
+COLS["kab"]     = "KABUPATEN"
+COLS["kec"]     = "KECAMATAN"
+COLS["sekolah"] = "SEKOLAH"
+COLS["alamat"]  = "ALAMAT"
+
+# Ekstrak tahun
+def extract_year(row):
+    candidates = [COLS["tahun"]] + list(raw.columns) if COLS["tahun"] else list(raw.columns)
+    for col in candidates:
+        try:
+            y = int(str(row[col]).strip()[:4])
+            if 2019 <= y <= 2024:
+                return y
+        except Exception:
+            pass
+    return None
+
+raw["_tahun"] = raw.apply(extract_year, axis=1)
+raw = raw[raw["_tahun"].notna()].copy()
+raw["_tahun"] = raw["_tahun"].astype(int)
+
+print(f"\n📅 Distribusi per tahun:")
+DIST = raw["_tahun"].value_counts().sort_index()
+for y, n in DIST.items():
+    print(f"   {y}  [{FASE[y]:12}]  → {n:4d} pendaftar")
+print(f"   TOTAL               → {len(raw):,}")
+
+def detect_col(cols, patterns, label=""):
+    for p in patterns:
+        found = [c for c in cols if re.search(p, c, re.I)]
+        if found:
+            print(f"   {label:12} → '{found[0]}'")
+            return found[0]
+    print(f"   {label:12} → ⚠️  TIDAK TERDETEKSI – pilih manual")
+    return None
+
+print("🔍 Auto-deteksi kolom:")
+COLS = dict(
+    tahun   = detect_col(raw.columns, [r"tahun",r"year",r"angkatan",r"^ta[_\s]",r"periode"], "Tahun"),
+    prodi   = detect_col(raw.columns, [r"prodi",r"program.studi",r"jurusan",r"program"], "Prodi"),
+    jalur   = detect_col(raw.columns, [r"jalur",r"jenis.jalur",r"jenis"], "Jalur"),
+    kab     = detect_col(raw.columns, [r"kabupaten",r"\bkab\b",r"kota"], "Kabupaten"),
+    kec     = detect_col(raw.columns, [r"kecamatan",r"\bkec\b"], "Kecamatan"),
+    sekolah = detect_col(raw.columns, [r"sekolah",r"asal.sekolah",r"nama.sekolah"], "Sekolah"),
+    alamat  = detect_col(raw.columns, [r"alamat",r"address",r"domisili"], "Alamat"),
+)
+
+# ── EDIT MANUAL JIKA KOLOM SALAH DETEKSI ────────────────────────────────
+# Hapus tanda # dan ganti nilainya jika perlu:
+COLS["tahun"]   = "TAHUN"
+COLS["prodi"]   = "PRODI"
+COLS["jalur"]   = "JALUR"
+COLS["kab"]     = "KABUPATEN"
+COLS["kec"]     = "KECAMATAN"
+COLS["sekolah"] = "SEKOLAH"
+COLS["alamat"]  = "ALAMAT"
+
+# Ekstrak tahun
+def extract_year(row):
+    candidates = [COLS["tahun"]] + list(raw.columns) if COLS["tahun"] else list(raw.columns)
+    for col in candidates:
+        try:
+            y = int(str(row[col]).strip()[:4])
+            if 2019 <= y <= 2024:
+                return y
+        except Exception:
+            pass
+    return None
+
+raw["_tahun"] = raw.apply(extract_year, axis=1)
+raw = raw[raw["_tahun"].notna()].copy()
+raw["_tahun"] = raw["_tahun"].astype(int)
+
+print(f"\n📅 Distribusi per tahun:")
+DIST = raw["_tahun"].value_counts().sort_index()
+for y, n in DIST.items():
+    print(f"   {y}  [{FASE[y]:12}]  → {n:4d} pendaftar")
+print(f"   TOTAL               → {len(raw):,}")
+
+def detect_col(cols, patterns, label=""):
+    for p in patterns:
+        found = [c for c in cols if re.search(p, c, re.I)]
+        if found:
+            print(f"   {label:12} → '{found[0]}'")
+            return found[0]
+    print(f"   {label:12} → ⚠️  TIDAK TERDETEKSI – pilih manual")
+    return None
+
+print("🔍 Auto-deteksi kolom:")
+COLS = dict(
+    tahun   = detect_col(raw.columns, [r"tahun",r"year",r"angkatan",r"^ta[_\s]",r"periode"], "Tahun"),
+    prodi   = detect_col(raw.columns, [r"prodi",r"program.studi",r"jurusan",r"program"], "Prodi"),
+    jalur   = detect_col(raw.columns, [r"jalur",r"jenis.jalur",r"jenis"], "Jalur"),
+    kab     = detect_col(raw.columns, [r"kabupaten",r"\bkab\b",r"kota"], "Kabupaten"),
+    kec     = detect_col(raw.columns, [r"kecamatan",r"\bkec\b"], "Kecamatan"),
+    sekolah = detect_col(raw.columns, [r"sekolah",r"asal.sekolah",r"nama.sekolah"], "Sekolah"),
+    alamat  = detect_col(raw.columns, [r"alamat",r"address",r"domisili"], "Alamat"),
+)
+
+# ── EDIT MANUAL JIKA KOLOM SALAH DETEKSI ────────────────────────────────
+# Hapus tanda # dan ganti nilainya jika perlu:
+COLS["tahun"]   = "TAHUN"
+COLS["prodi"]   = "PRODI"
+COLS["jalur"]   = "JALUR"
+COLS["kab"]     = "KABUPATEN"
+COLS["kec"]     = "KECAMATAN"
+COLS["sekolah"] = "SEKOLAH"
+COLS["alamat"]  = "ALAMAT"
+
+# Ekstrak tahun
+def extract_year(row):
+    candidates = [COLS["tahun"]] + list(raw.columns) if COLS["tahun"] else list(raw.columns)
+    for col in candidates:
+        try:
+            y = int(str(row[col]).strip()[:4])
+            if 2019 <= y <= 2024:
+                return y
+        except Exception:
+            pass
+    return None
+
+raw["_tahun"] = raw.apply(extract_year, axis=1)
+raw = raw[raw["_tahun"].notna()].copy()
+raw["_tahun"] = raw["_tahun"].astype(int)
+
+print(f"\n📅 Distribusi per tahun:")
+DIST = raw["_tahun"].value_counts().sort_index()
+for y, n in DIST.items():
+    print(f"   {y}  [{FASE[y]:12}]  → {n:4d} pendaftar")
+print(f"   TOTAL               → {len(raw):,}")
+
+from google.colab import files
+
+print("⬆️  Upload file: DATASET PMB ITSNUPKL20192024_FIX.xls")
+uploaded = files.upload()
+FNAME = list(uploaded.keys())[0]
+print(f"✅ File diterima: {FNAME}")
+
+# Baca semua sheet, gabungkan
+xf   = pd.ExcelFile(FNAME)
+dfs  = []
+for sn in xf.sheet_names:
+    # Read without header initially, then set columns from the first row
+    df_s = pd.read_excel(FNAME, sheet_name=sn, dtype=str, header=None)
+    
+    # Generate new column names, replacing NaN with 'Unnamed_X'
+    new_columns = []
+    for i, col_val in enumerate(df_s.iloc[0]):
+        if pd.isna(col_val) or str(col_val).strip() == '':
+            new_columns.append(f'Unnamed_{i}')
+        else:
+            new_columns.append(str(col_val).strip())
+    
+    # Assign the cleaned columns and drop the header row
+    df_s.columns = new_columns
+    df_s = df_s[1:].reset_index(drop=True)
+    df_s["_sheet"] = sn
+    dfs.append(df_s)
+    print(f"   Sheet '{sn}': {len(df_s)} baris, {len(df_s.columns)} kolom")
+
+raw = pd.concat(dfs, ignore_index=True)
+raw.columns = [str(c).strip() for c in raw.columns]   # strip whitespace again for good measure
+print(f"\n📦 Total baris gabungan: {len(raw):,}")
+print(f"📋 Kolom: {list(raw.columns)}")
+
+from google.colab import files, drive
+import ipywidgets as widgets
+from IPython.display import display
+
+# --- Opsi 1: Upload File --- #
+upload_button = widgets.Button(description="⬆️ Upload File")
+output_upload = widgets.Output()
+
+def on_upload_click(b):
+    with output_upload:
+        print("Mengupload file...")
+        uploaded = files.upload()
+        global FNAME
+        FNAME = list(uploaded.keys())[0]
+        print(f"✅ File diterima: {FNAME}")
+        # Rerun the rest of the cell from here
+        process_excel_file(FNAME)
+
+upload_button.on_click(on_upload_click)
+
+# --- Opsi 2: Pilih dari Google Drive --- #
+drive_mount_button = widgets.Button(description="🔗 Mount Google Drive")
+drive_path_input = widgets.Text(description="Jalur File di Drive:", placeholder="/content/DATASET PMB ITSNUPKL2019-2024_FIX (1).xls")
+process_drive_button = widgets.Button(description="➡️ Proses File dari Drive")
+output_drive = widgets.Output()
+
+def on_drive_mount_click(b):
+    with output_drive:
+        print("Mounting Google Drive...")
+        drive.mount('/content/drive')
+        print("✅ Google Drive ter-mount.")
+
+def on_process_drive_click(b):
+    with output_drive:
+        global FNAME
+        FNAME = drive_path_input.value
+        if not FNAME:
+            print("⚠️ Harap masukkan jalur file.")
+            return
+        print(f"Memproses file dari Drive: {FNAME}")
+        # Rerun the rest of the cell from here
+        process_excel_file(FNAME)
+
+drive_mount_button.on_click(on_drive_mount_click)
+process_drive_button.on_click(on_process_drive_click)
+
+def process_excel_file(file_path):
+    # Baca semua sheet, gabungkan
+    xf   = pd.ExcelFile(file_path)
+    dfs  = []
+    for sn in xf.sheet_names:
+        # Read without header initially, then set columns from the first row
+        df_s = pd.read_excel(file_path, sheet_name=sn, dtype=str, header=None)
+        
+        # Generate new column names, replacing NaN with 'Unnamed_X'
+        new_columns = []
+        for i, col_val in enumerate(df_s.iloc[0]):
+            if pd.isna(col_val) or str(col_val).strip() == '':
+                new_columns.append(f'Unnamed_{i}')
+            else:
+                new_columns.append(str(col_val).strip())
+        
+        # Assign the cleaned columns and drop the header row
+        df_s.columns = new_columns
+        df_s = df_s[1:].reset_index(drop=True)
+        df_s["_sheet"] = sn
+        dfs.append(df_s)
+        print(f"   Sheet '{sn}': {len(df_s)} baris, {len(df_s.columns)} kolom")
+
+    global raw
+    raw = pd.concat(dfs, ignore_index=True)
+    raw.columns = [str(c).strip() for c in raw.columns]   # strip whitespace again for good measure
+    print(f"\n📦 Total baris gabungan: {len(raw):,}")
+    print(f"📋 Kolom: {list(raw.columns)}")
+
+
+print("Pilih metode untuk memuat data:")
+display(upload_button, output_upload)
+display(drive_mount_button, drive_path_input, process_drive_button, output_drive)
+
+def detect_col(cols, patterns, label=""):
+    for p in patterns:
+        found = [c for c in cols if re.search(p, c, re.I)]
+        if found:
+            print(f"   {label:12} → '{found[0]}'")
+            return found[0]
+    print(f"   {label:12} → ⚠️  TIDAK TERDETEKSI – pilih manual")
+    return None
+
+print("🔍 Auto-deteksi kolom:")
+COLS = dict(
+    tahun   = detect_col(raw.columns, [r"tahun",r"year",r"angkatan",r"^ta[_\s]",r"periode"], "Tahun"),
+    prodi   = detect_col(raw.columns, [r"prodi",r"program.studi",r"jurusan",r"program"], "Prodi"),
+    jalur   = detect_col(raw.columns, [r"jalur",r"jenis.jalur",r"jenis"], "Jalur"),
+    kab     = detect_col(raw.columns, [r"kabupaten",r"\bkab\b",r"kota"], "Kabupaten"),
+    kec     = detect_col(raw.columns, [r"kecamatan",r"\bkec\b"], "Kecamatan"),
+    sekolah = detect_col(raw.columns, [r"sekolah",r"asal.sekolah",r"nama.sekolah"], "Sekolah"),
+    alamat  = detect_col(raw.columns, [r"alamat",r"address",r"domisili"], "Alamat"),
+)
+
+# ── EDIT MANUAL JIKA KOLOM SALAH DETEKSI ────────────────────────────────
+# Hapus tanda # dan ganti nilainya jika perlu:
+COLS["tahun"]   = "TAHUN"
+COLS["prodi"]   = "PRODI"
+COLS["jalur"]   = "JALUR"
+COLS["kab"]     = "KABUPATEN"
+COLS["kec"]     = "KECAMATAN"
+COLS["sekolah"] = "SEKOLAH"
+COLS["alamat"]  = "ALAMAT"
+
+# Ekstrak tahun
+def extract_year(row):
+    candidates = [COLS["tahun"]] + list(raw.columns) if COLS["tahun"] else list(raw.columns)
+    for col in candidates:
+        try:
+            y = int(str(row[col]).strip()[:4])
+            if 2019 <= y <= 2024:
+                return y
+        except Exception:
+            pass
+    return None
+
+raw["_tahun"] = raw.apply(extract_year, axis=1)
+raw = raw[raw["_tahun"].notna()].copy()
+raw["_tahun"] = raw["_tahun"].astype(int)
+
+print(f"\n📅 Distribusi per tahun:")
+DIST = raw["_tahun"].value_counts().sort_index()
+for y, n in DIST.items():
+    print(f"   {y}  [{FASE[y]:12}]  → {n:4d} pendaftar")
+print(f"   TOTAL               → {len(raw):,}")
+
+ABBR = {
+    r"\bjl\b":  "jalan",    r"\bds\b":  "desa",
+    r"\bkec\b": "kecamatan",r"\bkel\b": "kelurahan",
+    r"\bkab\b": "kabupaten",r"\brt\b":  "rukun tetangga",
+    r"\brw\b":  "rukun warga",r"\bgg\b": "gang",
+    r"\bno\b":  "nomor",    r"\bsmk\b": "sekolah menengah kejuruan",
+    r"\bsma\b": "sekolah menengah atas",
+    r"\bma\b":  "madrasah aliyah",
+    r"\bmts\b": "madrasah tsanawiyah",
+    r"\bmi\b":  "madrasah ibtidaiyah",
+    r"\bsd\b":  "sekolah dasar",
+    r"\bsmp\b": "sekolah menengah pertama",
+    r"\bpkl\b": "pekalongan",
+    r"\bbth\b": "batang",
+    r"\bpml\b": "pemalang",
+}
+
+def preprocess_text(text):
+    if pd.isna(text) or str(text).strip() in ("", "nan", "-", "0"):
+        return ""
+    t = str(text).lower()
+    t = re.sub(r"[^a-z0-9\s]", " ", t)
+    t = re.sub(r"\s+", " ", t).strip()
+    for pat, rep in ABBR.items():
+        t = re.sub(pat, rep, t)
+    return t
+
+TEXT_COLS = {k: COLS[k] for k in ("sekolah", "alamat", "kab", "kec") if COLS.get(k)}
+for key, col in TEXT_COLS.items():
+    raw[f"_clean_{key}"] = raw[col].apply(preprocess_text)
+    print(f"✅ Preprocessing '{col}' selesai")
+
+# Tabel 4.3 – contoh normalisasi
+print("\n📋 TABEL 4.3 – Contoh Normalisasi Text Preprocessing:")
+samples = raw[[COLS["sekolah"], "_clean_sekolah"]].drop_duplicates().head(8) if COLS.get("sekolah") else pd.DataFrame()
+if not samples.empty:
+    samples.columns = ["Teks Asli", "Hasil Preprocessing"]
+    print(samples.to_string(index=False))
+    samples.to_excel(OUTPUT_DIR / "tabel_4_3_preprocessing.xlsx", index=False)
+
+def detect_col(cols, patterns, label=""):
+    for p in patterns:
+        found = [c for c in cols if re.search(p, c, re.I)]
+        if found:
+            print(f"   {label:12} → '{found[0]}'")
+            return found[0]
+    print(f"   {label:12} → ⚠️  TIDAK TERDETEKSI – pilih manual")
+    return None
+
+print("🔍 Auto-deteksi kolom:")
+COLS = dict(
+    tahun   = detect_col(raw.columns, [r"tahun",r"year",r"angkatan",r"^ta[_\s]",r"periode"], "Tahun"),
+    prodi   = detect_col(raw.columns, [r"prodi",r"program.studi",r"jurusan",r"program"], "Prodi"),
+    jalur   = detect_col(raw.columns, [r"jalur",r"jenis.jalur",r"jenis"], "Jalur"),
+    kab     = detect_col(raw.columns, [r"kabupaten",r"\bkab\b",r"kota"], "Kabupaten"),
+    kec     = detect_col(raw.columns, [r"kecamatan",r"\bkec\b"], "Kecamatan"),
+    sekolah = detect_col(raw.columns, [r"sekolah",r"asal.sekolah",r"nama.sekolah"], "Sekolah"),
+    alamat  = detect_col(raw.columns, [r"alamat",r"address",r"domisili"], "Alamat"),
+)
+
+# ── EDIT MANUAL JIKA KOLOM SALAH DETEKSI ────────────────────────────────
+# Hapus tanda # dan ganti nilainya jika perlu:
+COLS["tahun"]   = "TAHUN"
+COLS["prodi"]   = "PRODI"
+COLS["jalur"]   = "JALUR"
+COLS["kab"]     = "KABUPATEN"
+COLS["kec"]     = "KECAMATAN"
+COLS["sekolah"] = "SEKOLAH"
+COLS["alamat"]  = "ALAMAT"
+
+# Ekstrak tahun
+def extract_year(row):
+    candidates = [COLS["tahun"]] + list(raw.columns) if COLS["tahun"] else list(raw.columns)
+    for col in candidates:
+        try:
+            y = int(str(row[col]).strip()[:4])
+            if 2019 <= y <= 2024:
+                return y
+        except Exception:
+            pass
+    return None
+
+raw["_tahun"] = raw.apply(extract_year, axis=1)
+raw = raw[raw["_tahun"].notna()].copy()
+raw["_tahun"] = raw["_tahun"].astype(int)
+
+print(f"\n📅 Distribusi per tahun:")
+DIST = raw["_tahun"].value_counts().sort_index()
+for y, n in DIST.items():
+    print(f"   {y}  [{FASE[y]:12}]  → {n:4d} pendaftar")
+print(f"   TOTAL               → {len(raw):,}")
+
+def detect_col(cols, patterns, label=""):
+    for p in patterns:
+        found = [c for c in cols if re.search(p, c, re.I)]
+        if found:
+            print(f"   {label:12} → '{found[0]}'")
+            return found[0]
+    print(f"   {label:12} → ⚠️  TIDAK TERDETEKSI – pilih manual")
+    return None
+
+print("🔍 Auto-deteksi kolom:")
+COLS = dict(
+    tahun   = detect_col(raw.columns, [r"tahun",r"year",r"angkatan",r"^ta[_\s]",r"periode"], "Tahun"),
+    prodi   = detect_col(raw.columns, [r"prodi",r"program.studi",r"jurusan",r"program"], "Prodi"),
+    jalur   = detect_col(raw.columns, [r"jalur",r"jenis.jalur",r"jenis"], "Jalur"),
+    kab     = detect_col(raw.columns, [r"kabupaten",r"\bkab\b",r"kota"], "Kabupaten"),
+    kec     = detect_col(raw.columns, [r"kecamatan",r"\bkec\b"], "Kecamatan"),
+    sekolah = detect_col(raw.columns, [r"sekolah",r"asal.sekolah",r"nama.sekolah"], "Sekolah"),
+    alamat  = detect_col(raw.columns, [r"alamat",r"address",r"domisili"], "Alamat"),
+)
+
+# ── EDIT MANUAL JIKA KOLOM SALAH DETEKSI ────────────────────────────────
+# Hapus tanda # dan ganti nilainya jika perlu:
+COLS["tahun"]   = "TAHUN"
+COLS["prodi"]   = "PRODI"
+COLS["jalur"]   = "JALUR"
+COLS["kab"]     = "KABUPATEN"
+COLS["kec"]     = "KECAMATAN"
+COLS["sekolah"] = "SEKOLAH"
+COLS["alamat"]  = "ALAMAT"
+
+# Ekstrak tahun
+def extract_year(row):
+    candidates = [COLS["tahun"]] + list(raw.columns) if COLS["tahun"] else list(raw.columns)
+    for col in candidates:
+        try:
+            y = int(str(row[col]).strip()[:4])
+            if 2019 <= y <= 2024:
+                return y
+        except Exception:
+            pass
+    return None
+
+raw["_tahun"] = raw.apply(extract_year, axis=1)
+raw = raw[raw["_tahun"].notna()].copy()
+raw["_tahun"] = raw["_tahun"].astype(int)
+
+print(f"\n📅 Distribusi per tahun:")
+DIST = raw["_tahun"].value_counts().sort_index()
+for y, n in DIST.items():
+    print(f"   {y}  [{FASE[y]:12}]  → {n:4d} pendaftar")
+print(f"   TOTAL               → {len(raw):,}")
+
+from google.colab import files, drive
+import ipywidgets as widgets
+from IPython.display import display
+
+# --- Opsi 1: Upload File --- #
+upload_button = widgets.Button(description="⬆️ Upload File")
+output_upload = widgets.Output()
+
+def on_upload_click(b):
+    with output_upload:
+        print("Mengupload file...")
+        uploaded = files.upload()
+        global FNAME
+        FNAME = list(uploaded.keys())[0]
+        print(f"✅ File diterima: {FNAME}")
+        # Rerun the rest of the cell from here
+        process_excel_file(FNAME)
+
+upload_button.on_click(on_upload_click)
+
+# --- Opsi 2: Pilih dari Google Drive --- #
+drive_mount_button = widgets.Button(description="🔗 Mount Google Drive")
+drive_path_input = widgets.Text(description="Jalur File di Drive:", placeholder="/content/DATASET PMB ITSNUPKL2019-2024_FIX (1).xls")
+process_drive_button = widgets.Button(description="➡️ Proses File dari Drive")
+output_drive = widgets.Output()
+
+def on_drive_mount_click(b):
+    with output_drive:
+        print("Mounting Google Drive...")
+        drive.mount('/content/drive')
+        print("✅ Google Drive ter-mount.")
+
+def on_process_drive_click(b):
+    with output_drive:
+        global FNAME
+        FNAME = drive_path_input.value
+        if not FNAME:
+            print("⚠️ Harap masukkan jalur file.")
+            return
+        print(f"Memproses file dari Drive: {FNAME}")
+        # Rerun the rest of the cell from here
+        process_excel_file(FNAME)
+
+drive_mount_button.on_click(on_drive_mount_click)
+process_drive_button.on_click(on_process_drive_click)
+
+def process_excel_file(file_path):
+    # Baca semua sheet, gabungkan
+    xf   = pd.ExcelFile(file_path)
+    dfs  = []
+    for sn in xf.sheet_names:
+        # Read without header initially, then set columns from the first row
+        df_s = pd.read_excel(file_path, sheet_name=sn, dtype=str, header=None)
+        
+        # Generate new column names, replacing NaN with 'Unnamed_X'
+        # Correctly identify headers from the second row (index 1)
+        new_columns = []
+        for i, col_val in enumerate(df_s.iloc[1]): # Changed from df_s.iloc[0] to df_s.iloc[1]
+            if pd.isna(col_val) or str(col_val).strip() == '':
+                new_columns.append(f'Unnamed_{i}')
+            else:
+                new_columns.append(str(col_val).strip())
+        
+        # Assign the cleaned columns and drop the first two rows (empty + header)
+        df_s.columns = new_columns
+        df_s = df_s[2:].reset_index(drop=True) # Changed from df_s[1:] to df_s[2:]
+        df_s["_sheet"] = sn
+        dfs.append(df_s)
+        print(f"   Sheet '{sn}': {len(df_s)} baris, {len(df_s.columns)} kolom")
+
+    global raw
+    raw = pd.concat(dfs, ignore_index=True)
+    raw.columns = [str(c).strip() for c in raw.columns]   # strip whitespace again for good measure
+    print(f"\n📦 Total baris gabungan: {len(raw):,}")
+    print(f"📋 Kolom: {list(raw.columns)}")
+
+
+print("Pilih metode untuk memuat data:")
+display(upload_button, output_upload)
+display(drive_mount_button, drive_path_input, process_drive_button, output_drive)
+
+def detect_col(cols, patterns, label=""):
+    for p in patterns:
+        found = [c for c in cols if re.search(p, c, re.I)]
+        if found:
+            print(f"   {label:12} → '{found[0]}'")
+            return found[0]
+    print(f"   {label:12} → ⚠️  TIDAK TERDETEKSI – pilih manual")
+    return None
+
+print("🔍 Auto-deteksi kolom:")
+COLS = dict(
+    tahun   = detect_col(raw.columns, [r"tahun",r"year",r"angkatan",r"^ta[_\s]",r"periode"], "Tahun"),
+    prodi   = detect_col(raw.columns, [r"prodi",r"program.studi",r"jurusan",r"program"], "Prodi"),
+    jalur   = detect_col(raw.columns, [r"jalur",r"jenis.jalur",r"jenis"], "Jalur"),
+    kab     = detect_col(raw.columns, [r"kabupaten",r"\bkab\b",r"kota"], "Kabupaten"),
+    kec     = detect_col(raw.columns, [r"kecamatan",r"\bkec\b"], "Kecamatan"),
+    sekolah = detect_col(raw.columns, [r"sekolah",r"asal.sekolah",r"nama.sekolah"], "Sekolah"),
+    alamat  = detect_col(raw.columns, [r"alamat",r"address",r"domisili"], "Alamat"),
+)
+
+# ── EDIT MANUAL JIKA KOLOM SALAH DETEKSI ────────────────────────────────
+# Hapus tanda # dan ganti nilainya jika perlu:
+COLS["tahun"]   = "TAHUN"
+COLS["prodi"]   = "PRODI"
+COLS["jalur"]   = "JALUR"
+COLS["kab"]     = "KABUPATEN"
+COLS["kec"]     = "KECAMATAN"
+COLS["sekolah"] = "SEKOLAH"
+COLS["alamat"]  = "ALAMAT"
+
+# Ekstrak tahun
+def extract_year(row):
+    candidates = [COLS["tahun"]] + list(raw.columns) if COLS["tahun"] else list(raw.columns)
+    for col in candidates:
+        try:
+            y = int(str(row[col]).strip()[:4])
+            if 2019 <= y <= 2024:
+                return y
+        except Exception:
+            pass
+    return None
+
+raw["_tahun"] = raw.apply(extract_year, axis=1)
+raw = raw[raw["_tahun"].notna()].copy()
+raw["_tahun"] = raw["_tahun"].astype(int)
+
+print(f"\n📅 Distribusi per tahun:")
+DIST = raw["_tahun"].value_counts().sort_index()
+for y, n in DIST.items():
+    print(f"   {y}  [{FASE[y]:12}]  → {n:4d} pendaftar")
+print(f"   TOTAL               → {len(raw):,}")
+
+ABBR = {
+    r"\bjl\b":  "jalan",    r"\bds\b":  "desa",
+    r"\bkec\b": "kecamatan",r"\bkel\b": "kelurahan",
+    r"\bkab\b": "kabupaten",r"\brt\b":  "rukun tetangga",
+    r"\brw\b":  "rukun warga",r"\bgg\b": "gang",
+    r"\bno\b":  "nomor",    r"\bsmk\b": "sekolah menengah kejuruan",
+    r"\bsma\b": "sekolah menengah atas",
+    r"\bma\b":  "madrasah aliyah",
+    r"\bmts\b": "madrasah tsanawiyah",
+    r"\bmi\b":  "madrasah ibtidaiyah",
+    r"\bsd\b":  "sekolah dasar",
+    r"\bsmp\b": "sekolah menengah pertama",
+    r"\bpkl\b": "pekalongan",
+    r"\bbth\b": "batang",
+    r"\bpml\b": "pemalang",
+}
+
+def preprocess_text(text):
+    if pd.isna(text) or str(text).strip() in ("", "nan", "-", "0"):
+        return ""
+    t = str(text).lower()
+    t = re.sub(r"[^a-z0-9\s]", " ", t)
+    t = re.sub(r"\s+", " ", t).strip()
+    for pat, rep in ABBR.items():
+        t = re.sub(pat, rep, t)
+    return t
+
+TEXT_COLS = {k: COLS[k] for k in ("sekolah", "alamat", "kab", "kec") if COLS.get(k)}
+for key, col in TEXT_COLS.items():
+    raw[f"_clean_{key}"] = raw[col].apply(preprocess_text)
+    print(f"✅ Preprocessing '{col}' selesai")
+
+# Tabel 4.3 – contoh normalisasi
+print("\n📋 TABEL 4.3 – Contoh Normalisasi Text Preprocessing:")
+samples = raw[[COLS["sekolah"], "_clean_sekolah"]].drop_duplicates().head(8) if COLS.get("sekolah") else pd.DataFrame()
+if not samples.empty:
+    samples.columns = ["Teks Asli", "Hasil Preprocessing"]
+    print(samples.to_string(index=False))
+    samples.to_excel(OUTPUT_DIR / "tabel_4_3_preprocessing.xlsx", index=False)
+
+ABBR = {
+    r"\bjl\b":  "jalan",    r"\bds\b":  "desa",
+    r"\bkec\b": "kecamatan",r"\bkel\b": "kelurahan",
+    r"\bkab\b": "kabupaten",r"\brt\b":  "rukun tetangga",
+    r"\brw\b":  "rukun warga",r"\bgg\b": "gang",
+    r"\bno\b":  "nomor",    r"\bsmk\b": "sekolah menengah kejuruan",
+    r"\bsma\b": "sekolah menengah atas",
+    r"\bma\b":  "madrasah aliyah",
+    r"\bmts\b": "madrasah tsanawiyah",
+    r"\bmi\b":  "madrasah ibtidaiyah",
+    r"\bsd\b":  "sekolah dasar",
+    r"\bsmp\b": "sekolah menengah pertama",
+    r"\bpkl\b": "pekalongan",
+    r"\bbth\b": "batang",
+    r"\bpml\b": "pemalang",
+}
+
+def preprocess_text(text):
+    if pd.isna(text) or str(text).strip() in ("", "nan", "-", "0"):
+        return ""
+    t = str(text).lower()
+    t = re.sub(r"[^a-z0-9\s]", " ", t)
+    t = re.sub(r"\s+", " ", t).strip()
+    for pat, rep in ABBR.items():
+        t = re.sub(pat, rep, t)
+    return t
+
+TEXT_COLS = {k: COLS[k] for k in ("sekolah", "alamat", "kab", "kec") if COLS.get(k)}
+for key, col in TEXT_COLS.items():
+    raw[f"_clean_{key}"] = raw[col].apply(preprocess_text)
+    print(f"✅ Preprocessing '{col}' selesai")
+
+# Tabel 4.3 – contoh normalisasi
+print("\n📋 TABEL 4.3 – Contoh Normalisasi Text Preprocessing:")
+samples = raw[[COLS["sekolah"], "_clean_sekolah"]].drop_duplicates().head(8) if COLS.get("sekolah") else pd.DataFrame()
+if not samples.empty:
+    samples.columns = ["Teks Asli", "Hasil Preprocessing"]
+    print(samples.to_string(index=False))
+    samples.to_excel(OUTPUT_DIR / "tabel_4_3_preprocessing.xlsx", index=False)
+
+from google.colab import files, drive
+import ipywidgets as widgetsrom IPython.display import display
+
+# --- Opsi 1: Upload File --- #
+upload_button = widgets.Button(description="⬆️ Upload File")
+output_upload = widgets.Output()
+
+def on_upload_click(b):
+    with output_upload:
+        print("Mengupload file...")
+        uploaded = files.upload()
+        global FNAME
+        FNAME = list(uploaded.keys())[0]
+        print(f"✅ File diterima: {FNAME}")
+        # Rerun the rest of the cell from here
+        process_excel_file(FNAME)
+
+upload_button.on_click(on_upload_click)
+
+# --- Opsi 2: Pilih dari Google Drive --- #
+drive_mount_button = widgets.Button(description="🔗 Mount Google Drive")
+drive_path_input = widgets.Text(description="Jalur File di Drive:", placeholder="/content/DATASET PMB ITSNUPKL2019-2024_FIX (1).xls")
+process_drive_button = widgets.Button(description="➡️ Proses File dari Drive")
+output_drive = widgets.Output()
+
+def on_drive_mount_click(b):
+    with output_drive:
+        print("Mounting Google Drive...")
+        drive.mount('/content/drive')
+        print("✅ Google Drive ter-mount.")
+
+def on_process_drive_click(b):
+    with output_drive:
+        global FNAME
+        FNAME = drive_path_input.value
+        if not FNAME:
+            print("⚠️ Harap masukkan jalur file.")
+            return
+        print(f"Memproses file dari Drive: {FNAME}")
+        # Rerun the rest of the cell from here
+        process_excel_file(FNAME)
+
+drive_mount_button.on_click(on_drive_mount_click)
+process_drive_button.on_click(on_process_drive_click)
+
+def process_excel_file(file_path):
+    # Baca semua sheet, gabungkan
+    xf   = pd.ExcelFile(file_path)
+    dfs  = []
+    for sn in xf.sheet_names:
+        # Read without header initially, then set columns from the first row
+        df_s = pd.read_excel(file_path, sheet_name=sn, dtype=str, header=None)
+        
+        # Generate new column names, replacing NaN with 'Unnamed_X'
+        # Correctly identify headers from the second row (index 1)
+        new_columns = []
+        for i, col_val in enumerate(df_s.iloc[1]):
+            if pd.isna(col_val) or str(col_val).strip() == '':
+                new_columns.append(f'Unnamed_{i}')
+            else:
+                new_columns.append(str(col_val).strip())
+        print(f"   [DEBUG] Extracted columns for sheet '{sn}': {new_columns}") # Added debug print
+
+        # Assign the cleaned columns and drop the first two rows (empty + header)
+        df_s.columns = new_columns
+        df_s = df_s[2:].reset_index(drop=True)
+        df_s["_sheet"] = sn
+        dfs.append(df_s)
+        print(f"   Sheet '{sn}': {len(df_s)} baris, {len(df_s.columns)} kolom")
+
+    global raw
+    raw = pd.concat(dfs, ignore_index=True)
+    raw.columns = [str(c).strip() for c in raw.columns]   # strip whitespace again for good measure
+    print(f"\n📦 Total baris gabungan: {len(raw):,}")
+    print(f"📋 Kolom: {list(raw.columns)}")
+
+
+print("Pilih metode untuk memuat data:")
+display(upload_button, output_upload)
+display(drive_mount_button, drive_path_input, process_drive_button, output_drive)
+
+from google.colab import files, drive
+import ipywidgets as widgetsrom IPython.display import display
+
+# --- Opsi 1: Upload File --- #
+upload_button = widgets.Button(description="⬆️ Upload File")
+output_upload = widgets.Output()
+
+def on_upload_click(b):
+    with output_upload:
+        print("Mengupload file...")
+        uploaded = files.upload()
+        global FNAME
+        FNAME = list(uploaded.keys())[0]
+        print(f"✅ File diterima: {FNAME}")
+        # Rerun the rest of the cell from here
+        process_excel_file(FNAME)
+
+upload_button.on_click(on_upload_click)
+
+# --- Opsi 2: Pilih dari Google Drive --- #
+drive_mount_button = widgets.Button(description="🔗 Mount Google Drive")
+drive_path_input = widgets.Text(description="Jalur File di Drive:", placeholder="/content/DATASET PMB ITSNUPKL2019-2024_FIX (1).xls")
+process_drive_button = widgets.Button(description="➡️ Proses File dari Drive")
+output_drive = widgets.Output()
+
+def on_drive_mount_click(b):
+    with output_drive:
+        print("Mounting Google Drive...")
+        drive.mount('/content/drive')
+        print("✅ Google Drive ter-mount.")
+
+def on_process_drive_click(b):
+    with output_drive:
+        global FNAME
+        FNAME = drive_path_input.value
+        if not FNAME:
+            print("⚠️ Harap masukkan jalur file.")
+            return
+        print(f"Memproses file dari Drive: {FNAME}")
+        # Rerun the rest of the cell from here
+        process_excel_file(FNAME)
+
+drive_mount_button.on_click(on_drive_mount_click)
+process_drive_button.on_click(on_process_drive_click)
+
+def process_excel_file(file_path):
+    # Baca semua sheet, gabungkan
+    xf   = pd.ExcelFile(file_path)
+    dfs  = []
+    for sn in xf.sheet_names:
+        # Read without header initially, then set columns from the first row
+        df_s = pd.read_excel(file_path, sheet_name=sn, dtype=str, header=None)
+        
+        # Generate new column names, replacing NaN with 'Unnamed_X'
+        # Correctly identify headers from the second row (index 1)
+        new_columns = []
+        for i, col_val in enumerate(df_s.iloc[1]):
+            if pd.isna(col_val) or str(col_val).strip() == '':
+                new_columns.append(f'Unnamed_{i}')
+            else:
+                new_columns.append(str(col_val).strip())
+        print(f"   [DEBUG] Extracted columns for sheet '{sn}': {new_columns}") # Added debug print
+
+        # Assign the cleaned columns and drop the first two rows (empty + header)
+        df_s.columns = new_columns
+        df_s = df_s[2:].reset_index(drop=True)
+        df_s["_sheet"] = sn
+        dfs.append(df_s)
+        print(f"   Sheet '{sn}': {len(df_s)} baris, {len(df_s.columns)} kolom")
+
+    global raw
+    raw = pd.concat(dfs, ignore_index=True)
+    raw.columns = [str(c).strip() for c in raw.columns]   # strip whitespace again for good measure
+    print(f"\n📦 Total baris gabungan: {len(raw):,}")
+    print(f"📋 Kolom: {list(raw.columns)}")
+
+
+print("Pilih metode untuk memuat data:")
+display(upload_button, output_upload)
+display(drive_mount_button, drive_path_input, process_drive_button, output_drive)
+
+from google.colab import files, drive
+import ipywidgets as widgets
+from IPython.display import display
+
+# --- Opsi 1: Upload File --- #
+upload_button = widgets.Button(description="⬆️ Upload File")
+output_upload = widgets.Output()
+
+def on_upload_click(b):
+    with output_upload:
+        print("Mengupload file...")
+        uploaded = files.upload()
+        global FNAME
+        FNAME = list(uploaded.keys())[0]
+        print(f"✅ File diterima: {FNAME}")
+        # Rerun the rest of the cell from here
+        process_excel_file(FNAME)
+
+upload_button.on_click(on_upload_click)
+
+# --- Opsi 2: Pilih dari Google Drive --- #
+drive_mount_button = widgets.Button(description="🔗 Mount Google Drive")
+drive_path_input = widgets.Text(description="Jalur File di Drive:", placeholder="/content/DATASET PMB ITSNUPKL2019-2024_FIX (1).xls")
+process_drive_button = widgets.Button(description="➡️ Proses File dari Drive")
+output_drive = widgets.Output()
+
+def on_drive_mount_click(b):
+    with output_drive:
+        print("Mounting Google Drive...")
+        drive.mount('/content/drive')
+        print("✅ Google Drive ter-mount.")
+
+def on_process_drive_click(b):
+    with output_drive:
+        global FNAME
+        FNAME = drive_path_input.value
+        if not FNAME:
+            print("⚠️ Harap masukkan jalur file.")
+            return
+        print(f"Memproses file dari Drive: {FNAME}")
+        # Rerun the rest of the cell from here
+        process_excel_file(FNAME)
+
+drive_mount_button.on_click(on_drive_mount_click)
+process_drive_button.on_click(on_process_drive_click)
+
+def process_excel_file(file_path):
+    # Baca semua sheet, gabungkan
+    xf   = pd.ExcelFile(file_path)
+    dfs  = []
+    for sn in xf.sheet_names:
+        # Read without header initially, then set columns from the first row
+        df_s = pd.read_excel(file_path, sheet_name=sn, dtype=str, header=None)
+        
+        # Generate new column names, replacing NaN with 'Unnamed_X'
+        # Correctly identify headers from the second row (index 1)
+        new_columns = []
+        for i, col_val in enumerate(df_s.iloc[1]):
+            if pd.isna(col_val) or str(col_val).strip() == '':
+                new_columns.append(f'Unnamed_{i}')
+            else:
+                new_columns.append(str(col_val).strip())
+        print(f"   [DEBUG] Extracted columns for sheet '{sn}': {new_columns}") # Added debug print
+
+        # Assign the cleaned columns and drop the first two rows (empty + header)
+        df_s.columns = new_columns
+        df_s = df_s[2:].reset_index(drop=True)
+        df_s["_sheet"] = sn
+        dfs.append(df_s)
+        print(f"   Sheet '{sn}': {len(df_s)} baris, {len(df_s.columns)} kolom")
+
+    global raw
+    raw = pd.concat(dfs, ignore_index=True)
+    raw.columns = [str(c).strip() for c in raw.columns]   # strip whitespace again for good measure
+    print(f"\n📦 Total baris gabungan: {len(raw):,}")
+    print(f"📋 Kolom: {list(raw.columns)}")
+
+
+print("Pilih metode untuk memuat data:")
+display(upload_button, output_upload)
+display(drive_mount_button, drive_path_input, process_drive_button, output_drive)
+
+def detect_col(cols, patterns, label=""):
+    for p in patterns:
+        found = [c for c in cols if re.search(p, c, re.I)]
+        if found:
+            print(f"   {label:12} → '{found[0]}'")
+            return found[0]
+    print(f"   {label:12} → ⚠️  TIDAK TERDETEKSI – pilih manual")
+    return None
+
+print("🔍 Auto-deteksi kolom:")
+COLS = dict(
+    tahun   = detect_col(raw.columns, [r"tahun",r"year",r"angkatan",r"^ta[_
+]",r"periode"], "Tahun"),
+    prodi   = detect_col(raw.columns, [r"prodi",r"program.studi",r"jurusan",r"program"], "Prodi"),
+    jalur   = detect_col(raw.columns, [r"jalur",r"jenis.jalur",r"jenis"], "Jalur"),
+    kab     = detect_col(raw.columns, [r"kabupaten",r"\bkab\b",r"kota"], "Kabupaten"),
+    kec     = detect_col(raw.columns, [r"kecamatan",r"\bkec\b"], "Kecamatan"),
+    sekolah = detect_col(raw.columns, [r"sekolah",r"asal.sekolah",r"nama.sekolah"], "Sekolah"),
+    alamat  = detect_col(raw.columns, [r"alamat",r"address",r"domisili"], "Alamat"),
+)
+
+# ── EDIT MANUAL JIKA KOLOM SALAH DETEKSI ────────────────────────────────
+# Hapus tanda # dan ganti nilainya jika perlu:
+# Menggunakan nama kolom Unnamed_X yang terdeteksi dari raw DataFrame
+COLS["tahun"]   = "Unnamed_2"
+COLS["prodi"]   = "Unnamed_7"
+COLS["jalur"]   = "Unnamed_8"
+COLS["kab"]     = "Unnamed_4"
+COLS["kec"]     = "Unnamed_5"
+COLS["sekolah"] = "Unnamed_3"
+COLS["alamat"]  = "Unnamed_6"
+
+# Ekstrak tahun
+def extract_year(row):
+    candidates = [COLS["tahun"]] + list(raw.columns) if COLS["tahun"] else list(raw.columns)
+    for col in candidates:
+        try:
+            y = int(str(row[col]).strip()[:4])
+            if 2019 <= y <= 2024:
+                return y
+        except Exception:
+            pass
+    return None
+
+raw["_tahun"] = raw.apply(extract_year, axis=1)
+raw = raw[raw["_tahun"].notna()].copy()
+raw["_tahun"] = raw["_tahun"].astype(int)
+
+print(f"\n📅 Distribusi per tahun:")
+DIST = raw["_tahun"].value_counts().sort_index()
+for y, n in DIST.items():
+    print(f"   {y}  [{FASE[y]:12}]  → {n:4d} pendaftar")
+print(f"   TOTAL               → {len(raw):,}")
+
+def detect_col(cols, patterns, label=""):
+    for p in patterns:
+        found = [c for c in cols if re.search(p, c, re.I)]
+        if found:
+            print(f"   {label:12} → '{found[0]}'")
+            return found[0]
+    print(f"   {label:12} → ⚠️  TIDAK TERDETEKSI – pilih manual")
+    return None
+
+print("🔍 Auto-deteksi kolom:")
+COLS = dict(
+    tahun   = detect_col(raw.columns, [r"tahun",r"year",r"angkatan",r"^ta[_
+]",r"periode"], "Tahun"),
+    prodi   = detect_col(raw.columns, [r"prodi",r"program.studi",r"jurusan",r"program"], "Prodi"),
+    jalur   = detect_col(raw.columns, [r"jalur",r"jenis.jalur",r"jenis"], "Jalur"),
+    kab     = detect_col(raw.columns, [r"kabupaten",r"\bkab\b",r"kota"], "Kabupaten"),
+    kec     = detect_col(raw.columns, [r"kecamatan",r"\bkec\b"], "Kecamatan"),
+    sekolah = detect_col(raw.columns, [r"sekolah",r"asal.sekolah",r"nama.sekolah"], "Sekolah"),
+    alamat  = detect_col(raw.columns, [r"alamat",r"address",r"domisili"], "Alamat"),
+)
+
+# ── EDIT MANUAL JIKA KOLOM SALAH DETEKSI ────────────────────────────────
+# Hapus tanda # dan ganti nilainya jika perlu:
+# Menggunakan nama kolom Unnamed_X yang terdeteksi dari raw DataFrame
+COLS["tahun"]   = "Unnamed_2"
+COLS["prodi"]   = "Unnamed_7"
+COLS["jalur"]   = "Unnamed_8"
+COLS["kab"]     = "Unnamed_4"
+COLS["kec"]     = "Unnamed_5"
+COLS["sekolah"] = "Unnamed_3"
+COLS["alamat"]  = "Unnamed_6"
+
+# Ekstrak tahun
+def extract_year(row):
+    candidates = [COLS["tahun"]] + list(raw.columns) if COLS["tahun"] else list(raw.columns)
+    for col in candidates:
+        try:
+            y = int(str(row[col]).strip()[:4])
+            if 2019 <= y <= 2024:
+                return y
+        except Exception:
+            pass
+    return None
+
+raw["_tahun"] = raw.apply(extract_year, axis=1)
+raw = raw[raw["_tahun"].notna()].copy()
+raw["_tahun"] = raw["_tahun"].astype(int)
+
+print(f"\n📅 Distribusi per tahun:")
+DIST = raw["_tahun"].value_counts().sort_index()
+for y, n in DIST.items():
+    print(f"   {y}  [{FASE[y]:12}]  → {n:4d} pendaftar")
+print(f"   TOTAL               → {len(raw):,}")
+
+def detect_col(cols, patterns, label=""):
+    for p in patterns:
+        found = [c for c in cols if re.search(p, c, re.I)]
+        if found:
+            print(f"   {label:12} → '{found[0]}'")
+            return found[0]
+    print(f"   {label:12} → ⚠️  TIDAK TERDETEKSI – pilih manual")
+    return None
+
+print("🔍 Auto-deteksi kolom:")
+COLS = dict(
+    tahun   = detect_col(raw.columns, [r"tahun",r"year",r"angkatan",r"^ta[_\s]",r"periode"], "Tahun"),
+    prodi   = detect_col(raw.columns, [r"prodi",r"program.studi",r"jurusan",r"program"], "Prodi"),
+    jalur   = detect_col(raw.columns, [r"jalur",r"jenis.jalur",r"jenis"], "Jalur"),
+    kab     = detect_col(raw.columns, [r"kabupaten",r"\bkab\b",r"kota"], "Kabupaten"),
+    kec     = detect_col(raw.columns, [r"kecamatan",r"\bkec\b"], "Kecamatan"),
+    sekolah = detect_col(raw.columns, [r"sekolah",r"asal.sekolah",r"nama.sekolah"], "Sekolah"),
+    alamat  = detect_col(raw.columns, [r"alamat",r"address",r"domisili"], "Alamat"),
+)
+
+# ── EDIT MANUAL JIKA KOLOM SALAH DETEKSI ────────────────────────────────
+# Hapus tanda # dan ganti nilainya jika perlu:
+# Menggunakan nama kolom Unnamed_X yang terdeteksi dari raw DataFrame
+COLS["tahun"]   = "Unnamed_2"
+COLS["prodi"]   = "Unnamed_7"
+COLS["jalur"]   = "Unnamed_8"
+COLS["kab"]     = "Unnamed_4"
+COLS["kec"]     = "Unnamed_5"
+COLS["sekolah"] = "Unnamed_3"
+COLS["alamat"]  = "Unnamed_6"
+
+# Ekstrak tahun
+def extract_year(row):
+    candidates = [COLS["tahun"]] + list(raw.columns) if COLS["tahun"] else list(raw.columns)
+    for col in candidates:
+        try:
+            y = int(str(row[col]).strip()[:4])
+            if 2019 <= y <= 2024:
+                return y
+        except Exception:
+            pass
+    return None
+
+raw["_tahun"] = raw.apply(extract_year, axis=1)
+raw = raw[raw["_tahun"].notna()].copy()
+raw["_tahun"] = raw["_tahun"].astype(int)
+
+print(f"\n📅 Distribusi per tahun:")
+DIST = raw["_tahun"].value_counts().sort_index()
+for y, n in DIST.items():
+    print(f"   {y}  [{FASE[y]:12}]  → {n:4d} pendaftar")
+print(f"   TOTAL               → {len(raw):,}")
+
+ABBR = {
+    r"\bjl\b":  "jalan",    r"\bds\b":  "desa",
+    r"\bkec\b": "kecamatan",r"\bkel\b": "kelurahan",
+    r"\bkab\b": "kabupaten",r"\brt\b":  "rukun tetangga",
+    r"\brw\b":  "rukun warga",r"\bgg\b": "gang",
+    r"\bno\b":  "nomor",    r"\bsmk\b": "sekolah menengah kejuruan",
+    r"\bsma\b": "sekolah menengah atas",
+    r"\bma\b":  "madrasah aliyah",
+    r"\bmts\b": "madrasah tsanawiyah",
+    r"\bmi\b":  "madrasah ibtidaiyah",
+    r"\bsd\b":  "sekolah dasar",
+    r"\bsmp\b": "sekolah menengah pertama",
+    r"\bpkl\b": "pekalongan",
+    r"\bbth\b": "batang",
+    r"\bpml\b": "pemalang",
+}
+
+def preprocess_text(text):
+    if pd.isna(text) or str(text).strip() in ("", "nan", "-", "0"):
+        return ""
+    t = str(text).lower()
+    t = re.sub(r"[^a-z0-9\s]", " ", t)
+    t = re.sub(r"\s+", " ", t).strip()
+    for pat, rep in ABBR.items():
+        t = re.sub(pat, rep, t)
+    return t
+
+TEXT_COLS = {k: COLS[k] for k in ("sekolah", "alamat", "kab", "kec") if COLS.get(k)}
+for key, col in TEXT_COLS.items():
+    raw[f"_clean_{key}"] = raw[col].apply(preprocess_text)
+    print(f"✅ Preprocessing '{col}' selesai")
+
+# Tabel 4.3 – contoh normalisasi
+print("\n📋 TABEL 4.3 – Contoh Normalisasi Text Preprocessing:")
+samples = raw[[COLS["sekolah"], "_clean_sekolah"]].drop_duplicates().head(8) if COLS.get("sekolah") else pd.DataFrame()
+if not samples.empty:
+    samples.columns = ["Teks Asli", "Hasil Preprocessing"]
+    print(samples.to_string(index=False))
+    samples.to_excel(OUTPUT_DIR / "tabel_4_3_preprocessing.xlsx", index=False)
+
+def detect_col(cols, patterns, label=""):
+    for p in patterns:
+        found = [c for c in cols if re.search(p, c, re.I)]
+        if found:
+            print(f"   {label:12} → '{found[0]}'")
+            return found[0]
+    print(f"   {label:12} → ⚠️  TIDAK TERDETEKSI – pilih manual")
+    return None
+
+print("🔍 Auto-deteksi kolom:")
+COLS = dict(
+    tahun   = detect_col(raw.columns, [r"tahun",r"year",r"angkatan",r"^ta[_\s]",r"periode"], "Tahun"),
+    prodi   = detect_col(raw.columns, [r"prodi",r"program.studi",r"jurusan",r"program"], "Prodi"),
+    jalur   = detect_col(raw.columns, [r"jalur",r"jenis.jalur",r"jenis"], "Jalur"),
+    kab     = detect_col(raw.columns, [r"kabupaten",r"\bkab\b",r"kota"], "Kabupaten"),
+    kec     = detect_col(raw.columns, [r"kecamatan",r"\bkec\b"], "Kecamatan"),
+    sekolah = detect_col(raw.columns, [r"sekolah",r"asal.sekolah",r"nama.sekolah"], "Sekolah"),
+    alamat  = detect_col(raw.columns, [r"alamat",r"address",r"domisili"], "Alamat"),
+)
+
+# ── EDIT MANUAL JIKA KOLOM SALAH DETEKSI ────────────────────────────────
+# Hapus tanda # dan ganti nilainya jika perlu:
+# Menggunakan nama kolom Unnamed_X yang terdeteksi dari raw DataFrame
+COLS["tahun"]   = "Unnamed_2"
+COLS["prodi"]   = "Unnamed_7"
+COLS["jalur"]   = "Unnamed_8"
+COLS["kab"]     = "Unnamed_4"
+COLS["kec"]     = "Unnamed_5"
+COLS["sekolah"] = "Unnamed_3"
+COLS["alamat"]  = "Unnamed_6"
+
+# Ekstrak tahun
+def extract_year(row):
+    candidates = [COLS["tahun"]] + list(raw.columns) if COLS["tahun"] else list(raw.columns)
+    for col in candidates:
+        try:
+            y = int(str(row[col]).strip()[:4])
+            if 2019 <= y <= 2024:
+                return y
+        except Exception:
+            pass
+    return None
+
+raw["_tahun"] = raw.apply(extract_year, axis=1)
+raw = raw[raw["_tahun"].notna()].copy()
+raw["_tahun"] = raw["_tahun"].astype(int)
+
+print(f"\n📅 Distribusi per tahun:")
+DIST = raw["_tahun"].value_counts().sort_index()
+for y, n in DIST.items():
+    print(f"   {y}  [{FASE[y]:12}]  → {n:4d} pendaftar")
+print(f"   TOTAL               → {len(raw):,}")
+
+ABBR = {
+    r"\bjl\b":  "jalan",    r"\bds\b":  "desa",
+    r"\bkec\b": "kecamatan",r"\bkel\b": "kelurahan",
+    r"\bkab\b": "kabupaten",r"\brt\b":  "rukun tetangga",
+    r"\brw\b":  "rukun warga",r"\bgg\b": "gang",
+    r"\bno\b":  "nomor",    r"\bsmk\b": "sekolah menengah kejuruan",
+    r"\bsma\b": "sekolah menengah atas",
+    r"\bma\b":  "madrasah aliyah",
+    r"\bmts\b": "madrasah tsanawiyah",
+    r"\bmi\b":  "madrasah ibtidaiyah",
+    r"\bsd\b":  "sekolah dasar",
+    r"\bsmp\b": "sekolah menengah pertama",
+    r"\bpkl\b": "pekalongan",
+    r"\bbth\b": "batang",
+    r"\bpml\b": "pemalang",
+}
+
+def preprocess_text(text):
+    if pd.isna(text) or str(text).strip() in ("", "nan", "-", "0"):
+        return ""
+    t = str(text).lower()
+    t = re.sub(r"[^a-z0-9\s]", " ", t)
+    t = re.sub(r"\s+", " ", t).strip()
+    for pat, rep in ABBR.items():
+        t = re.sub(pat, rep, t)
+    return t
+
+TEXT_COLS = {k: COLS[k] for k in ("sekolah", "alamat", "kab", "kec") if COLS.get(k)}
+for key, col in TEXT_COLS.items():
+    raw[f"_clean_{key}"] = raw[col].apply(preprocess_text)
+    print(f"✅ Preprocessing '{col}' selesai")
+
+# Tabel 4.3 – contoh normalisasi
+print("\n📋 TABEL 4.3 – Contoh Normalisasi Text Preprocessing:")
+samples = raw[[COLS["sekolah"], "_clean_sekolah"]].drop_duplicates().head(8) if COLS.get("sekolah") else pd.DataFrame()
+if not samples.empty:
+    samples.columns = ["Teks Asli", "Hasil Preprocessing"]
+    print(samples.to_string(index=False))
+    samples.to_excel(OUTPUT_DIR / "tabel_4_3_preprocessing.xlsx", index=False)
+
+def detect_col(cols, patterns, label=""):
+    for p in patterns:
+        found = [c for c in cols if re.search(p, c, re.I)]
+        if found:
+            print(f"   {label:12} → '{found[0]}'")
+            return found[0]
+    print(f"   {label:12} → ⚠️  TIDAK TERDETEKSI – pilih manual")
+    return None
+
+print("🔍 Auto-deteksi kolom:")
+COLS = dict(
+    tahun   = detect_col(raw.columns, [r"tahun",r"year",r"angkatan",r"^ta[_\s]",r"periode"], "Tahun"),
+    prodi   = detect_col(raw.columns, [r"prodi",r"program.studi",r"jurusan",r"program"], "Prodi"),
+    jalur   = detect_col(raw.columns, [r"jalur",r"jenis.jalur",r"jenis"], "Jalur"),
+    kab     = detect_col(raw.columns, [r"kabupaten",r"\bkab\b",r"kota"], "Kabupaten"),
+    kec     = detect_col(raw.columns, [r"kecamatan",r"\bkec\b"], "Kecamatan"),
+    sekolah = detect_col(raw.columns, [r"sekolah",r"asal.sekolah",r"nama.sekolah"], "Sekolah"),
+    alamat  = detect_col(raw.columns, [r"alamat",r"address",r"domisili"], "Alamat"),
+)
+
+# ── EDIT MANUAL JIKA KOLOM SALAH DETEKSI ────────────────────────────────
+# Hapus tanda # dan ganti nilainya jika perlu:
+# Menggunakan nama kolom Unnamed_X yang terdeteksi dari raw DataFrame
+# COLS["tahun"]   = "Unnamed_2"
+# COLS["prodi"]   = "Unnamed_7"
+# COLS["jalur"]   = "Unnamed_8"
+# COLS["kab"]     = "Unnamed_4"
+# COLS["kec"]     = "Unnamed_5"
+# COLS["sekolah"] = "Unnamed_3"
+# COLS["alamat"]  = "Unnamed_6"
+
+# Ekstrak tahun
+def extract_year(row):
+    candidates = [COLS["tahun"]] + list(raw.columns) if COLS["tahun"] else list(raw.columns)
+    for col in candidates:
+        try:
+            y = int(str(row[col]).strip()[:4])
+            if 2019 <= y <= 2024:
+                return y
+        except Exception:
+            pass
+    return None
+
+raw["_tahun"] = raw.apply(extract_year, axis=1)
+raw = raw[raw["_tahun"].notna()].copy()
+raw["_tahun"] = raw["_tahun"].astype(int)
+
+print(f"\n📅 Distribusi per tahun:")
+DIST = raw["_tahun"].value_counts().sort_index()
+for y, n in DIST.items():
+    print(f"   {y}  [{FASE[y]:12}]  → {n:4d} pendaftar")
+print(f"   TOTAL               → {len(raw):,}")
+
+ABBR = {
+    r"\bjl\b":  "jalan",    r"\bds\b":  "desa",
+    r"\bkec\b": "kecamatan",r"\bkel\b": "kelurahan",
+    r"\bkab\b": "kabupaten",r"\brt\b":  "rukun tetangga",
+    r"\brw\b":  "rukun warga",r"\bgg\b": "gang",
+    r"\bno\b":  "nomor",    r"\bsmk\b": "sekolah menengah kejuruan",
+    r"\bsma\b": "sekolah menengah atas",
+    r"\bma\b":  "madrasah aliyah",
+    r"\bmts\b": "madrasah tsanawiyah",
+    r"\bmi\b":  "madrasah ibtidaiyah",
+    r"\bsd\b":  "sekolah dasar",
+    r"\bsmp\b": "sekolah menengah pertama",
+    r"\bpkl\b": "pekalongan",
+    r"\bbth\b": "batang",
+    r"\bpml\b": "pemalang",
+}
+
+def preprocess_text(text):
+    if pd.isna(text) or str(text).strip() in ("", "nan", "-", "0"):
+        return ""
+    t = str(text).lower()
+    t = re.sub(r"[^a-z0-9\s]", " ", t)
+    t = re.sub(r"\s+", " ", t).strip()
+    for pat, rep in ABBR.items():
+        t = re.sub(pat, rep, t)
+    return t
+
+TEXT_COLS = {k: COLS[k] for k in ("sekolah", "alamat", "kab", "kec") if COLS.get(k)}
+for key, col in TEXT_COLS.items():
+    raw[f"_clean_{key}"] = raw[col].apply(preprocess_text)
+    print(f"✅ Preprocessing '{col}' selesai")
+
+# Tabel 4.3 – contoh normalisasi
+print("\n📋 TABEL 4.3 – Contoh Normalisasi Text Preprocessing:")
+samples = raw[[COLS["sekolah"], "_clean_sekolah"]].drop_duplicates().head(8) if COLS.get("sekolah") else pd.DataFrame()
+if not samples.empty:
+    samples.columns = ["Teks Asli", "Hasil Preprocessing"]
+    print(samples.to_string(index=False))
+    samples.to_excel(OUTPUT_DIR / "tabel_4_3_preprocessing.xlsx", index=False)
+
+import torch
+from transformers import AutoTokenizer, AutoModel
+
+MODEL_NAME = "indobenchmark/indobert-base-p1"
+print(f"📥 Memuat IndoBERT: {MODEL_NAME}")
+print("   (Download ~500 MB, makan waktu 2–5 menit...)\n")
+
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+bert_model = AutoModel.from_pretrained(MODEL_NAME)
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+bert_model = bert_model.to(DEVICE).eval()
+print(f"✅ IndoBERT dimuat di: {DEVICE}")
+
+def get_embeddings(texts, batch_size=64, max_len=64):
+    """Mean-pooling IndoBERT embedding."""
+    all_emb = []
+    texts = [t if t.strip() else "[UNK]" for t in texts]
+    for i in range(0, len(texts), batch_size):
+        batch = texts[i : i + batch_size]
+        enc = tokenizer(
+            batch, padding=True, truncation=True,
+            max_length=max_len, return_tensors="pt"
+        )
+        enc = {k: v.to(DEVICE) for k, v in enc.items()}
+        with torch.no_grad():
+            out = bert_model(**enc)
+        mask = enc["attention_mask"].unsqueeze(-1).float()
+        emb  = (out.last_hidden_state * mask).sum(1) / mask.sum(1)
+        all_emb.append(emb.cpu().numpy())
+        if (i // batch_size) % 10 == 0:
+            print(f"   batch {i//batch_size+1}/{(len(texts)+batch_size-1)//batch_size} ...")
+    return np.vstack(all_emb)   # (N, 768)
+
+# Gabungkan teks untuk embedding
+def build_text(row):
+    parts = []
+    for k in ("sekolah", "kab", "kec", "alamat"):
+        v = row.get(f"_clean_{k}", "")
+        if v:
+            parts.append(v)
+    return " ".join(parts) or "tidak diketahui"
+
+raw["_text_emb"] = raw.apply(build_text, axis=1)
+print(f"\n⚙️  Mengekstrak embedding untuk {len(raw):,} baris...")
+EMB_MATRIX = get_embeddings(raw["_text_emb"].tolist())   # (N, 768)
+print(f"✅ Embedding shape: {EMB_MATRIX.shape}")
+
+# Simpan embedding (agar tidak perlu ulang)
+np.save(OUTPUT_DIR / "indobert_embeddings.npy", EMB_MATRIX)
+print(f"💾 Embedding disimpan: {OUTPUT_DIR}/indobert_embeddings.npy")
+
+# ── Tabel 4.3a: Cosine Similarity antar periode ─────────────────────────
+print("\n📋 TABEL 4.3a – Cosine Similarity Antar Periode:")
+print(f"{'Transisi':>12}  {'Cosine Sim':>10}  {'Kategori':>10}")
+print("-" * 40)
+years_sorted = sorted(raw["_tahun"].unique())
+sim_results  = []
+for i in range(len(years_sorted) - 1):
+    y1, y2 = years_sorted[i], years_sorted[i + 1]
+    idx1 = raw[raw["_tahun"] == y1].index[:100]
+    idx2 = raw[raw["_tahun"] == y2].index[:100]
+    pos1 = [raw.index.get_loc(j) for j in idx1]
+    pos2 = [raw.index.get_loc(j) for j in idx2]
+    sim  = float(cosine_similarity(EMB_MATRIX[pos1], EMB_MATRIX[pos2]).mean())
+    cat  = "Stabil" if sim > 0.85 else "Moderat" if sim > 0.70 else "Rendah"
+    sim_results.append({"Transisi": f"{y1}→{y2}", "Cosine Sim": round(sim, 4), "Kategori": cat})
+    print(f"   {y1}→{y2}  {sim:>10.4f}  {cat:>10}")
+
+df_sim = pd.DataFrame(sim_results)
+df_sim.to_excel(OUTPUT_DIR / "tabel_4_3a_cosine_similarity.xlsx", index=False)
+avg_sim = df_sim["Cosine Sim"].mean()
+print(f"\n   Rata-rata Cosine Similarity: {avg_sim:.4f}")
+
+print("⚙️  Encoding kategorikal...")
+
+# Fit encoder HANYA pada 2019
+REF_YEAR  = 2019
+ref_mask  = raw["_tahun"] == REF_YEAR
+ENCODERS  = {}
+for key in ("prodi", "jalur", "kab"):
+    col = COLS.get(key)
+    if not col:
+        continue
+    enc = LabelEncoder()
+    enc.fit(raw.loc[ref_mask, col].fillna("Unknown"))
+    ENCODERS[key] = enc
+    print(f"   LabelEncoder '{key}': {len(enc.classes_)} kelas")
+
+def safe_encode(enc, series):
+    known = set(enc.classes_)
+    mapped = series.fillna("Unknown").apply(
+        lambda x: x if x in known else "Unknown"
+    )
+    if "Unknown" not in known:
+        enc.classes_ = np.append(enc.classes_, "Unknown")
+    return enc.transform(mapped)
+
+cat_arrays = []
+for key, enc in ENCODERS.items():
+    col = COLS[key]
+    arr = safe_encode(enc, raw[col]).reshape(-1, 1)
+    cat_arrays.append(arr)
+
+CAT_FEATURES = np.hstack(cat_arrays).astype(float)   # (N, n_cat)
+X_FULL = np.hstack([EMB_MATRIX, CAT_FEATURES])        # (N, 768+n_cat)
+print(f"\n✅ Feature matrix shape: {X_FULL.shape}")
+print(f"   (768 IndoBERT embedding + {CAT_FEATURES.shape[1]} kategorikal)")
+
+print("⚙️  StandardScaler (fit 2019, transform semua)...")
+ref_pos  = [raw.index.get_loc(i) for i in raw[ref_mask].index]
+SCALER   = StandardScaler()
+SCALER.fit(X_FULL[ref_pos])
+X_SCALED = SCALER.transform(X_FULL)
+print(f"   Scaled shape: {X_SCALED.shape}")
+
+print("\n⚙️  PCA (95% variance, fit 2019)...")
+PCA_MODEL = PCA(n_components=0.95, random_state=42, svd_solver="full")
+PCA_MODEL.fit(X_SCALED[ref_pos])
+N_COMP   = PCA_MODEL.n_components_
+X_PCA    = PCA_MODEL.transform(X_SCALED)
+ev_ratio = PCA_MODEL.explained_variance_ratio_
+print(f"   Komponen PCA: {N_COMP}")
+print(f"   Explained variance (top-5): {np.round(ev_ratio[:5]*100,2)} %")
+print(f"   Total explained: {ev_ratio.sum()*100:.2f}%")
+
+# Tambahkan posisi PCA ke raw
+raw["_pca_pos"] = range(len(raw))
+
+K_RANGE = range(2, 7)
+K_SCAN  = {}   # { year: { k: {bic,aic,sil} } }
+GMM_RES = {}   # { year: { model, labels, posterior, sil, bic, aic, ch, k, X } }
+
+print("=" * 60)
+print("🧮  GMM PER PERIODE")
+print("=" * 60)
+
+for year in years_sorted:
+    mask_y = raw["_tahun"] == year
+    X_yr   = X_PCA[mask_y.values]
+    n_yr   = len(X_yr)
+    print(f"\n── {year}  [{FASE[year]}]  n={n_yr} ──")
+
+    K_SCAN[year] = {}
+    for k in K_RANGE:
+        if k >= n_yr:
+            break
+        gmm_k = GaussianMixture(
+            n_components=k, covariance_type="full",
+            init_params="k-means++", max_iter=300,
+            random_state=42, n_init=5
+        )
+        gmm_k.fit(X_yr)
+        lbl_k = gmm_k.predict(X_yr)
+        sil_k = silhouette_score(X_yr, lbl_k,
+                                 sample_size=min(500, n_yr), random_state=42)
+        K_SCAN[year][k] = {
+            "bic": round(gmm_k.bic(X_yr), 1),
+            "aic": round(gmm_k.aic(X_yr), 1),
+            "sil": round(sil_k, 4),
+        }
+        print(f"   K={k}: BIC={K_SCAN[year][k]['bic']:>10.1f}  "
+              f"AIC={K_SCAN[year][k]['aic']:>10.1f}  "
+              f"Sil={K_SCAN[year][k]['sil']:.4f}")
+
+    # K optimal = min BIC
+    best_k = min(K_SCAN[year], key=lambda k: K_SCAN[year][k]["bic"])
+    print(f"   → K optimal (min BIC): {best_k}")
+
+    gmm_final = GaussianMixture(
+        n_components=best_k, covariance_type="full",
+        init_params="k-means++", max_iter=500,
+        random_state=42, n_init=10
+    )
+    gmm_final.fit(X_yr)
+    labels_y  = gmm_final.predict(X_yr)
+    post_y    = gmm_final.predict_proba(X_yr)
+    sil_fin   = silhouette_score(X_yr, labels_y,
+                                 sample_size=min(500, n_yr), random_state=42)
+    ch_idx    = calinski_harabasz_score(X_yr, labels_y)
+    log_lik   = round(gmm_final.score(X_yr) * n_yr, 2)
+
+    GMM_RES[year] = {
+        "model":     gmm_final,
+        "labels":    labels_y,
+        "posterior": post_y,
+        "sil":       round(sil_fin, 4),
+        "bic":       round(gmm_final.bic(X_yr), 1),
+        "aic":       round(gmm_final.aic(X_yr), 1),
+        "ch":        round(ch_idx, 2),
+        "log_lik":   log_lik,
+        "k":         best_k,
+        "n":         n_yr,
+        "means":     gmm_final.means_,
+        "weights":   gmm_final.weights_,
+        "X":         X_yr,
+        "mask":      mask_y.values,
+    }
+    print(f"   Final → Sil={sil_fin:.4f}  CH={ch_idx:.2f}")
+
+print("\n📋 TABEL 4.4 – Nilai BIC, AIC, Silhouette per K dan Per Tahun")
+print(f"{'Tahun':>6} {'Fase':>14}", end="")
+for k in K_RANGE:
+    print(f"  K={k}(Sil)", end="")
+print(f"  {'K_opt':>5}  {'BIC':>9}  {'AIC':>9}  {'Sil_opt':>8}")
+print("-" * 90)
+
+rows_44 = []
+for year in years_sorted:
+    r  = GMM_RES[year]
+    ks = K_SCAN[year]
+    row_dict = {"Tahun": year, "Fase": FASE[year],
+                "K_Optimal": r["k"], "BIC": r["bic"],
+                "AIC": r["aic"], "Sil_Optimal": r["sil"]}
+    line = f"{year:>6} {FASE[year]:>14}"
+    for k in K_RANGE:
+        v = ks[k]["sil"] if k in ks else "-"
+        row_dict[f"K{k}_Sil"] = v
+        line += f"  {str(v):>8}"
+    row_dict.update({"K_Optimal": r["k"], "BIC": r["bic"],
+                     "AIC": r["aic"], "Sil_Optimal": r["sil"]})
+    print(line + f"  {r['k']:>5}  {r['bic']:>9.1f}  "
+          f"{r['aic']:>9.1f}  {r['sil']:>8.4f}")
+    rows_44.append(row_dict)
+
+df_44 = pd.DataFrame(rows_44)
+df_44.to_excel(OUTPUT_DIR / "tabel_4_4_kscan.xlsx", index=False)
+print(f"\n💾 Tabel 4.4 disimpan.")
+
+print("\n" + "=" * 60)
+print("📈  TIME SERIES ANALYSIS")
+print("=" * 60)
+
+# 11.1 ARI antar periode
+print("\n── 11.1 Adjusted Rand Index (Stabilitas Klaster) ──")
+ari_rows = []
+for i in range(len(years_sorted) - 1):
+    y1, y2 = years_sorted[i], years_sorted[i + 1]
+    l1, l2 = GMM_RES[y1]["labels"], GMM_RES[y2]["labels"]
+    n_min  = min(len(l1), len(l2))
+    ari    = round(adjusted_rand_score(l1[:n_min], l2[:n_min]), 4)
+    is_brk = (y1 == 2019 and y2 == 2020)
+    cat    = ("⚡ Structural Break" if is_brk or ari < 0.30
+              else "⚠️  Drift Moderat" if ari < 0.60 else "✅ Stabil")
+    ari_rows.append({"Transisi": f"{y1}→{y2}", "ARI": ari,
+                     "Kategori": cat, "Structural_Break": is_brk or ari < 0.30})
+    print(f"   {y1}→{y2}: ARI={ari:.4f}  {cat}")
+
+df_45 = pd.DataFrame(ari_rows)
+df_45.to_excel(OUTPUT_DIR / "tabel_4_5_ari_stabilitas.xlsx", index=False)
+
+# 11.2 Centroid Drift
+print("\n── 11.2 Centroid Drift (Euclidean Distance) ──")
+for i in range(len(years_sorted) - 1):
+    y1, y2  = years_sorted[i], years_sorted[i + 1]
+    m1, m2  = GMM_RES[y1]["means"], GMM_RES[y2]["means"]
+    D       = cdist(m1, m2)
+    drift   = round(D.min(axis=1).mean(), 4)
+    print(f"   {y1}→{y2}: avg centroid drift = {drift:.4f}")
+
+# 11.3 Forecasting 2025
+print("\n── 11.3 Forecasting 2025 (Regresi Linear Tren Recovery) ──")
+rec_years = [y for y in years_sorted if FASE[y] == "Recovery"]
+rec_ns    = [GMM_RES[y]["n"] for y in rec_years]
+coefs     = np.polyfit(rec_years, rec_ns, 1)
+PROJ_2025 = max(0, int(np.round(np.polyval(coefs, 2025))))
+print(f"   Data Recovery: {dict(zip(rec_years, rec_ns))}")
+print(f"   Koefisien regresi: slope={coefs[0]:.2f}, intercept={coefs[1]:.2f}")
+print(f"   ✅ Proyeksi 2025: ~{PROJ_2025:,} pendaftar")
+
+print("\n" + "=" * 60)
+print("🎯  PROFILING KLASTER PER PERIODE")
+print("=" * 60)
+
+PROFILES   = {}
+TABEL_NUMS = {2019:"4.6",2020:"4.7",2021:"4.8",
+              2022:"4.9",2023:"4.10",2024:"4.11"}
+
+def top_n(series, n=5):
+    return series.dropna().value_counts().head(n)
+
+with pd.ExcelWriter(OUTPUT_DIR / "tabel_4_6_to_4_11_profil_klaster.xlsx",
+                    engine="xlsxwriter") as writer:
+    for year in years_sorted:
+        r    = GMM_RES[year]
+        mask = r["mask"]
+        df_y = raw[mask].copy()
+        df_y["_cluster"]  = r["labels"]
+        df_y["_max_post"] = r["posterior"].max(axis=1)
+
+        print(f"\n── Tabel {TABEL_NUMS[year]} – {year} [{FASE[year]}] "
+              f"K={r['k']} Sil={r['sil']} ──")
+
+        year_profiles = []
+        for ci in sorted(df_y["_cluster"].unique()):
+            sub  = df_y[df_y["_cluster"] == ci]
+            pct  = round(len(sub) / r["n"] * 100, 1)
+            avgp = round(sub["_max_post"].mean(), 3)
+
+            def top_str(col_key, n=3):
+                col = COLS.get(col_key)
+                if not col or col not in sub.columns:
+                    return "-"
+                t = top_n(sub[col], n)
+                return "; ".join([f"{v}({c})" for v, c in t.items()])
+
+            profile = {
+                "Klaster": f"K{ci+1}-{year}",
+                "N": len(sub),
+                "Persen (%)": pct,
+                "Avg Posterior": avgp,
+                "Prodi Dominan": top_str("prodi"),
+                "Jalur Dominan": top_str("jalur", 2),
+                "Kab Dominan":   top_str("kab"),
+                "Kec Dominan":   top_str("kec"),
+                "Sekolah Dominan": top_str("sekolah"),
+            }
+            year_profiles.append(profile)
+            print(f"   K{ci+1}: N={len(sub)} ({pct}%)  "
+                  f"Post={avgp}  "
+                  f"Prodi={top_str('prodi',2)}  "
+                  f"Kab={top_str('kab',2)}")
+
+        PROFILES[year] = year_profiles
+        df_prof = pd.DataFrame(year_profiles)
+        df_prof.to_excel(writer, sheet_name=f"Profil {year}", index=False)
+
+print(f"\n💾 Tabel 4.6–4.11 disimpan.")
+
+max_k   = max(GMM_RES[y]["k"] for y in years_sorted)
+lc_data = []
+for ci in range(max_k):
+    row = {"Klaster": f"Klaster {ci+1}"}
+    pcts_yr = []
+    for year in years_sorted:
+        profs = PROFILES[year]
+        match = [p for p in profs if p["Klaster"] == f"K{ci+1}-{year}"]
+        val   = match[0]["Persen (%)"] if match else None
+        row[str(year)] = val
+        if val is not None:
+            pcts_yr.append(val)
+    if len(pcts_yr) >= 2:
+        diff = pcts_yr[-1] - pcts_yr[0]
+        lc   = ("📈 Growth" if diff > 5 else
+                "📉 Decline" if diff < -5 else
+                "🔄 Recovery" if min(pcts_yr) < pcts_yr[0] - 3 else
+                "➡️ Stable")
+    else:
+        lc = "–"
+    row["Lifecycle"] = lc
+    lc_data.append(row)
+
+df_412 = pd.DataFrame(lc_data)
+df_412.to_excel(OUTPUT_DIR / "tabel_4_12_lifecycle.xlsx", index=False)
+print("\n📋 TABEL 4.12 – Matrix Lifecycle:")
+print(df_412.to_string(index=False))
+
+last_year = max(y for y in years_sorted if FASE[y] == "Recovery")
+prio_data = []
+for ci, row_lc in enumerate(lc_data):
+    lc_val = row_lc.get("Lifecycle","")
+    trend  = ("📈 Tumbuh"  if "Growth"  in lc_val else
+              "📉 Menurun" if "Decline" in lc_val else "➡️ Stabil")
+    prio   = ("🔴 Tinggi" if "Growth"   in lc_val else
+              "🟡 Sedang"  if "Stable"  in lc_val else "🟢 Evaluasi")
+    profs_last = PROFILES.get(last_year, [])
+    match_last = [p for p in profs_last if p["Klaster"] == f"K{ci+1}-{last_year}"]
+    kab_dom    = match_last[0]["Kab Dominan"].split(";")[0] if match_last else "-"
+    prodi_dom  = match_last[0]["Prodi Dominan"].split(";")[0] if match_last else "-"
+    prio_data.append({
+        "Klaster": f"Klaster {ci+1}",
+        "Tren 2022-2024": trend,
+        "Prioritas": prio,
+        "Kab Dominan": kab_dom,
+        "Prodi Dominan": prodi_dom,
+        "Strategi Utama": (
+            f"Intensifikasi rekrutmen di {kab_dom}; "
+            f"kampanye digital prodi {prodi_dom}"
+        ),
+    })
+
+df_413 = pd.DataFrame(prio_data)
+df_413.to_excel(OUTPUT_DIR / "tabel_4_13_prioritasi_2025.xlsx", index=False)
+print("\n📋 TABEL 4.13:")
+print(df_413[["Klaster","Tren 2022-2024","Prioritas","Strategi Utama"]].to_string(index=False))
+
+# PCA 2D untuk scatter — fit 2019, transform semua
+pca2d       = PCA(n_components=2, random_state=42)
+ref_pca_pos = [raw.index.get_loc(i) for i in raw[ref_mask].index]
+pca2d.fit(X_PCA[ref_pca_pos])
+X_2D_ALL = pca2d.transform(X_PCA)   # (N, 2)
+
+# ── GAMBAR 4.1 – Bar chart DESKRIPTIF (tanpa 2025) ─────────────────────
+fig, ax = plt.subplots(figsize=(10, 5))
+ns_hist = [GMM_RES[y]["n"] for y in years_sorted]
+bars = ax.bar(
+    years_sorted, ns_hist,
+    color=[FASE_COL[FASE[y]] for y in years_sorted],
+    width=0.6, edgecolor="white", linewidth=1.2, alpha=0.9
+)
+for bar, n in zip(bars, ns_hist):
+    ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 1,
+            str(n), ha="center", va="bottom", fontsize=11, fontweight="bold")
+# Shading COVID
+ax.axvspan(2019.5, 2021.5, alpha=0.07, color="red", label="Periode COVID-19")
+ax.set_xlabel("Tahun Akademik", fontsize=12)
+ax.set_ylabel("Jumlah Pendaftar", fontsize=12)
+ax.set_title("Gambar 4.1 – Distribusi Jumlah Pendaftar PMB ITSNU Pekalongan\n"
+             "per Tahun (Data Historis 2019–2024)", fontsize=13, fontweight="bold")
+ax.set_xticks(years_sorted)
+patches = [mpatches.Patch(color=c, label=l) for l, c in FASE_COL.items()]
+patches.append(mpatches.Patch(color="red", alpha=0.15, label="Periode COVID-19"))
+ax.legend(handles=patches, fontsize=9, loc="upper right")
+ax.grid(axis="y", alpha=0.3)
+plt.tight_layout()
+plt.savefig(OUTPUT_DIR / "gambar_4_1_distribusi_pendaftar.png")
+plt.show()
+print("💾 Gambar 4.1 disimpan.")
+
+# ── GAMBAR 4.2 – Scatter PCA per tahun ─────────────────────────────────
+n_years = len(years_sorted)
+ncols   = 3
+nrows   = (n_years + ncols - 1) // ncols
+fig, axes = plt.subplots(nrows, ncols, figsize=(ncols*5, nrows*4.5))
+axes = axes.flatten()
+for idx, year in enumerate(years_sorted):
+    ax   = axes[idx]
+    r    = GMM_RES[year]
+    X_2d = X_2D_ALL[r["mask"]]
+    for ci in range(r["k"]):
+        pts = X_2d[r["labels"] == ci]
+        ax.scatter(pts[:, 0], pts[:, 1],
+                   c=CL_COLORS[ci], alpha=0.45, s=10,
+                   label=f"K{ci+1} (n={len(pts)})")
+        # centroid
+        cx, cy = pts[:, 0].mean(), pts[:, 1].mean()
+        ax.scatter(cx, cy, c=CL_COLORS[ci], s=120,
+                   marker="*", edgecolors="white", linewidths=0.8, zorder=5)
+    ax.set_title(f"Gambar 4.2{'abcde'[idx]} – {year} [{FASE[year]}]\n"
+                 f"K={r['k']}  Sil={r['sil']}", fontsize=10, fontweight="bold")
+    ax.set_xlabel("PC1", fontsize=9); ax.set_ylabel("PC2", fontsize=9)
+    ax.legend(fontsize=7, loc="upper right", markerscale=1.5)
+    ax.tick_params(labelsize=8)
+for j in range(idx + 1, len(axes)):
+    axes[j].set_visible(False)
+fig.suptitle("Gambar 4.2 – Visualisasi Klaster GMM pada Ruang PCA 2D\n"
+             "per Periode (2019–2024)", fontsize=13, fontweight="bold", y=1.01)
+plt.tight_layout()
+plt.savefig(OUTPUT_DIR / "gambar_4_2_scatter_pca.png")
+plt.show()
+print("💾 Gambar 4.2 disimpan.")
+
+# ── GAMBAR 4.2 – Scatter PCA per tahun ─────────────────────────────────
+n_years = len(years_sorted)
+ncols   = 3
+nrows   = (n_years + ncols - 1) // ncols
+fig, axes = plt.subplots(nrows, ncols, figsize=(ncols*5, nrows*4.5))
+axes = axes.flatten()
+for idx, year in enumerate(years_sorted):
+    ax   = axes[idx]
+    r    = GMM_RES[year]
+    X_2d = X_2D_ALL[r["mask"]]
+    for ci in range(r["k"]):
+        pts = X_2d[r["labels"] == ci]
+        ax.scatter(pts[:, 0], pts[:, 1],
+                   c=CL_COLORS[ci], alpha=0.45, s=10,
+                   label=f"K{ci+1} (n={len(pts)})")
+        # centroid
+        cx, cy = pts[:, 0].mean(), pts[:, 1].mean()
+        ax.scatter(cx, cy, c=CL_COLORS[ci], s=120,
+                   marker="*", edgecolors="white", linewidths=0.8, zorder=5)
+    ax.set_title(f"Gambar 4.2{'abcdef'[idx]} – {year} [{FASE[year]}]\n"
+                 f"K={r['k']}  Sil={r['sil']}", fontsize=10, fontweight="bold")
+    ax.set_xlabel("PC1", fontsize=9); ax.set_ylabel("PC2", fontsize=9)
+    ax.legend(fontsize=7, loc="upper right", markerscale=1.5)
+    ax.tick_params(labelsize=8)
+for j in range(idx + 1, len(axes)):
+    axes[j].set_visible(False)
+fig.suptitle("Gambar 4.2 – Visualisasi Klaster GMM pada Ruang PCA 2D\n"
+             "per Periode (2019–2024)", fontsize=13, fontweight="bold", y=1.01)
+plt.tight_layout()
+plt.savefig(OUTPUT_DIR / "gambar_4_2_scatter_pca.png")
+plt.show()
+print("💾 Gambar 4.2 disimpan.")
+
+# ── GAMBAR 4.3a – Silhouette Score per periode ──────────────────────────
+sil_vals = [GMM_RES[y]["sil"] for y in years_sorted]
+fig, ax  = plt.subplots(figsize=(8, 4))
+ax.plot(years_sorted, sil_vals, "o-",
+        color="#534AB7", lw=2.5, ms=9, zorder=5)
+for y, s in zip(years_sorted, sil_vals):
+    ax.annotate(f"{s:.4f}", (y, s),
+                textcoords="offset points", xytext=(0, 10),
+                ha="center", fontsize=10, fontweight="bold", color="#534AB7")
+ax.axhline(0.50, color="#1D9E75", ls="--", lw=1.2, alpha=0.7, label="Baik (≥0.50)")
+ax.axhline(0.25, color="#BA7517", ls="--", lw=1.2, alpha=0.7, label="Cukup (≥0.25)")
+ax.axvspan(2019.5, 2021.5, alpha=0.07, color="red", label="Periode COVID-19")
+ax.set_ylim(0, max(sil_vals) * 1.25)
+ax.set_xlabel("Tahun", fontsize=12); ax.set_ylabel("Silhouette Score", fontsize=12)
+ax.set_title("Gambar 4.3a – Silhouette Score per Periode (2019–2024)",
+             fontsize=13, fontweight="bold")
+ax.set_xticks(years_sorted); ax.legend(fontsize=9); ax.grid(alpha=0.3)
+plt.tight_layout()
+plt.savefig(OUTPUT_DIR / "gambar_4_3a_silhouette.png")
+plt.show()
+print("💾 Gambar 4.3a disimpan.")
+
+# ── GAMBAR 4.3b – BIC per periode ───────────────────────────────────────
+bic_vals = [GMM_RES[y]["bic"] for y in years_sorted]
+fig, ax  = plt.subplots(figsize=(8, 4))
+ax.plot(years_sorted, bic_vals, "s-",
+        color="#E24B4A", lw=2.5, ms=9, zorder=5)
+for y, b in zip(years_sorted, bic_vals):
+    ax.annotate(f"{b:.0f}", (y, b),
+                textcoords="offset points", xytext=(0, 10),
+                ha="center", fontsize=9, color="#E24B4A")
+ax.axvspan(2019.5, 2021.5, alpha=0.07, color="red", label="Periode COVID-19")
+ax.set_xlabel("Tahun", fontsize=12)
+ax.set_ylabel("BIC (↓ lebih baik)", fontsize=12)
+ax.set_title("Gambar 4.3b – BIC GMM per Periode (2019–2024)",
+             fontsize=13, fontweight="bold")
+ax.set_xticks(years_sorted); ax.legend(fontsize=9); ax.grid(alpha=0.3)
+plt.tight_layout()
+plt.savefig(OUTPUT_DIR / "gambar_4_3b_bic.png")
+plt.show()
+print("💾 Gambar 4.3b disimpan.")
+
+# ── GAMBAR 4.3c – ARI Stabilitas ────────────────────────────────────────
+ari_labels = [r["Transisi"] for r in ari_rows]
+ari_vals   = [r["ARI"] for r in ari_rows]
+ari_colors = ["#E24B4A" if v < 0.30 else
+              "#BA7517" if v < 0.60 else "#1D9E75" for v in ari_vals]
+fig, ax = plt.subplots(figsize=(8, 4))
+bars_ari = ax.barh(ari_labels, ari_vals,
+                   color=ari_colors, edgecolor="white", alpha=0.88)
+ax.axvline(0.30, color="#E24B4A", ls="--", lw=1.2, alpha=0.8,
+           label="Structural Break (<0.30)")
+ax.axvline(0.60, color="#1D9E75", ls="--", lw=1.2, alpha=0.8,
+           label="Stabil (≥0.60)")
+for bar, v in zip(bars_ari, ari_vals):
+    ax.text(v + 0.01, bar.get_y() + bar.get_height()/2,
+            f"{v:.4f}", va="center", fontsize=10, fontweight="bold")
+ax.set_xlim(0, 1.05)
+ax.set_xlabel("Adjusted Rand Index (ARI)", fontsize=12)
+ax.set_title("Gambar 4.3c – ARI Stabilitas Klaster Antar Periode",
+             fontsize=13, fontweight="bold")
+ax.legend(fontsize=9); ax.grid(axis="x", alpha=0.3)
+plt.tight_layout()
+plt.savefig(OUTPUT_DIR / "gambar_4_3c_ari.png")
+plt.show()
+print("💾 Gambar 4.3c disimpan.")
+
+# ── GAMBAR 4.5 – Bar chart PREDIKTIF (dengan 2025) ─────────────────────
+fig, ax = plt.subplots(figsize=(11, 5))
+all_years = years_sorted + [2025]
+all_ns    = ns_hist + [PROJ_2025]
+all_cols  = [FASE_COL[FASE[y]] for y in years_sorted] + ["#534AB7"]
+all_alphas= [0.9] * len(years_sorted) + [0.45]
+for i, (yr, n, col, alp) in enumerate(zip(all_years, all_ns, all_cols, all_alphas)):
+    ax.bar(yr, n, color=col, alpha=alp, width=0.6, edgecolor="white",
+           linewidth=1.2,
+           linestyle="--" if yr == 2025 else "-",
+           hatch="///" if yr == 2025 else "")
+    ax.text(yr, n + 1, ("~" if yr == 2025 else "") + str(n),
+            ha="center", va="bottom", fontsize=10, fontweight="bold",
+            color=col if yr != 2025 else "#534AB7")
+# Garis tren recovery
+x_trend = np.array(rec_years + [2025])
+y_trend = np.polyval(coefs, x_trend)
+ax.plot(x_trend, y_trend, "--", color="#534AB7", lw=2,
+        alpha=0.7, label=f"Tren Recovery (proj. 2025 ≈ {PROJ_2025})")
+ax.axvspan(2019.5, 2021.5, alpha=0.07, color="red", label="Periode COVID-19")
+ax.set_xlabel("Tahun Akademik", fontsize=12)
+ax.set_ylabel("Jumlah Pendaftar", fontsize=12)
+ax.set_title("Gambar 4.5 – Proyeksi Jumlah Pendaftar ITSNU Pekalongan\n"
+             "Tahun 2025 Berbasis Tren Recovery 2022–2024 (PREDIKTIF)",
+             fontsize=13, fontweight="bold")
+ax.set_xticks(all_years)
+patches2 = [mpatches.Patch(color=c, label=l) for l, c in FASE_COL.items()]
+patches2.append(mpatches.Patch(color="#534AB7", alpha=0.45,
+                               label=f"Proyeksi 2025 (~{PROJ_2025})"))
+ax.legend(handles=patches2 +
+          [plt.Line2D([0],[0], ls="--", color="#534AB7", lw=2,
+                      label="Garis Tren Regresi")],
+          fontsize=9, loc="upper left")
+ax.grid(axis="y", alpha=0.3)
+ax.annotate("*Proyeksi berdasarkan regresi linear\ntren recovery 2022–2024.\nBukan angka pasti.",
+            xy=(2025, PROJ_2025), xytext=(2023.2, PROJ_2025 * 1.05),
+            fontsize=8, color="#534AB7",
+            arrowprops=dict(arrowstyle="->", color="#534AB7", lw=1))
+plt.tight_layout()
+plt.savefig(OUTPUT_DIR / "gambar_4_5_proyeksi_2025.png")
+plt.show()
+print("💾 Gambar 4.5 disimpan.")
+
+#EXPORT RINGKASAN LENGKAP + DATA BERLABEL
+# ════════════════════════════════════════════════════════════════════════════
+print("\n📦  Membuat file ringkasan Excel lengkap...")
+
+with pd.ExcelWriter(OUTPUT_DIR / "RINGKASAN_BAB4_LENGKAP.xlsx",
+                    engine="xlsxwriter") as writer:
+    wb  = writer.book
+
+    # Format header
+    hdr_fmt = wb.add_format({
+        "bold": True, "bg_color": "#2C3E50", "font_color": "white",
+        "border": 1, "align": "center", "valign": "vcenter",
+    })
+    val_fmt = wb.add_format({"border": 1, "align": "center"})
+
+    # Sheet 1 – Distribusi per tahun (Tabel 4.1)
+    rows_41 = []
+    for i, year in enumerate(years_sorted):
+        n   = GMM_RES[year]["n"]
+        p   = round(n / len(raw) * 100, 1)
+        prev = GMM_RES[years_sorted[i-1]]["n"] if i > 0 else None
+        delta = f"{round((n-prev)/prev*100,1)}%" if prev else "baseline"
+        rows_41.append({"Tahun": year, "Fase": FASE[year],
+                        "Jumlah": n, "Persen_%": p, "Perubahan_%": delta})
+    pd.DataFrame(rows_41).to_excel(writer, sheet_name="T4.1 Distribusi", index=False)
+
+    # Sheet 2 – Tabel 4.4 K-scan
+    df_44.to_excel(writer, sheet_name="T4.4 K-Scan BIC AIC Sil", index=False)
+
+    # Sheet 3 – Tabel 4.5 ARI
+    df_45.to_excel(writer, sheet_name="T4.5 ARI Stabilitas", index=False)
+
+    # Sheet 4-9 – Profil per tahun
+    for year in years_sorted:
+        pd.DataFrame(PROFILES[year]).to_excel(
+            writer, sheet_name=f"T{TABEL_NUMS[year]} Profil {year}", index=False)
+
+    # Sheet 10 – Lifecycle
+    df_412.to_excel(writer, sheet_name="T4.12 Lifecycle", index=False)
+
+    # Sheet 11 – Prioritasi 2025
+    df_413.to_excel(writer, sheet_name="T4.13 Prioritasi 2025", index=False)
+
+    # Sheet 12 – Cosine Similarity
+    df_sim.to_excel(writer, sheet_name="T4.3a Cosine Sim", index=False)
+
+    # Sheet 13 – Data lengkap dengan label klaster
+    raw["_cluster"]  = np.nan
+    raw["_max_post"] = np.nan
+    for year in years_sorted:
+        r    = GMM_RES[year]
+        idxs = raw[raw["_tahun"] == year].index
+        raw.loc[idxs, "_cluster"]  = r["labels"]
+        raw.loc[idxs, "_max_post"] = r["posterior"].max(axis=1)
+    out_cols = (["_tahun", "_cluster", "_max_post"] +
+                [v for v in COLS.values() if v and v in raw.columns])
+    raw[out_cols].to_excel(writer, sheet_name="Data+Label Klaster", index=False)
+
+    # Sheet 14 – Summary metrik
+    summ_rows = []
+    for year in years_sorted:
+        r = GMM_RES[year]
+        summ_rows.append({
+            "Tahun": year, "Fase": FASE[year], "N": r["n"],
+            "K_Optimal": r["k"], "Silhouette": r["sil"],
+            "BIC": r["bic"], "AIC": r["aic"],
+            "Calinski_Harabasz": r["ch"],
+        })
+    pd.DataFrame(summ_rows).to_excel(
+        writer, sheet_name="Summary Metrik", index=False)
+
+print(f"✅ File Excel lengkap: {OUTPUT_DIR}/RINGKASAN_BAB4_LENGKAP.xlsx")
+
+#DOWNLOAD SEMUA OUTPUT
+# ════════════════════════════════════════════════════════════════════════════
+import zipfile
+
+zip_path = "OUTPUT_BAB4_ITSNU.zip"
+with zipfile.ZipFile(zip_path, "w") as zf:
+    for f in OUTPUT_DIR.iterdir():
+        zf.write(f, f.name)
+
+print(f"📦 Semua output dikemas: {zip_path}")
+files.download(zip_path)
+
+# ════════════════════════════════════════════════════════════════════════════
+# CELL 18 ── CETAK PLACEHOLDER BAB IV (untuk copy-paste ke tesis)
+# ════════════════════════════════════════════════════════════════════════════
+print("\n" + "═" * 70)
+print("📋  PLACEHOLDER BAB IV – COPY-PASTE KE DOKUMEN TESIS")
+print("═" * 70)
+
+avg_sil  = round(np.mean([GMM_RES[y]["sil"] for y in years_sorted]), 4)
+sil_max  = max([(GMM_RES[y]["sil"], y) for y in years_sorted])
+sil_min  = min([(GMM_RES[y]["sil"], y) for y in years_sorted])
+ari_19_20 = next((r["ARI"] for r in ari_rows if r["Transisi"]=="2019→2020"), "N/A")
+
+print(f"""
+[TOTAL_N]         = {len(raw):,}
+[N_2019]          = {GMM_RES.get(2019,{}).get('n','N/A')}
+[N_2020]          = {GMM_RES.get(2020,{}).get('n','N/A')}
+[N_2021]          = {GMM_RES.get(2021,{}).get('n','N/A')}
+[N_2022]          = {GMM_RES.get(2022,{}).get('n','N/A')}
+[N_2023]          = {GMM_RES.get(2023,{}).get('n','N/A')}
+[N_2024]          = {GMM_RES.get(2024,{}).get('n','N/A')}
+[AVG_REC]         = {round(np.mean([GMM_RES[y]['n'] for y in rec_years]),0):.0f}
+[N_COMP]          = {N_COMP}
+[AVG_SIM]         = {round(avg_sim, 4)}
+[SIL_MAX]         = {sil_max[0]}  (Tahun {sil_max[1]})
+[SIL_MIN]         = {sil_min[0]}  (Tahun {sil_min[1]})
+[AVG_SIL]         = {avg_sil}
+[ARI_1920]        = {ari_19_20}
+[PROJ_2025]       = ~{PROJ_2025:,}
+""")
+for r in ari_rows:
+    key = r['Transisi'].replace("→","_")
+    print(f"[ARI_{key}]   = {r['ARI']}  ({r['Kategori'].replace('⚡ ','').replace('⚠️  ','').replace('✅ ','')})")
+
+for year in years_sorted:
+    r = GMM_RES[year]
+    print(f"\n── {year} ──")
+    print(f"  [K_{year}]  = {r['k']}")
+    print(f"  [BIC_{year}] = {r['bic']}")
+    print(f"  [AIC_{year}] = {r['aic']}")
+    print(f"  [SIL_{year}] = {r['sil']}")
+    for ci, prof in enumerate(PROFILES[year]):
+        print(f"  [N_K{ci+1}_{str(year)[2:]}]   = {prof['N']}")
+        print(f"  [PCT_K{ci+1}_{str(year)[2:]}] = {prof['Persen (%)']}")
+        print(f"  [POST_K{ci+1}_{str(year)[2:]}]= {prof['Avg Posterior']}")
+
+print("\n✅ PIPELINE SELESAI. Semua output ada di OUTPUT_BAB4_ITSNU.zip")
+
+notebook_code = []
+for cell in get_ipython().execution_result['cells']:
+    if cell['cell_type'] == 'code':
+        notebook_code.append(cell['content'])
+
+output_py_path = OUTPUT_DIR / "notebook_code.py"
+with open(output_py_path, "w") as f:
+    f.write("\n\n".join(notebook_code))
+
+print(f"✅ Semua kode Python telah disimpan ke: {output_py_path}")
+
+notebook_code = []
+# Menggunakan history_manager.get_range() untuk mendapatkan semua input code yang telah dieksekusi
+# get_range(start_session=1, end_session=None, raw=True) akan mengembalikan (session, line_number, input_code)
+for session, line_number, input_code in get_ipython().history_manager.get_range(1, None, raw=True):
+    # Hanya tambahkan jika kode tidak kosong dan bukan magic command yang umum
+    if input_code.strip() and not input_code.strip().startswith('%'):
+        notebook_code.append(input_code)
+
+output_py_path = OUTPUT_DIR / "notebook_code.py"
+with open(output_py_path, "w") as f:
+    f.write("\n\n".join(notebook_code))
+
+print(f"✅ Semua kode Python yang dieksekusi telah disimpan ke: {output_py_path}")
+
+from IPython import get_ipython
+
+notebook_code = []
+# Get the current session ID
+current_session_id = get_ipython().history_manager.get_last_session_id()
+
+# Iterate through history from session 1 to the current session
+# Using raw=True to get the un-processed input as string
+for session, line_number, input_code in get_ipython().history_manager.get_range(1, current_session_id, raw=True):
+    # Only add if code is not empty and not a common magic command
+    if input_code.strip() and not input_code.strip().startswith('%'):
+        notebook_code.append(input_code)
+
+output_py_path = OUTPUT_DIR / "notebook_code.py"
+with open(output_py_path, "w") as f:
+    f.write("\n\n".join(notebook_code))
+
+print(f"✅ Semua kode Python yang dieksekusi telah disimpan ke: {output_py_path}")
+
+from IPython import get_ipython
+
+notebook_code = []
+# Get the current session ID
+current_session_id = get_ipython().history_manager.get_last_session_id()
+
+# Iterate through history from session 1 to the current session
+# Using raw=True to get the un-processed input as string
+for session, line_number, input_code in get_ipython().history_manager.get_range(1, current_session_id, raw=True):
+    # Only add if code is not empty and not a common magic command
+    if input_code.strip() and not input_code.strip().startswith('%'):
+        notebook_code.append(input_code)
+
+output_py_path = OUTPUT_DIR / "notebook_code.py"
+with open(output_py_path, "w") as f:
+    f.write("\n\n".join(notebook_code))
+
+print(f"✅ Semua kode Python yang dieksekusi telah disimpan ke: {output_py_path}")
+
+from IPython import get_ipython
+
+notebook_code = []
+# Get the current session ID
+current_session_id = get_ipython().history_manager.get_last_session_id()
+
+# Iterate through history from session 1 to the current session
+# Using raw=True to get the un-processed input as string
+for session, line_number, input_code in get_ipython().history_manager.get_range(1, current_session_id, raw=True):
+    # Only add if code is not empty and not a common magic command
+    if input_code.strip() and not input_code.strip().startswith('%'):
+        notebook_code.append(input_code)
+
+output_py_path = OUTPUT_DIR / "notebook_code.py"
+with open(output_py_path, "w") as f:
+    f.write("\n\n".join(notebook_code))
+
+print(f"✅ Semua kode Python yang dieksekusi telah disimpan ke: {output_py_path}")

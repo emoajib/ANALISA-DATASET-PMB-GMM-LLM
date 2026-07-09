@@ -1,0 +1,291 @@
+# BAB III
+# METODOLOGI PENELITIAN
+
+## 3.1 Desain Penelitian
+
+Penelitian ini menggunakan pendekatan *Research and Development* (R&D) dengan metode kuantitatif berbasis *data mining time series* menggunakan kerangka *Cross Industry Standard Process for Data Mining* (CRISP-DM) yang diaplikasikan secara iteratif pada enam periode (2019–2024). Pendekatan R&D dipilih karena penelitian ini tidak hanya menganalisis data, tetapi menghasilkan **produk sistem** berupa *pipeline* analitik otomatis yang dapat direplikasi dan diperbarui secara berkelanjutan setiap tahun akademik.
+
+**Produk R&D yang dihasilkan** adalah sistem *end-to-end automated pipeline* yang mengintegrasikan sepuluh tahapan sesuai alur penelitian:
+
+1. *Business Understanding* — pemetaan kebutuhan rekrutmen multi-periode
+2. *Data Collection* — pengumpulan dataset PMB ITSNU 2019–2024
+3. *Data Understanding* — profil statistik deskriptif dan deteksi anomali
+4. *Data Preparation* — otomasi *batch* 6 periode (A–E)
+5. *Dimensionality Reduction* — PCA konsisten 6 periode
+6. *Modeling* — GMM per periode dengan K-*scan*
+7. *Time Series Analysis* — ARI, Jaccard, *centroid drift*, *forecasting*
+8. *Evaluation* — metrik internal, stabilitas, dan komparatif
+9. Otomasi Analisis LLM — persona, *reasoning* kausal, ringkasan naratif
+10. *Deployment* — strategi rekrutmen prediktif dengan personalisasi
+
+## 3.2 Tahap 1 — Business Understanding
+
+Tahap *Business Understanding* mencakup dua aktivitas utama. **Pertama**, pemetaan kebutuhan rekrutmen ITSNU Pekalongan multi-periode: mengidentifikasi pertanyaan bisnis kritis yang harus dijawab oleh sistem — antara lain siapa segmen calon mahasiswa yang paling potensial, bagaimana profil segmen berubah akibat pandemi, dan segmen mana yang harus diprioritaskan dalam kampanye 2025. **Kedua**, definisi operasional otomasi analisis LLM: menetapkan secara eksplisit empat fungsi otomasi (ekstraksi fitur, generasi persona, *reasoning* kausal, ringkasan naratif) beserta format input-output masing-masing fungsi, sehingga sistem dapat divalidasi secara terukur.
+
+## 3.3 Tahap 2 — Data Collection
+
+Data penelitian adalah data sekunder calon mahasiswa ITSNU Pekalongan periode 2019–2024, diperoleh dari sistem informasi akademik institusi. Data tersimpan dalam enam *sheet* atau file per periode akademik. Tabel 3.1 menyajikan spesifikasi lengkap variabel dataset.
+
+**Tabel 3.1** Spesifikasi Dataset Time Series 2019–2024
+
+| Variabel | Tipe Data | Keterangan | Peran dalam Pipeline |
+|---|---|---|---|
+| Nama | Tekstual | Nama lengkap calon mahasiswa | Input IndoBERT *embedding* [Tahap 4B, 4D] |
+| Tahun Pendaftaran | Kategorikal Ordinal | 2019–2024 | Label fase temporal |
+| Asal Sekolah | Tekstual | Nama lengkap sekolah asal | Input IndoBERT *embedding* [Tahap 4B] |
+| Program Studi | Kategorikal Nominal | Pilihan program studi | *Encoding* + fitur GMM [Tahap 4D] |
+| Kecamatan | Kategorikal Nominal | Wilayah administratif level II | Input IndoBERT + *geocoding* [Tahap 4B, 4C] |
+| Kabupaten | Kategorikal Nominal | Wilayah administratif level I | Input IndoBERT + *geocoding* [Tahap 4B, 4C] |
+| Alamat Lengkap | Tekstual | Detail alamat calon mahasiswa | Input IndoBERT *embedding* [Tahap 4B] |
+| Jenis Jalur | Kategorikal Nominal | Jalur masuk (mandiri/beasiswa/prestasi) | *Encoding* + fitur GMM [Tahap 4D] |
+
+Sumber: Sistem Informasi Akademik PMB ITSNU Pekalongan (2019–2024)
+
+**Definisi fase temporal:** Pre-COVID (2019): *baseline* normal. COVID Crisis (2020–2021): disrupsi pandemi, pembelajaran daring, kontraksi ekonomi. Recovery (2022–2024): pemulihan transformasi digital.
+
+## 3.4 Tahap 3 — Data Understanding
+
+Tahap *Data Understanding* mencakup tiga aktivitas. **Pertama**, profil statistik deskriptif per periode: distribusi frekuensi per variabel kategorikal, statistik ringkas, dan visualisasi distribusi variabel kunci berupa bar chart pendaftar per tahun (Gambar 4.1). **Kedua**, deteksi anomali dan *missing values*: pemeriksaan konsistensi format variabel antar tahun, identifikasi nilai hilang, dan deteksi entri duplikat atau anomali drastis yang mengindikasikan kesalahan *data entry*. **Ketiga**, validasi konsistensi kategori: nama program studi yang berubah format antar tahun diseragamkan sebelum analisis.
+
+## 3.5 Tahap 4 — Data Preparation (Otomasi Batch 6 Periode)
+
+### 3.5.1 Subproses A: Text Preprocessing Otomatis (Pipeline Identik)
+
+Data tekstual (Nama, Asal Sekolah, Alamat Lengkap, Kecamatan, Kabupaten) seluruh periode 2019–2024 melalui *pipeline* praproses otomatis yang tersimpan dalam skrip Python yang sama. Tahapan:
+
+1. ***Case folding***: konversi seluruh teks ke huruf kecil
+2. ***Cleaning***: penghapusan karakter khusus dan *noise*
+3. **Normalisasi singkatan**: standardisasi menggunakan kamus singkatan administratif Indonesia (JL→Jalan, DS→Desa, KEC→Kecamatan, SMK→Sekolah Menengah Kejuruan, MA→Madrasah Aliyah, MTs→Madrasah Tsanawiyah, PKL→Pekalongan, dst.)
+
+*Pipeline* identik ini memastikan tidak ada bias praproses antar tahun — syarat fundamental untuk komparabilitas analisis temporal.
+
+### 3.5.2 Subproses B: Otomasi Ekstraksi Fitur Semantik IndoBERT
+
+Implementasi menggunakan HuggingFace Transformers dengan parameter *frozen* dan identik untuk keenam periode:
+
+- **Model**: `indobenchmark/indobert-base-p1` (12-*layer*, *hidden size* 768, 12 *attention heads*)
+- **Tokenisasi**: IndoBERT-base-uncased *tokenizer* (*vocab* 30.000)
+- **Input**: gabungan teks hasil praproses — Nama + Asal Sekolah + Kabupaten + Kecamatan + Alamat
+- **Metode *embedding***: *mean pooling* terhadap *last hidden states* (kecuali [CLS] dan [SEP])
+- **Output**: vektor 768 dimensi per observasi
+
+Penyertaan variabel **Nama** sebagai komponen input *embedding* merupakan keputusan metodologis yang disengaja: nama dalam Bahasa Indonesia mengandung informasi semantik tentang latar belakang budaya, geografis, dan sosio-ekonomi yang dapat memperkaya diferensiasi antar segmen pada level distribusi agregat.
+
+**Validasi Stabilitas *Embedding* (Cosine Similarity):** Setelah ekstraksi, *cosine similarity* rata-rata dihitung antara *embedding* entitas identik pada dua tahun berurutan. Threshold > 0,70 ditetapkan sebagai batas stabilitas yang diterima, memvalidasi bahwa pergeseran klaster mencerminkan perubahan substantif data.
+
+### 3.5.3 Subproses C: Geocoding Koordinat Geospasial
+
+Alamat/kecamatan dikonversi ke koordinat geografis (Latitude, Longitude) menggunakan GeoPy/Nominatim API dengan parameter identik: *user agent* konsisten, *delay* 1 detik, *timeout* 10 detik. Koordinat yang gagal ditemukan diimputasi dengan modus koordinat kecamatan dari data yang berhasil di-*geocode* pada tahun yang sama. *Fallback* global menggunakan median koordinat keseluruhan dataset bila imputasi kecamatan tidak tersedia.
+
+### 3.5.4 Subproses D: Encoding Variabel Kategorikal (Termasuk Nama)
+
+*LabelEncoder* di-*fit* pada data 2019 (periode referensi) dan diterapkan ke seluruh periode. Nilai kategori yang muncul pada tahun lain tetapi tidak ada pada 2019 (*unseen categories*) dipetakan ke label "Unknown" sebelum *encoding*. Variabel yang di-*encode*: Program Studi, Jenis Jalur, dan Kabupaten. Variabel Nama diproses melalui IndoBERT *embedding* (Subproses B) bukan *label encoding*, mengingat kandungan semantik yang tidak dapat ditangkap oleh *encoding* ordinal.
+
+### 3.5.5 Subproses E: Feature Integration dan Standardisasi
+
+Seluruh fitur digabungkan menjadi matriks fitur final per tahun:
+
+| Komponen Fitur | Dimensi | Sumber |
+|---|---|---|
+| IndoBERT *embedding* (Nama + Sekolah + Kab + Kec + Alamat) | 768 | Subproses B |
+| Koordinat geospasial (Lat, Lon) | 2 | Subproses C |
+| *Encoded* Program Studi, Jalur, Kabupaten | 3 | Subproses D |
+| **Total** | **~773** | |
+
+Standardisasi menggunakan *StandardScaler* (Z-*score normalization*) yang di-*fit* pada data 2019 dan diterapkan ke semua tahun, memastikan konsistensi skala antar periode.
+
+## 3.6 Tahap 5 — Dimensionality Reduction: PCA Konsisten 6 Periode
+
+PCA diterapkan dengan strategi *fit-on-2019, transform-all*:
+
+- **Fitting**: PCA di-*fit* hanya pada data 2019 yang telah distandarisasi
+- **Threshold**: 95% *explained variance ratio* (jumlah komponen ditentukan otomatis)
+- **Transform**: matriks proyeksi yang sama diterapkan ke data 2020–2024
+
+Strategi ini memastikan semua periode berada dalam ruang fitur yang sama — syarat mutlak agar pergeseran posisi klaster antar waktu dapat diinterpretasikan sebagai perubahan substantif populasi, bukan perubahan basis koordinat (Jolliffe & Cadima, 2016).
+
+## 3.7 Tahap 6 — Modeling: GMM per Periode
+
+### 3.7.1 Penentuan Jumlah Komponen Optimal
+
+Eksperimen K dari 2 hingga 6 untuk setiap tahun menggunakan tiga kriteria:
+
+$$\text{BIC} = -2\ln(\hat{L}) + k\ln(n) \quad \text{...(III.1)}$$
+
+$$\text{AIC} = 2k - 2\ln(\hat{L}) \quad \text{...(III.2)}$$
+
+$$S(i) = \frac{b(i) - a(i)}{\max\{a(i), b(i)\}} \quad \text{...(III.3)}$$
+
+K optimal dipilih berdasarkan **minimum BIC** sebagai kriteria utama.
+
+### 3.7.2 Implementasi GMM Final
+
+Parameter GMM menggunakan Scikit-learn (Pedregosa et al., 2011) dengan *setting* identik untuk semua periode:
+
+**Tabel 3.2** Parameter Implementasi GMM
+
+| Parameter | Nilai | Justifikasi |
+|---|---|---|
+| `covariance_type` | `full` | Memungkinkan bentuk klaster elipsoid bebas |
+| `init_params` | `k-means++` | Inisialisasi cerdas, mitigasi *local optimum* |
+| `max_iter` | 300 | Konvergensi stabil untuk data besar |
+| `n_init` | 10 | 10 *restarts* untuk mitigasi *local optimum* |
+| `random_state` | 42 | Reprodusibilitas hasil |
+| `tol` | 1e-3 | *Convergence threshold* standar |
+
+**Output per periode**: *cluster means* (μ), *covariance matrices* (Σ), *mixing coefficients* (π), *posterior probability matrix*, *hard assignment* label.
+
+### 3.7.3 Perbandingan GMM vs K-Means (Baseline Validation)
+
+Sebagai validasi keunggulan GMM, K-Means (*init* K-Means++, *n_init* 10) diterapkan pada data yang sama dengan K identik. Perbandingan menggunakan *Silhouette Score*, *Calinski-Harabasz Index*, dan *Davies-Bouldin Index*.
+
+## 3.8 Tahap 7 — Time Series Analysis
+
+### 3.8.1 Deteksi Structural Break (ARI, Jaccard, Centroid Drift)
+
+Tiga metrik digunakan secara komplementer:
+
+**Adjusted Rand Index (ARI):**
+$$\text{ARI} = \frac{\text{RI} - E[\text{RI}]}{\max(\text{RI}) - E[\text{RI}]} \quad \text{...(III.4)}$$
+
+*Structural break* terdeteksi bila ARI < 0,30.
+
+**Jaccard Similarity Index:**
+$$J(A,B) = \frac{|A \cap B|}{|A \cup B|} \quad \text{...(III.5)}$$
+
+**Centroid Drift:** jarak Euclidean rata-rata minimum antar sentroid klaster periode berurutan.
+
+### 3.8.2 Forecasting 2025
+
+Proyeksi jumlah pendaftar 2025 menggunakan regresi linear pada data fase *Recovery* (2022–2024) sebagai basis, mengikuti rekomendasi Box et al. (2015) bahwa periode *post-structural break* lebih representatif sebagai dasar peramalan.
+
+## 3.9 Tahap 8 — Evaluation Multi-Level
+
+### 3.9.1 Metrik Evaluasi Internal per Periode
+
+| Metrik | Formula | Interpretasi |
+|---|---|---|
+| *Silhouette Score* | Persamaan III.3 | [-1,1]; mendekati 1 = klaster baik |
+| *Calinski-Harabasz* | Rasio dispersi *between/within* | Lebih tinggi lebih baik |
+| *Davies-Bouldin* | Rata-rata rasio *within/between* | Lebih rendah lebih baik |
+| *Log-Likelihood* | $\sum_i \ln p(\mathbf{x}_i)$ | Lebih tinggi = model lebih baik *fit* |
+
+### 3.9.2 Metrik Stabilitas Antar Periode
+
+| Metrik | Threshold Interpretasi |
+|---|---|
+| ARI | > 0,60 Stabil; 0,30–0,60 Drift Moderat; < 0,30 *Structural Break* |
+| Jaccard Similarity | > 0,50 *Overlap* tinggi; < 0,30 pergeseran signifikan |
+| *Centroid Drift* | Nilai relatif; peningkatan mendadak = indikator *break* |
+
+### 3.9.3 Validasi Eksternal (Expert Validation)
+
+Hasil segmentasi dan rekomendasi strategi divalidasi melalui sesi diskusi terfokus dengan tim rekrutmen ITSNU Pekalongan, mencakup: (1) relevansi persona klaster terhadap pengalaman empiris rekrutmen; (2) *feasibility* rekomendasi kanal dan pesan; dan (3) kelengkapan cakupan segmen. Hasil validasi didokumentasikan pada Sub-bab 4.7.
+
+## 3.10 Tahap 9 — Otomasi Analisis LLM: Interpretasi, Reasoning, dan Ringkasan
+
+### 3.10.1 Otomasi Generasi Narasi Persona Klaster
+
+Profil statistik klaster GMM dikonstruksi menjadi *prompt* terstruktur yang diproses oleh LLM. Format *prompt*:
+
+> *"Anda adalah konsultan pemasaran pendidikan tinggi di Indonesia. Berikut profil statistik klaster calon mahasiswa ITSNU Pekalongan: Tahun [Y] (Fase: [F]), N=[N] ([PCT]%), Avg Posterior=[POST], Program studi dominan: [PRODI], Jalur masuk dominan: [JALUR], Kabupaten dominan: [KAB]. Buatkan persona rekrutmen yang actionable mencakup: Nama Persona, Karakteristik Demografis, Motivasi Utama, Hambatan Utama, Pesan Kunci, Channel Terbaik."*
+
+Output LLM berupa narasi persona terstruktur per klaster per periode, masing-masing tidak lebih dari 150 kata, dalam format yang dapat langsung digunakan oleh tim rekrutmen non-teknis.
+
+### 3.10.2 Otomasi Reasoning Tren Kausal
+
+*Reasoning* kausal dihasilkan untuk setiap transisi antar periode berurutan. Format *prompt* untuk *reasoning*:
+
+> *"Analisis perubahan berikut pada klaster [K] ITSNU Pekalongan antara [Y1] dan [Y2]: Proporsi berubah dari [PCT1]% menjadi [PCT2]%, ARI=[ARI], Centroid Drift=[DRIFT], Perubahan jalur dominan: [JALUR1] → [JALUR2], Konteks: [pra-COVID/COVID/Recovery]. Jelaskan secara kausal mengapa perubahan ini terjadi, integrasikan konteks pandemi, transformasi digital, dan dinamika ekonomi regional. Berikan reasoning 3–5 paragraf yang logis dan bergrounded pada data."*
+
+*Reasoning* ini mengintegrasikan data kuantitatif (ARI, *centroid drift*, perubahan proporsi) dengan konteks historis (pandemi, kebijakan pemerintah, transformasi digital) untuk menghasilkan penjelasan kausal yang koheran — melampaui sekadar deskripsi statistik.
+
+### 3.10.3 Otomasi Ringkasan Naratif Laporan
+
+Setelah seluruh analisis selesai, LLM menghasilkan ringkasan eksekutif laporan dengan format *prompt*:
+
+> *"Berdasarkan analisis GMM time series ITSNU Pekalongan 2019–2024 berikut: [temuan utama ARI per periode], [klaster dengan tren paling signifikan], [proyeksi 2025], buatkan ringkasan eksekutif 1 halaman yang mencakup: (1) Temuan utama, (2) Implikasi untuk manajemen, (3) Rekomendasi prioritas tiga teratas."*
+
+Output berupa laporan ringkas yang siap dipresentasikan kepada pimpinan institusi tanpa perlu pemahaman teknis tentang GMM atau NLP.
+
+## 3.11 Tahap 10 — Deployment: Formulasi Strategi Rekrutmen Prediktif
+
+### 3.11.1 Prioritasi Segmen Dinamis
+
+Klaster diurutkan berdasarkan tren proporsi pada fase *Recovery* (2022–2024). Klaster dengan tren meningkat dikategorikan *High Priority*, stabil sebagai *Medium Priority*, dan menurun sebagai *Low Priority / Evaluation*.
+
+### 3.11.2 Mapping Channel per Klaster
+
+Setiap klaster dipetakan ke kanal rekrutmen berdasarkan: profil kabupaten (menentukan jangkauan geografis kanal), program studi dominan (menentukan narasi pesan), dan jalur masuk dominan (menentukan pendekatan biaya). Mapping menggunakan matriks *segment-channel fit* dari kerangka Kotler dan Keller (2016).
+
+### 3.11.3 Proyeksi Komposisi Segmen 2025
+
+Proyeksi proporsi klaster 2025 menggunakan ekstrapolasi tren proporsi fase *Recovery*, dikombinasikan dengan proyeksi total pendaftar dari regresi linear (Sub-bab 3.8.2).
+
+### 3.11.4 Personalisasi Rekrutmen
+
+Tahap personalisasi menghasilkan panduan komunikasi spesifik per segmen yang mencakup: (a) *value proposition* yang paling relevan berdasarkan motivasi utama persona; (b) *channel* komunikasi optimal berdasarkan karakteristik geografis dan sekolah asal klaster; (c) waktu optimal kampanye berdasarkan pola pendaftaran historis; dan (d) rekomendasi alokasi anggaran rekrutmen proporsional terhadap ukuran dan tren segmen. Seluruh panduan ini dihasilkan secara otomatis oleh modul LLM yang menerima profil statistik klaster final sebagai input.
+
+## 3.12 Alur Penelitian (Flowchart Lengkap)
+
+Gambar 3.1 menampilkan alur penelitian lengkap yang menggambarkan integrasi seluruh komponen metodologis.
+
+**Gambar 3.1** Flowchart Alur Penelitian: *Hybrid Pipeline* IndoBERT-GMM-LLM *Time Series* Berbasis CRISP-DM (6 Periode 2019–2024)
+
+```
+[START]
+    ↓
+[1. BUSINESS UNDERSTANDING]
+   └─ Pemetaan kebutuhan rekrutmen ITSNU multi-periode
+   └─ Definisi operasional otomasi analisis LLM (4 fungsi)
+    ↓
+[2. DATA COLLECTION]
+   └─ Dataset PMB ITSNU 2019–2024 (6 sheet/periode)
+    ↓
+[3. DATA UNDERSTANDING]
+   ├─ Profil statistik deskriptif per periode
+   ├─ Deteksi anomali dan missing values
+   └─ Visualisasi distribusi variabel kunci → Gambar 4.1
+    ↓
+[4. DATA PREPARATION — OTOMASI BATCH 6 PERIODE]
+   ├─ [A] Text Preprocessing (pipeline identik, normalisasi singkatan)
+   ├─ [B] OTOMASI LLM: IndoBERT Embedding Extraction
+   │       (frozen, 768-dim, input: Nama+Sekolah+Kab+Kec+Alamat)
+   │       └─ Validasi cosine similarity antar periode → Tabel 4.3a
+   ├─ [C] Geocoding (alamat/kec → Lat/Long, imputasi modus kecamatan)
+   ├─ [D] Encoding kategorikal (fit 2019, transform semua)
+   └─ [E] Feature Integration (~773 dim) + StandardScaler (fit 2019)
+    ↓
+[5. DIMENSIONALITY REDUCTION]
+   └─ PCA 95% variance (fit 2019, transform 2020–2024)
+    ↓
+[6. MODELING: GMM PER PERIODE]
+   ├─ K-scan BIC/AIC/Silhouette (K=2..6) per tahun → Tabel 4.4
+   ├─ GMM final (K optimal, n_init=10, full covariance)
+   └─ Output: labels, posterior probability, means, covariance
+    ↓
+[7. TIME SERIES ANALYSIS]
+   ├─ ARI antar periode → Structural Break → Tabel 4.5 & Gambar 4.3c
+   ├─ Centroid Drift + Jaccard Similarity
+   └─ Forecasting 2025 (regresi linear tren Recovery) → Gambar 4.5
+    ↓
+[8. EVALUATION]
+   ├─ Internal: Silhouette, Calinski-Harabasz, Davies-Bouldin → Gambar 4.3a
+   ├─ Stabilitas: ARI, Jaccard, Centroid Drift
+   └─ Komparatif: GMM vs K-Means baseline → Tabel 4.15a
+    ↓
+[9. OTOMASI ANALISIS LLM: INTERPRETASI & REASONING]
+   ├─ Profil statistik klaster → prompt terstruktur
+   ├─ LLM: auto-generate narasi persona per klaster per periode → Tabel 4.6–4.11
+   ├─ LLM: Reasoning Tren Kausal (penjelasan perubahan klaster) → Sub-bab 4.7.2
+   └─ LLM: Ringkasan Naratif laporan otomatis → Sub-bab 4.7.3
+    ↓
+[10. DEPLOYMENT: FORMULASI STRATEGI REKRUTMEN PREDIKTIF]
+   ├─ Prioritasi segmen dinamis (tren 2022–2024) → Tabel 4.13
+   ├─ Mapping channel per klaster → Tabel 4.14
+   ├─ Proyeksi komposisi segmen 2025
+   └─ Personalisasi rekrutmen (value prop + channel + waktu + anggaran)
+    ↓
+[END]
+```
+

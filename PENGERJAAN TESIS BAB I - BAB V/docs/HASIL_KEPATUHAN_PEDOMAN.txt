@@ -1,0 +1,138 @@
+═══════════════════════════════════════════════════════
+  COMPLIANCE CHECK: Panduan Tesis v3 (2025)
+  BAB V: P343 | DP: P361–P388
+═══════════════════════════════════════════════════════
+
+── A. Font & Formatting (§4.1.2) ──
+  ✓  Headings use Times New Roman
+  ✓  Headings use 12pt
+  ✓  Body text uses TNR
+
+── B. Page Margins (§4.1.5) ──
+  ✓  Section 1: margins 4-3-4-3 cm
+  ✓  Section 2: margins 4-3-4-3 cm
+
+── C. Justification (§4.1.6) ──
+  ✓  Body justified (rata kanan-kiri)
+
+── D. First-line Indent (§4.1.6) ──
+  ✓  Body first-line indent = 720 twips
+
+── E. BAB V Heading Format ──
+  ✓  Heading 1 "BAB V" found
+  ✓  Heading 1 "KESIMPULAN DAN SARAN" found
+  ✓  Heading 2 "5.1 Kesimpulan/Simpulan" found
+  ✓  Heading 2 "5.3/5.4 Saran" found
+  ⚠  Heading 2 "5.2 Keterbatasan Penelitian" — v3: opsional  — (tidak diwajibkan)
+
+── E2. BAB V Content ──
+  ✓  BAB V word count >= 500
+  ✓  BAB V citations >= 2
+  ✓  BAB V body paragraphs exist
+  ✓  BAB V contains Implikasi
+  ⚠  BAB V Keterbatasan — v3: opsional  — ditemukan
+
+── F. Outline Levels ──
+  ✓  H1 outline=1
+  ✓  H2 outline=2
+  ✓  H3 outline=3
+
+── G. BAB V Body Spacing (v3: 0) ──
+  ✓  BAB V body spacing_after=0
+
+── H. Daftar Pustaka ──
+  ✓  Bibliography entries
+  ✓  No glued DOIs at entry start
+  ✓  Sorted alphabetically
+  ✓  Hanging indent on all entries
+  ✓  No bracket annotations
+  ✓  Orphans removed (Rai)
+
+── I. Tables (§4.1.12) ──
+  ✓  Tables count >= 30
+  ✓  Table borders standard (top/bottom/insideH)
+
+── J. Captions ──
+  ✓  Captions merged
+
+── K. Cross-BAB Coherence ──
+  ✓  BAB I has RQs
+  ✓  BAB III mentions methods (5/5)
+  ✓  BAB IV reports results (5/5)
+  ✓  BAB V numbered conclusions >=3
+  ✓  BAB V mentions ARI
+  ✓  BAB V has Saran
+  ⚠  BAB V Keterbatasan — v3: opsional  — ditemukan
+  ✓  Key refs in bibliography (4/4)
+
+── L. Equations (§4.1.14) ──
+  ✓  Native OMML equations >= 8
+  ✓  No oMathPara wrappers
+
+── M. Decimal Comma (§4.1.9) ──
+  ✓  Decimal titik violations after filtering
+  ✓  Filter stats: heading_nums filtered
+  ✓  Version/year/DOI/arXiv/NIM/subbab filters active
+
+── N. Page Numbering (§4.1.11) ──
+  ⚠  Multiple sections found for page numbering  — 2 sections
+  ⚠  Page numbers detected in footers  — 1 footer(s) with numbers
+
+── O. Font Color ──
+  ✓  Body text = black/auto
+  ✓  Heading color = black/auto
+
+── P. Citations APA (§4.1.15) ──
+  ✓  APA in-text citations found
+  ⚠  Reference manager mention  — Not found
+
+── Q. Paper Size (§4.1.1) ──
+  ✓  Paper size = A4 (21x29.7 cm)
+
+── R. Line Spacing (§4.1.4) ──
+  ✓  Body paragraphs use 2 spasi (line=480)
+  ✓  Bibliography use 1 spasi (line=240)
+  ✓  Multi-line captions use 1 spasi
+
+── S. Italic Foreign Terms & Language (§4.1.8-§4.1.9) ──
+  ✓  Greek equations italic
+  ✓  "et al." in citations italic
+  ✓  Foreign phrases italic usage
+  ✓  No kata ganti orang (saya/aku/kami/kita)
+
+── T. Table Font 10pt (§4.1.12) ──
+  ✓  Table font >= 10pt
+  ✓  All tables 10pt compliant
+
+── U. Images (§4.1.13) ──
+  ✓  Images present >= 5
+  ✓  Gambar captions centered
+  ✓  Gambar numbering format (x.y)
+
+── V. Heading Style ──
+  ✓  All headings typed in bold
+  ✓  BAB headings use Roman numerals
+  ✓  Sub-bab numbering format (x.y)
+  ✓  Body text spacing_after=0 consistent
+
+── W. Space Before/After (§5.4 v3) ──
+  ✓  Body space-before=0
+  ✓  Body space-after=0 (or 160 for 2-spasi)
+
+── X. Abstrak Font Size (§5.2 v3) ──
+  ⚠  Abstrak section boundaries not found  — cannot check font size/spacing
+  ✓  ABSTRAK heading — not in document (front matter terpisah)
+
+── Y. Cover Requirements (§6 v3) ──
+  ✓  Cover has English title (2 bahasa)
+  ✓  NIM found on cover
+  ⚠  ID Tesis on cover — v3: opsional  — tidak terdeteksi
+
+── Z. Page Count & Reference Age (§5.1, §4 v3) ──
+  ⚠  Estimated page count  — ~16 hal (target 150-200)
+  ✓  Reference age mostly <=5 years
+
+═══════════════════════════════════════════════════════
+  PASSED: 66/66  FAILED: 0  WARNINGS: 9
+═══════════════════════════════════════════════════════
+  ✓ Semua lulus.
