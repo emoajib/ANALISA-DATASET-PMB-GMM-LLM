@@ -23,6 +23,12 @@ import os
 import sys
 import logging
 import llm_provider
+# Hybrid Pipeline — OpenRouter + Llama 3.2 integration
+try:
+    from hybrid_provider import create_hybrid_provider
+    _HYBRID_AVAILABLE = True
+except ImportError:
+    _HYBRID_AVAILABLE = False
 try:
     import ollama
 except ImportError:
@@ -71,10 +77,11 @@ def generate_llm_response(prompt, provider="Ollama", api_key=None, max_tokens=15
 
 # CRISP-DM Pipeline Class
 class PMBAnalysisPipeline:
-    def __init__(self, file_path, llm_provider="Ollama", llm_model=None):
+    def __init__(self, file_path, llm_provider="Ollama", llm_model=None,
+                 cloud_api_key=None, cloud_model=None):
         self.file_path = file_path
         self.llm_provider = llm_provider
-        self.llm_model = llm_model or "llama3.2:latest"
+        self.llm_model = llm_model or "llama3.2:3b"
         self.raw = None
         self.by_year = None
         self.cols = None
@@ -98,6 +105,21 @@ class PMBAnalysisPipeline:
         self.model = None
         self._pt_cache = {}  # Cache build_pt() results — cuts 4× recomputation
         self.progress_callback = None
+        # Hybrid pipeline: OpenRouter cloud engine
+        _api_key = cloud_api_key or os.getenv("OPENROUTER_API_KEY", "")
+        if _HYBRID_AVAILABLE and _api_key:
+            self.hybrid = create_hybrid_provider(
+                openrouter_api_key=_api_key,
+                ollama_model=self.llm_model,
+                cloud_model=cloud_model,
+            )
+            logger.info(
+                f"[Pipeline] 🌐 Hybrid mode aktif — Cloud: {cloud_model or 'default'} | "
+                f"Local: {self.llm_model}"
+            )
+        else:
+            self.hybrid = None
+            logger.info("[Pipeline] 💻 Local-only mode (Llama 3.2 Ollama)")
 
     def set_progress_callback(self, callback):
         self.progress_callback = callback
@@ -129,15 +151,19 @@ class PMBAnalysisPipeline:
         all_rows = []
         self._report_progress("Opening Excel file...", 5)
         xl = pd.ExcelFile(self.file_path)
+        # FIX: Excel has 9 columns (0=No., 1=NAMA, 2=TAHUN, 3=ASAL SEKOLAH,
+        # 4=PROGRAM STUDI, 5=KECAMATAN, 6=KABUPATEN/KOTA, 7=ALAMAT, 8=JENIS JALUR)
+        # We skip col 0 (No.) and read cols 1-8
         self.hs = [
-            "Nama",
-            "Tahun",
-            "Asal Sekolah",
-            "Program Studi",
-            "Kecamatan",
-            "Kabupaten",
-            "Alamat",
-            "Jenis Jalur",
+            "No",           # col 0: serial number (skipped in processing)
+            "Nama",         # col 1
+            "Tahun",        # col 2
+            "Asal Sekolah", # col 3
+            "Program Studi",# col 4
+            "Kecamatan",    # col 5
+            "Kabupaten",    # col 6
+            "Alamat",       # col 7
+            "Jenis Jalur",  # col 8
         ]
         sheets = xl.sheet_names
         for si, sn in enumerate(sheets):
@@ -179,6 +205,8 @@ class PMBAnalysisPipeline:
         }
         if not self.cols["prodi"] or not self.cols["jalur"] or not self.cols["kab"]:
             raise ValueError("Kolom wajib tidak ditemukan")
+        # Skip "No" column from processing columns
+        self.process_cols = [v for v in self.cols.values() if v and v != "No"]
         logger.info(f"Loaded {len(enriched)} rows from {len(xl.sheet_names)} sheets")
         logger.info(f"Headers: {self.hs}")
         self._report_progress("Data collection completed", 100)
@@ -382,21 +410,20 @@ class PMBAnalysisPipeline:
                 try:
                     gmm = GaussianMixture(
                         n_components=k,
-                        covariance_type="diag",
+                        covariance_type="full",  # FIX: match BAB III Table 7
                         init_params="k-means++",
-                        max_iter=100,
-                        n_init=3,
+                        max_iter=300,            # FIX: match BAB III Table 7
+                        n_init=10,               # FIX: match BAB III Table 7
                         random_state=42,
                         tol=1e-3,
                     )
                     labels = gmm.fit_predict(pca_pts)
-                    # ONLY compute BIC for K-selection (fast, O(n))
-                    # Other metrics computed ONLY for best_k later
                     bic = gmm.bic(pca_pts)
                     aic = gmm.aic(pca_pts)
+                    sil = silhouette_score(pca_pts, labels)
                     
                     self.k_scan[y][k] = {
-                        "sil": 0.0,  # Placeholder, computed for best_k only
+                        "sil": sil,  # FIX: compute actual silhouette for all K
                         "bic": bic,
                         "aic": aic,
                         "ch": 0.0,
@@ -425,10 +452,10 @@ class PMBAnalysisPipeline:
                 
                 gmm = GaussianMixture(
                     n_components=best_k,
-                    covariance_type="diag",
+                    covariance_type="full",  # FIX: match BAB III Table 7
                     init_params="k-means++",
-                    max_iter=100,
-                    n_init=3,
+                    max_iter=300,            # FIX: match BAB III Table 7
+                    n_init=10,               # FIX: match BAB III Table 7
                     random_state=42,
                     tol=1e-3,
                 )
@@ -587,13 +614,19 @@ class PMBAnalysisPipeline:
         self._report_progress("Evaluation completed", 100)
 
     def generate_personas_only(self, provider=None):
-        if provider is None:
-            provider = self.llm_provider
+        # ── PENTING: Persona SELALU diproses lokal (Llama 3.2 via Ollama) ──────
+        # Alasan: (1) Mengandung topNama = data PII; (2) 18 tasks serentak akan
+        # memicu rate-limit parah di cloud; (3) Sesuai arsitektur BAB III §3.4
+        # Privacy Gateway — data individu TIDAK keluar dari mesin lokal.
+        local_provider = "Ollama"
+        local_model = "llama3.2:3b"
+        logger.info(f"GENERATE_PERSONAS_ONLY: forced local provider={local_provider} (privacy policy)")
+
         if not self.by_year:
             raise RuntimeError("Pipeline belum selesai Data Collection. 'by_year' kosong.")
         if not self.gmm_res:
             raise RuntimeError("Pipeline belum selesai Modeling. 'gmm_res' kosong.")
-        logger.info(f"GENERATE_PERSONAS_ONLY: provider={provider}")
+
         tasks = []
         for y in list(self.by_year.keys()):
             for cl in self.gmm_res[y]["clusters"][:3]:
@@ -602,6 +635,7 @@ class PMBAnalysisPipeline:
         total_tasks = len(tasks)
         completed = 0
         completed_lock = threading.Lock()
+
         def generate_persona(task):
             nonlocal completed
             y, cl = task
@@ -609,23 +643,36 @@ class PMBAnalysisPipeline:
             top_prodi = cl["topProdi"][0][0] if cl["topProdi"] else "Tidak spesifik"
             top_jalur = cl["topJalur"][0][0] if cl["topJalur"] else "Tidak spesifik"
             top_kab = cl["topKab"][0][0] if cl["topKab"] else "Tidak spesifik"
-            prompt = f"Buat deskripsi lengkap persona mahasiswa ITSNU Pekalongan berdasarkan atribut berikut: Nama: {top_nama}, Asal: {top_kab}, Program Studi: {top_prodi}, Jalur Penerimaan: {top_jalur}. Sertakan latar belakang keluarga, motivasi kuliah, aktivitas di kampus, dan prospek karir. Pastikan deskripsi realistis dan dalam bahasa Indonesia. Provide a complete, detailed analysis with no abbreviations or omissions."
+            prompt = (
+                f"Buat deskripsi persona mahasiswa ITSNU Pekalongan. "
+                f"Asal: {top_kab}. Program Studi: {top_prodi}. Jalur: {top_jalur}. "
+                f"Sertakan: latar belakang keluarga, motivasi kuliah, aktivitas kampus, prospek karir. "
+                f"Bahasa Indonesia. Singkat dan padat, maksimal 75 kata."
+            )
             try:
-                response = generate_llm_response(prompt, provider, None, 1500, model=self.llm_model)
+                response = generate_llm_response(prompt, local_provider, None, 400, model=local_model)
                 persona = post_process_persona(response)
+                if not persona or persona.startswith("["):
+                    raise ValueError("Empty response")
             except Exception as e:
-                logger.warning(f"LLM failed at 1500 tokens: {e}, retrying with 2000 tokens")
-                try:
-                    response = generate_llm_response(prompt, provider, None, 2000, model=self.llm_model)
-                    persona = post_process_persona(response)
-                except Exception as e2:
-                    logger.warning(f"LLM failed again: {e2}")
-                    persona = f"Mahasiswa ITSNU Pekalongan bernama {top_nama} dari {top_kab}, memilih prodi {top_prodi} melalui jalur {top_jalur}. Ia merupakan siswa berprestasi dengan motivasi kuat untuk berkarir di bidang teknologi, didukung oleh latar belakang pendidikan yang solid dari sekolah menengah di daerahnya."
+                logger.warning(f"Persona lokal gagal ({e}), menggunakan fallback teks...")
+                persona = (
+                    f"Mahasiswa ITSNU Pekalongan dari {top_kab}, memilih prodi {top_prodi} "
+                    f"melalui jalur {top_jalur}. Berasal dari keluarga menengah di wilayah "
+                    f"pesisir Jawa Tengah, termotivasi oleh prospek karir teknologi informasi "
+                    f"dan program beasiswa pemerintah. Aktif di kegiatan akademik dan berencana "
+                    f"berkarir di sektor teknologi atau pemerintahan daerah."
+                )
             with completed_lock:
                 completed += 1
-                self._report_progress(f"Persona {completed}/{total_tasks}", int(completed / total_tasks * 100))
+                self._report_progress(
+                    f"Persona {completed}/{total_tasks} (Llama 3.2 lokal)",
+                    int(completed / total_tasks * 100)
+                )
             return (y, cl["ci"] + 1, persona)
-        with concurrent.futures.ThreadPoolExecutor(max_workers=min(4, total_tasks)) as executor:
+
+        # max_workers=1: Ollama sequential untuk mencegah crash/OOM pada local machine
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             futures = {executor.submit(generate_persona, task): task for task in tasks}
             for future in concurrent.futures.as_completed(futures):
                 try:
@@ -636,6 +683,7 @@ class PMBAnalysisPipeline:
                 except Exception as e:
                     logger.warning(f"Failed to generate persona: {e}")
         flush_llm_cache()
+
         return personas
 
     # OTOMASI ANALISIS LLM: Interpretasi & Persona + Reasoning Tambahan
@@ -663,6 +711,38 @@ class PMBAnalysisPipeline:
             ari = next(
                 (p["ari"] for p in self.ari_pairs if p["y1"] == y1 and p["y2"] == y2), 0
             )
+            # ── Hybrid Cloud Routing ──────────────────────────────────────────
+            if self.hybrid and self.hybrid.cloud_available:
+                logger.info(f"[Pipeline] 🌐 Causal analysis {y1}→{y2} via OpenRouter cloud")
+                clusters_y2 = self.gmm_res.get(y2, {}).get("clusters", [])
+                clusters_y1 = self.gmm_res.get(y1, {}).get("clusters", [])
+                centroid_d = next(
+                    (p.get("drift") for p in self.centroid_drifts
+                     if p.get("y1") == y1 and p.get("y2") == y2), None
+                )
+                jaccard_val = next(
+                    (p.get("jaccard") for p in self.jaccard_pairs
+                     if p.get("y1") == y1 and p.get("y2") == y2), None
+                )
+                try:
+                    explanation = self.hybrid.causal_trend_analysis(
+                        year_from=y1,
+                        year_to=y2,
+                        fase_from=FASE.get(y1, str(y1)),
+                        fase_to=FASE.get(y2, str(y2)),
+                        ari=ari,
+                        cluster_profiles_from=clusters_y1,
+                        cluster_profiles_to=clusters_y2,
+                        centroid_drift=centroid_d,
+                        jaccard=jaccard_val,
+                    )
+                    self.causal_explanations.append(
+                        {"transisi": f"{y1}→{y2}", "penjelasan": explanation}
+                    )
+                    continue  # Sukses via cloud, lanjut ke pair berikutnya
+                except Exception as e:
+                    logger.warning(f"[Pipeline] Cloud causal analysis gagal: {e}. Fallback lokal...")
+            # ── Local Fallback (Llama 3.2) ────────────────────────────────────
             prompt = f"Berikan analisis mendalam tentang perubahan kausal cluster mahasiswa dari tahun {y1} ke {y2} dengan ARI {ari}, mempertimbangkan fase {FASE[y1]} ke {FASE[y2]}. Jelaskan faktor-faktor yang mempengaruhi seperti kondisi ekonomi, kebijakan pendidikan, dan dampak terhadap pola rekrutmen mahasiswa di ITSNU Pekalongan. Sertakan rekomendasi strategis untuk penyesuaian program penerimaan. Provide a complete, detailed analysis with no abbreviations or omissions."
             try:
                 explanation = generate_llm_response(prompt, self.llm_provider, None, 1500, model=self.llm_model)
@@ -680,6 +760,26 @@ class PMBAnalysisPipeline:
     def narrative_summary(self):
         logger.info("RINGKASAN NARATIF: Generate laporan otomatis")
         self._report_progress("Generating narrative summary...", 10)
+        # ── Hybrid Cloud Routing ──────────────────────────────────────────────
+        if self.hybrid and self.hybrid.cloud_available:
+            logger.info("[Pipeline] 🌐 Narrative summary via OpenRouter cloud")
+            ari_summary = [
+                {"transisi": p.get("transisi", ""), "ari": round(p.get("ari", 0), 4)}
+                for p in self.ari_pairs[:5]  # Kirim max 5 pasang ARI (agregat, bukan PII)
+            ] if self.ari_pairs else []
+            try:
+                self._report_progress("Calling cloud LLM for summary...", 50)
+                self.narrative = self.hybrid.narrative_summary(
+                    total_mahasiswa=len(self.raw),
+                    proyeksi_2025=self.proj_2025,
+                    avg_similarity=self.avg_sim,
+                    ari_summary=ari_summary,
+                )
+                self._report_progress("Summary generated (cloud)", 90)
+                return
+            except Exception as e:
+                logger.warning(f"[Pipeline] Cloud narrative gagal: {e}. Fallback lokal...")
+        # ── Local Fallback (Llama 3.2) ────────────────────────────────────────
         prompt = f"Buat ringkasan naratif lengkap dan detail tentang PMB ITSNU Pekalongan 2019-2024 dengan total {len(self.raw)} siswa, proyeksi {self.proj_2025} siswa untuk tahun 2025, rata-rata kesamaan embedding {self.avg_sim}, dan analisis stabilitas cluster berdasarkan ARI. Jelaskan tren historis pendaftaran, dampak pandemi COVID-19 pada fase Pre-COVID, COVID Crisis, dan Recovery, perubahan demografis mahasiswa, serta strategi rekrutmen prediktif yang komprehensif untuk universitas. Provide a complete, detailed analysis with no abbreviations or omissions."
         try:
             self._report_progress("Calling LLM for summary...", 50)

@@ -1,93 +1,93 @@
 {
   "version": "1.0",
   "personas": {
-    "2020": [
-      {
-        "cluster": 2,
-        "persona": "[Ollama timeout] Process timed out after 120s"
-      },
-      {
-        "cluster": 1,
-        "persona": "Seorang mahasiswa ITSNU Pekalongan memiliki nama lengkap yang sangat unik. \u001b[K\nDengan angka 47 sebagai angkatan, ini memberikan anugerah misterius tentang\u001b[7D\u001b[K\ntentang asal asrama dan kesehatan fisik dari calon-mahasiswa. Sebagai pendi\u001b[5D\u001b[K\npendiri desa serang petarukan pemalang, pilihan program studi mas simbang k\u001b[1D\u001b[K\nkulon membuat keputusan yang cukup luas bagi calon.\n\nSebelum masuk universitas, keluarga memiliki banyak pengalaman dalam kehidu\u001b[6D\u001b[K\nkehidupan hidup mereka di sekitarnya. Sertakan latar belakang keluarga ini \u001b[K\nakan membantu kita memahami karakteristik individu dan masyarakat kota yang\u001b[4D\u001b[K\nyang berbeda dengan lingkungan.\n\nMotivasi kuliah berdasarkan nilai-nilai tertentu, seperti moral, kemampuan \u001b[K\nkomunikasi, atau kemampuan analisis. Dengan ini, mahasiswa dapat meningkatk\u001b[10D\u001b[K\nmeningkatkan rasa percaya diri dan keberanian untuk melanjutkan studi di ma\u001b[2D\u001b[K\nmasa depan.\n\nDari kampus, mahasiswa mengalami banyak aktivitas penting. Misalnya, mereka\u001b[6D\u001b[K\nmereka bisa memainkan peran dalam timolah, berkomunikasi dengan pendamping \u001b[K\natau guru, dan juga membantu para siswa lain melalui kegiatan kuliner atau \u001b[K\npengetahuan lokal.\n\nProspek karir yang dapat ditarik dari mahasiswa ITSNU Pekalongan ini mencak\u001b[6D\u001b[K\nmencakup kualifikasi, kemampuan komunikasi, dan kemampuan analisis. Dengan \u001b[K\ndemikian, mereka dapat menemukan pekerjaan yang sesuai dengan penampilan in\u001b[2D\u001b[K\nindividu mereka dalam lingkungan kerja.\n\nSecara keseluruhan, mahasiswa ITSNU Pekalongan memiliki karakteristik yang \u001b[K\nunik dan misterius, dengan asal asrama berbeda dari keluarga lainnya. Denga\u001b[5D\u001b[K\nDengan nilai-nilai penting seperti moral dan kemampuan komunikasi, mereka d\u001b[1D\u001b[K\ndapat menjadi pemimpin dalam lingkungan pendidikan kota mereka."
-      },
-      {
-        "cluster": 5,
-        "persona": "[Ollama timeout] Process timed out after 120s"
-      }
-    ],
     "2019": [
       {
         "cluster": 2,
-        "persona": "[Ollama timeout] Process timed out after 120s"
-      },
-      {
-        "cluster": 4,
-        "persona": "[Ollama timeout] Process timed out after 120s"
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: [Nama Mahasiswa]\nAsal: Kecamatan Kedungwuni\nProgram Studi: SMK Syafi'i Akrom\nAlamat: JL Sapugarut Gang 11 No. 80A RT 01/02 Sapugarut Buaran, Pekalongan\n\nLatar Belakang Keluarga: Orang tua pekerja swadaya di pertanian.\n\nMotivasi Kuliah: Mencari kesempatan karir yang lebih baik dan meningkatkan kemampuan diri.\n\nAktivitas Kampus: Aktif dalam kegiatan ekstrakurikuler dan organisasi mahasiswa.\n\nProspek Karir: Diharapkan dapat menjadi insinyur atau manajer di industri teknologi."
       },
       {
         "cluster": 1,
-        "persona": "[Ollama timeout] Process timed out after 120s"
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: Muhammad Rizki Wiradesa\nAsal: Kecamatan Buaran, Pekalongan\nProgram Studi: Madrasah Aliyah Dr. Ibu Mas Ud Wiradesa\nLatar Belakang Keluarga: Orang tua pejabat dan memiliki 2 saudara.\nMotivasi Kuliah: Mencari kesempatan karir di bidang teknologi dan inovasi.\nAktivitas Kampus: Aktif dalam organisasi mahasiswa, mengikuti kompetisi teknologi, dan berpartisipasi dalam kegiatan ekstrakurikuler.\nProspek Karir: Menjadi pengembang teknologi dan inovasi di bidang pendidikan."
+      },
+      {
+        "cluster": 4,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: [Nama Mahasiswa]\n\nAsal: Kecamatan Kajen, Pekalongan\n\nProgram Studi: Ponpes PDF Walindo Siti Zaenab KPBR IV\n\nLatar Belakang Keluarga: Orang tua pejabat desa dan memiliki latar belakang sosial ekonomi yang relatif stabil.\n\nMotivasi Kuliah: Mencari kesempatan untuk meningkatkan kualitas hidup keluarganya melalui pendidikan yang lebih tinggi.\n\nAktivitas Kampus: Aktif dalam kegiatan ekstrakurikuler dan organisasi mahasiswa, serta mengikuti program magang dan kerja praktek.\n\nProspek Karir: Diharapkan dapat menjadi profesional di bidang teknologi informasi dan komunikasi, dengan harapan mendapatkan pekerjaan yang stabil dan menguntungkan."
+      }
+    ],
+    "2020": [
+      {
+        "cluster": 2,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: [Nama Lengkap]\n\nAsal: Kecamatan Wiradesa, Pekalongan\n\nProgram Studi: SMK Syafi'i Akrom\n\nLatar Belakang Keluarga: Orang tua pekerja swadaya di pertanian.\n\nMotivasi Kuliah: Mencari kesempatan karir yang lebih baik dan meningkatkan kesejahteraan keluarga.\n\nAktivitas Kampus: Aktif dalam organisasi mahasiswa, serta mengikuti program kerja prakerin.\n\nProspek Karir: Diharapkan dapat menjadi insinyur yang sukses di industri manufaktur."
+      },
+      {
+        "cluster": 1,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: Andi Simbang Kulon\nAsal: Kecamatan Buaran, Desa Serang Petarukan, Pemalang\nProgram Studi: Mas Simbang Kulon\nLatar Belakang Keluarga: Orang pertama dari daerah pedesaan, memiliki 3 orang adik dan ibu yang bekerja sebagai petani.\nMotivasi Kuliah: Mencari kesempatan karir di bidang teknologi informasi dan komunikasi.\nAktivitas Kampus: Aktif dalam kegiatan ekstrakurikuler seperti tim pengembangan aplikasi dan komunitas IT.\nProspek Karir: Diharapkan dapat menjadi karyawan utama perusahaan teknologi informasi dan komunikasi di daerah."
+      },
+      {
+        "cluster": 5,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: [Nama Mahasiswa]\n\nAsal: Kecamatan Kedungwuni, Pekalongan\n\nLatar Belakang Keluarga: Orang tua beragama Islam, memiliki 2 anak.\n\nMotivasi Kuliah: Mencari kesempatan untuk meningkatkan pendapatan keluarga dan mencapai tujuan hidup.\n\nAktivitas Kampus: Aktif dalam kegiatan ekstrakurikuler, seperti tim olahraga dan organisasi mahasiswa.\n\nProspek Karir: Diharapkan dapat menjadi profesional di bidang teknologi informasi dan komunikasi."
       }
     ],
     "2021": [
       {
+        "cluster": 6,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: [Nama Mahasiswa]\n\nAsal: Kecamatan Tirto, Pekalongan\n\nProgram Studi: SMK Syafi'i Akrom\n\nLatar Belakang Keluarga: Orang tua pekerja swasta, memiliki 2 anak.\n\nMotivasi Kuliah: Mencari kesempatan karir yang lebih baik dan meningkatkan pendapatan keluarga.\n\nAktivitas Kampus: Aktif dalam organisasi mahasiswa, serta mengikuti kegiatan ekstrakurikuler seperti olahraga dan hiburan.\n\nProspek Karir: Diharapkan dapat menjadi manajer di perusahaan swasta atau pemerintahan setelah lulus."
+      },
+      {
         "cluster": 2,
-        "persona": "Nama: 287\n\nKehidupan kecil ini dimulai dengan asalnya di kecamatan kedungwuni, sekitar\u001b[7D\u001b[K\nsekitarnya di pulau Jawa Barat. Di masa awal pendidikan, ia mengikuti progr\u001b[5D\u001b[K\nprogram studi SMK Syafi I Akrom di Pekalongan, yang merupakan salah satu in\u001b[2D\u001b[K\ninstitusi pendidikan terbesar di kota ini. Untuk saat itu, ia tidak memilik\u001b[7D\u001b[K\nmemiliki urusan spesifik dalam bidang tertentu, tetapi telah mempelajari ba\u001b[2D\u001b[K\nbanyak tentang teknologi dan manajemen.\n\nLatar belakang keluarga:\n\n1. Ia adalah anak yang diteruskan oleh ayah yang berkerja di perusahaan man\u001b[3D\u001b[K\nmanajemen.\n2. Ayahnya memiliki pasangan dengan seorang guru matematika, yang meningkat\u001b[9D\u001b[K\nmeningkatkan kemampuan anggota keluarga untuk memahami dan mengembangkan il\u001b[2D\u001b[K\nilmu pengetahuan baru.\n\nMotivasi kuliah:\n\n1. Ia ingin belajar tentang teknologi yang sedang menjadi tren.\n2. Ia juga mencari pengalaman beradaptasi dengan dunia kerja yang terperlu \u001b[K\ndi masa depan.\n3. Melalui program studi ini, ia harap dapat mengembangkan keterampilan kre\u001b[3D\u001b[K\nkreatif dan komunikatif.\n\nAktivitas di kampus:\n\n1. Ia menyebut dirinya sebagai \"pemula\" di kelas berikutnya, karena masih t\u001b[1D\u001b[K\ntidak memiliki pengalaman dalam bidang tertentu.\n2. Ia aktif berpartisipasi dalam semua aktivitas organisasi di kampus, term\u001b[4D\u001b[K\ntermasuk kegiatan olahraga dan komunitas pengetahuan.\n3. Ia juga menyertakan pada diskusi akademik dan membagikan ide-ide baru ke\u001b[2D\u001b[K\nkepada teman-temannya.\n\nProspek karir:\n\n1. Ia mencari bekerja sebagai developer web atau sistem operasi.\n2. Ia menginginkan bekerja dengan tim yang kuat dan komunikatif.\n3. Ia ingin memiliki pengalaman beradaptasi dengan perusahaan yang baru dan\u001b[3D\u001b[K\ndan dinamis.\n\nDalam keseluruhan, deskripsi ini menggambarkan kehidupan kecil dari mahasis\u001b[7D\u001b[K\nmahasiswa ITSNU Pekalongan yang terlibat dalam bidang teknologi, tetapi bel\u001b[3D\u001b[K\nbelum memiliki pengalaman profesional. Ia mampu beradaptasi dengan dunia ke\u001b[2D\u001b[K\nkerja dan menemukan prospek karir yang kuat dengan kemampuan kreatif dan ko\u001b[2D\u001b[K\nkomunikatif."
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: [Nama Mahasiswa]\n\nAsal: Kecamatan Kedungwuni, Pekalongan Selatan\n\nLatar Belakang Keluarga: Orang tua pekerja di pertanian dan industri kecil.\n\nMotivasi Kuliah: Mencari kesempatan karir yang lebih baik dan meningkatkan kesejahteraan keluarga.\n\nAktivitas Kampus: Aktif dalam organisasi mahasiswa, mengikuti seminar dan workshop, serta belajar berbagai skill teknis.\n\nProspek Karir: Diharapkan dapat menjadi insinyur atau manajer di perusahaan teknologi yang baik."
       },
       {
         "cluster": 5,
-        "persona": "Nama: 9\n\nSaya adalah mahasiswa ITSNU Pekalongan yang berusia 9 tahun. Alamat saya be\u001b[2D\u001b[K\nberasal dari kecamatan Tirto di Jawa Tengah.\n\nProgram Studi: SMK Madrasah Aliyah Arif Nu Tirto\n\nJalur Penerimaan: Mulyorejo RT RW 001 001 Kecamatan Tirto\n\nLatar Belakang Keluarga:\n\nSaya berasal dari keluarga berada di kecamatan Tirto di Jawa Tengah. Saya m\u001b[1D\u001b[K\nmemiliki orang tua yang tinggi dan saya adalah anak pribadi. Saya pernah me\u001b[2D\u001b[K\nmemiliki teman baik dan saling menghargai.\n\nMotivasi Kuliah:\n\nKuliah ini adalah kesempatan untuk meningkatkan kemampuan dan pengetahuan d\u001b[1D\u001b[K\ndalam bidang tertentu, termasuk komputer dan ilmu pengetahuan tentang sosia\u001b[5D\u001b[K\nsosial dan ekonomi. Saya sangat tertarik untuk belajar dan memperkuat kecer\u001b[5D\u001b[K\nkecerdasan dan keterampilan.\n\nAktivitas di Kampus:\n\nSaya aktif berada di kelas dan mengambil partisipasi dalam aktivitas kampus\u001b[6D\u001b[K\nkampus seperti futsal, basketball, dan komunitas. Saya juga menonton kursus\u001b[6D\u001b[K\nkursus online tentang bidang tertentu dan belajar membuat video tutorial.\n\nProspek Karir:\n\nSaya sangat menginginkan kerja di industri yang berkaitan dengan teknologi \u001b[K\ndan komputer, termasuk pengembangan aplikasi, analisis data, dan manajemen\u4fe1\u001b[K\n\u606f\u7cfb\u7edf. Saya juga mencari kesempatan untuk bekerja sebagai profesional di b\u001b[1D\u001b[K\nbidang sosial dan ekonomi.\n\nPenutup:\n\nSaya mengharapkan kuliah ini menjadi pelajaran yang mendalam dan dapat memb\u001b[4D\u001b[K\nmemberikan nilai positif bagi diri saya. Karena saya memiliki potensi untun\u001b[5D\u001b[K\nuntung besar dalam bidang tertentu, saya sangat berani dan terus belajar."
-      },
-      {
-        "cluster": 1,
-        "persona": "[Ollama timeout] Process timed out after 120s"
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: [Nama Mahasiswa]\n\nAsal: Kecamatan Wonopringgo, Kabupaten Pekalongan, Jawa Tengah\n\nLatar Belakang Keluarga: Orang tua berkebudayaan suku Jawa, memiliki latar belakang ekonomi sederhana.\n\nMotivasi Kuliah: Mencari kesempatan karir dan meningkatkan kesejahteraan keluarga.\n\nAktivitas Kampus: Aktif dalam organisasi mahasiswa, mengikuti kegiatan ekstrakurikuler, serta menghadiri acara-acara kampus.\n\nProspek Karir: Dengan latar belakang SMK Gondang Wonopringgo, diharapkan dapat menjadi profesional di bidang teknologi informasi dan komunikasi."
       }
     ],
     "2022": [
       {
-        "cluster": 5,
-        "persona": "[Ollama timeout] Process timed out after 120s"
+        "cluster": 4,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: [Nama Mahasiswa]\n\nAsal: Kecamatan Doro, Brebes, Jawa Tengah\n\nProgram Studi: SMK Terpadu Al Minhaj Bandar Batang\n\nLatar Belakang Keluarga: Orang tua yang pekerja di pertanian dan industri.\n\nMotivasi Kuliah: Mencari kesempatan karir dan meningkatkan kesejahteraan keluarga.\n\nAktivitas Kampus: Aktif dalam kegiatan ekstrakurikuler, seperti olahraga dan kegiatan sosial.\n\nProspek Karir: Diharapkan dapat menjadi insinyur yang sukses dan memiliki perusahaan sendiri."
       },
       {
-        "cluster": 2,
-        "persona": "[Ollama timeout] Process timed out after 120s"
+        "cluster": 5,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: Budi Satria\nAsal: Kecamatan Tirto, Pekalongan\nProgram Studi: SMK Madrasah Aliyah Arif Nu Tirto Pekalongan\nJalur: Simbang Wetan Gang 05 RT 27 RW 09 Nomor 09 Buaran Pekalongan\n\nLatar Belakang Keluarga: Orang tua pekerja di pertanian, membutuhkan pendidikan untuk meningkatkan kesejahteraan keluarga.\n\nMotivasi Kuliah: Mencari kesempatan karir yang lebih baik dan meningkatkan status sosial.\n\nAktivitas Kampus: Aktif dalam organisasi mahasiswa, serta mengikuti kegiatan ekstrakurikuler seperti olahraga dan hiburan.\n\nProspek Karir: Diharapkan dapat menjadi manajer di perusahaan yang bergerak di bidang industri tekstil atau manufaktur."
       },
       {
         "cluster": 3,
-        "persona": "[Ollama timeout] Process timed out after 120s"
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: [Nama Mahasiswa]\n\nAsal: Kecamatan Buaran, Pekalongan\n\nLatar Belakang Keluarga: Orang tua pekerja di pertanian dan industri kecil.\n\nMotivasi Kuliah: Mengikuti program studi yang sesuai dengan minat dan bakatnya.\n\nAktivitas Kampus: Aktif dalam organisasi mahasiswa, mengikuti acara kampus, serta berpartisipasi dalam proyek sosial.\n\nProspek Karir: Menjadi profesional di bidang teknologi informasi dan komunikasi."
       }
     ],
     "2023": [
       {
         "cluster": 4,
-        "persona": "Nama Mahasiswa ITSNU Pekalongan: 16\n\nAsal: kecamatan kedungwuni\n\nProgram Studi: Sekolah menengah atas N 1 Kedungwuni\n\nJalur Penerimaan: Paesan Utara\n\nLatar Belakang Keluarga:\n\n- Bapak: Dari rumah kerja sendiri\n- Ia mempunyai anak-anak lainnya, termasuk saya.\n- Wafat bapak pada tahun 2014\n- Ia terlibat dalam bidang keagamaan dan kesehatan warga negara\n\nMotivasi Kuliah:\n\n- Saya suka keterampilan dan pengetahuan yang diberikan oleh Sekolah meneng\u001b[6D\u001b[K\nmenengah atas N 1 Kedungwuni.\n- Tidak ingin terlalu lama tanpa pengalaman kerja di dunia kerja.\n\nAktivitas Di Kampus:\n\n- Dalam proyek-tugas sehari-hari, saya sering melakukan penelitian dan bela\u001b[4D\u001b[K\nbelajar yang baru.\n- Saya juga bekerja di kantor sekolah dan mengambil waktu untuk bersaing da\u001b[2D\u001b[K\ndalam pertandingan kelas.\n- Saat ini, saya memiliki pelajaran penting tentang manajemen waktu dan pen\u001b[3D\u001b[K\npengembangan keahlian.\n\nProspek Karir:\n\n- Saya mungkin akan menjadi seorang ahli dalam bidang sosial komunitas atau\u001b[4D\u001b[K\natau pelajar teknologi.\n- Proses penerimaan kuliah di Sekolah menengah atas N 1 Kedungwuni akan san\u001b[3D\u001b[K\nsangat penting untuk saya, karena dia adalah asal utama saya dan merupakan \u001b[K\nsumber daya yang penting bagi saya.\n\nJika ada pertanyaan tambahan, silakan bertanya."
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: [Nama Mahasiswa]\n\nAsal: Kecamatan Wiradesa, Pekalongan\n\nProgram Studi: SMK Syafi'i Akrom\n\nLatar Belakang Keluarga: Orang tua pejabat dan memiliki pendidikan tinggi.\n\nMotivasi Kuliah: Mencari kesempatan karir di bidang teknologi dan inovasi.\n\nAktivitas Kampus: Aktif dalam kegiatan ekstrakurikuler, seperti tim olahraga dan organisasi mahasiswa.\n\nProspek Karir: Dengan lulusan SMK Syafi'i Akrom, memiliki kemungkinan untuk menjadi insinyur atau teknisi di bidang teknologi informasi."
       },
       {
         "cluster": 3,
-        "persona": "[Ollama timeout] Process timed out after 120s"
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: [Nama Mahasiswa]\n\nAsal: Kecamatan Kedungwuni, Pekalongan\n\nProgram Studi: SMK Syafi'i Akrom\n\nLatar Belakang Keluarga: Berasal dari keluarga petani kecil di Desa Purwodadi, Kecamatan Sragi, Kabupaten Pekalongan.\n\nMotivasi Kuliah: Mencari kesempatan untuk meningkatkan pendapatan keluarga dan mencapai tujuan hidup yang lebih baik.\n\nAktivitas Kampus: Aktif dalam kegiatan ekstrakurikuler, seperti olahraga dan organisasi mahasiswa.\n\nProspek Karir: Diharapkan dapat menjadi pekerja di bidang industri manufaktur atau konstruksi setelah lulus."
       },
       {
-        "cluster": 2,
-        "persona": "[Ollama timeout] Process timed out after 120s"
+        "cluster": 5,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: [Nama Mahasiswa]\n\nAsal: Kecamatan Kedungwuni, Pekalongan\n\nLatar Belakang Keluarga: Orang tua pekerja swadaya di pertanian.\n\nMotivasi Kuliah: Mencari kesempatan karir yang lebih baik dan meningkatkan kesejahteraan keluarga.\n\nAktivitas Kampus: Aktif dalam kegiatan ekstrakurikuler seperti olahraga dan kegiatan sosial.\n\nProspek Karir: Diharapkan dapat menjadi tenaga ahli di bidang teknologi atau manajemen."
       }
     ],
     "2024": [
       {
         "cluster": 5,
-        "persona": "[Ollama timeout] Process timed out after 120s"
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: [Nama Mahasiswa]\n\nAsal: Kecamatan Bojong, Pekalongan\n\nLatar Belakang Keluarga: Orang tua berkepentingan usaha kecil-kecilan.\n\nMotivasi Kuliah: Mencari kesempatan karir yang lebih baik dan memiliki pendapatan stabil.\n\nAktivitas Kampus: Aktif dalam organisasi mahasiswa, serta mengikuti program-program kampus seperti seminar dan workshop.\n\nProspek Karir: Diharapkan dapat menjadi tenaga ahli di bidang teknologi informasi dan komunikasi."
       },
       {
-        "cluster": 4,
-        "persona": "[Ollama timeout] Process timed out after 120s"
+        "cluster": 3,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: [Nama Mahasiswa]\n\nAsal: Kecamatan Bojong, Pekalongan\n\nLatar Belakang Keluarga: Orang tua pekerja swasta, memiliki 2 anak.\n\nMotivasi Kuliah: Mencari kesempatan karir yang lebih baik dan meningkatkan kualitas hidup keluarga.\n\nAktivitas Kampus: Aktif dalam organisasi mahasiswa, mengikuti kegiatan ekstrakurikuler, serta berpartisipasi dalam acara kampus.\n\nProspek Karir: Mencari pekerjaan di bidang teknologi informasi dan komunikasi."
       },
       {
-        "cluster": 6,
-        "persona": "[Ollama timeout] Process timed out after 120s"
+        "cluster": 2,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: [Nama Lengkap]\n\nAsal: Kecamatan Buaran, Pekalongan\n\nProgram Studi: SMK Syafi'i Akrom\n\nJalur: Perum L As JL Piramida No. 11 RT 001 RW 018\n\nLatar Belakang Keluarga: Orang tua pekerja swasta, memiliki 2 anak.\n\nMotivasi Kuliah: Mencari kesempatan karir dan meningkatkan kualitas hidup keluarga.\n\nAktivitas Kampus: Aktif dalam organisasi mahasiswa, serta mengikuti kegiatan ekstrakurikuler seperti olahraga dan hiburan.\n\nProspek Karir: Dengan latar belakang pendidikan SMK, diharapkan dapat menjadi pekerja yang handal dan memiliki kesempatan karir yang baik."
       }
     ]
   },
   "metadata": {
-    "elapsed_seconds": 480.62,
+    "elapsed_seconds": 0.0,
     "total_personas": 18,
     "years": [
       2019,
@@ -97,7 +97,7 @@
       2023,
       2024
     ],
-    "dataset_hash": "97ca911df1143a69"
+    "dataset_hash": "41c5062ac3dcaa3c"
   },
-  "generated_at": 1782273342.832736
+  "generated_at": 1782938930.945845
 }

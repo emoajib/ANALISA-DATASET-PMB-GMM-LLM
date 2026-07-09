@@ -5,7 +5,16 @@ from pathlib import Path
 from pmb_pipeline import PMBAnalysisPipeline, FASE
 from steps.utils import set_model
 from comparison import run_comparison, clear_comparison
-from providers import PROVIDER_NAMES as COMPARISON_PROVIDERS, OLLAMA_MODELS, DEFAULT_OLLAMA_MODEL
+from providers import (
+    PROVIDER_NAMES as COMPARISON_PROVIDERS,
+    OLLAMA_MODELS, DEFAULT_OLLAMA_MODEL,
+    OPENROUTER_FREE_MODELS, DEFAULT_OPENROUTER_MODEL,
+)
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
+except ImportError:
+    pass
 
 BASE_DIR = Path(__file__).parent.parent
 OUTPUTS_DIR = BASE_DIR / "outputs"
@@ -60,19 +69,105 @@ st.markdown("---")
 st.sidebar.header("Upload Dataset")
 uploaded_file = st.sidebar.file_uploader("Upload XLS file", type=["xls", "xlsx"])
 
-st.sidebar.header("LLM Provider")
-llm_provider = st.sidebar.radio("Pilih Provider LLM:", ("Ollama (local)", "Gemini CLI", "Kilo CLI", "OpenCode CLI"), index=0)
-llm_provider_map = {
-    "Ollama (local)": "Ollama",
-    "Gemini CLI": "Gemini",
-    "Kilo CLI": "Kilo",
-    "OpenCode CLI": "OpenCode",
-}
-llm_provider_key = llm_provider_map[llm_provider]
+# ══════════════════════════════════════════════════════════════
+# HYBRID COGNITIVE PIPELINE — Arsitektur Metodologi Tesis
+# Selaras dengan BAB III: Metode Penelitian (IndoBERT–GMM–LLM)
+# ══════════════════════════════════════════════════════════════
+st.sidebar.markdown("### 🧠 Hybrid Cognitive Pipeline")
 
-llm_model = DEFAULT_OLLAMA_MODEL
-if llm_provider_key == "Ollama":
-    llm_model = st.sidebar.selectbox("Pilih Model Ollama:", OLLAMA_MODELS, index=0)
+_openrouter_key = os.getenv("OPENROUTER_API_KEY", "")
+_openrouter_available = bool(_openrouter_key)
+
+# ── Status Badge ────────────────────────────────────────────────
+if _openrouter_available:
+    st.sidebar.success("🌐 Cloud Reasoning Engine: **Aktif**")
+    st.sidebar.caption("OpenRouter API terkoneksi · Free Tier")
+else:
+    st.sidebar.info("💻 Local-Only Mode · Llama 3.2 via Ollama")
+
+st.sidebar.markdown("---")
+
+# ── Pilihan Mode Pipeline (selaras terminologi BAB III) ─────────
+st.sidebar.markdown("**Pilih Mode Pipeline:**")
+
+PIPELINE_MODES = {
+    "🌐 Hybrid (Cloud + Lokal)": "OpenRouter",
+    "💻 Lokal Saja (Llama 3.2)": "Ollama",
+}
+
+# Default: Hybrid jika key tersedia
+_default_mode = "🌐 Hybrid (Cloud + Lokal)" if _openrouter_available else "💻 Lokal Saja (Llama 3.2)"
+
+selected_mode = st.sidebar.radio(
+    label="Mode Inferensi LLM:",
+    options=list(PIPELINE_MODES.keys()),
+    index=list(PIPELINE_MODES.keys()).index(_default_mode),
+    label_visibility="collapsed",
+)
+
+llm_provider_key = PIPELINE_MODES[selected_mode]
+llm_provider = selected_mode  # untuk kompatibilitas cek session state
+
+# ── Penjelasan Arsitektur (selaras BAB III) ─────────────────────
+if llm_provider_key == "OpenRouter":
+    st.sidebar.markdown("""
+<div style='background:#1a2332;border-radius:8px;padding:10px;font-size:0.78rem;color:#cdd9e5;border:1px solid #30475e'>
+<b>🔬 Hybrid Cognitive Pipeline (BAB III §3.4)</b><br><br>
+<b>🔒 Fase 1 — Lokal (Llama 3.2 via Ollama):</b><br>
+&nbsp;&nbsp;• Privacy Gateway & Sanitasi PII<br>
+&nbsp;&nbsp;• Persona Generation per Klaster<br>
+&nbsp;&nbsp;• Table Narratives (massal)<br><br>
+<b>🌐 Fase 2 — Cloud (OpenRouter Free):</b><br>
+&nbsp;&nbsp;• Causal Trend Analysis (ARI/Drift)<br>
+&nbsp;&nbsp;• Structural Break Detection<br>
+&nbsp;&nbsp;• Narrative Summary BAB IV
+</div>
+""", unsafe_allow_html=True)
+    st.sidebar.markdown("")
+
+    # Model selector untuk cloud
+    cloud_model_selected = st.sidebar.selectbox(
+        "🌐 Cloud Reasoning Model:",
+        OPENROUTER_FREE_MODELS,
+        index=0,
+        help=(
+            "Semua model GRATIS via OpenRouter. "
+            "Pipeline otomatis fallback ke model berikutnya jika rate-limited. "
+            "Rekomendasi: meta-llama/llama-3.3-70b (stabil) atau "
+            "nvidia/nemotron-3-ultra-550b (paling powerful)."
+        ),
+    )
+    llm_model = cloud_model_selected
+
+    # Privacy notice
+    st.sidebar.caption(
+        "🔐 **Data Privacy**: Nama & alamat mahasiswa "
+        "TIDAK dikirim ke cloud. Hanya statistik agregat "
+        "(ARI, Silhouette, n klaster) yang keluar ke API."
+    )
+
+else:  # Local only
+    st.sidebar.markdown("""
+<div style='background:#1a2e1a;border-radius:8px;padding:10px;font-size:0.78rem;color:#cdd9e5;border:1px solid #2d5a2d'>
+<b>💻 Local-Only Mode (BAB III §3.4 — Fallback)</b><br><br>
+<b>Model:</b> Llama 3.2 via Ollama<br>
+<b>Semua task:</b> Persona, Causal, Summary<br>
+<b>Privacy:</b> Data tidak keluar dari mesin lokal<br><br>
+<i>Catatan: Kedalaman reasoning lebih rendah<br>
+dibanding Hybrid Mode.</i>
+</div>
+""", unsafe_allow_html=True)
+    st.sidebar.markdown("")
+
+    cloud_model_selected = None
+    llm_model = st.sidebar.selectbox(
+        "💻 Model Lokal (Ollama):",
+        OLLAMA_MODELS,
+        index=0,
+        help="Model yang berjalan di mesin lokal via Ollama.",
+    )
+
+
 
 # Initialize session state
 if "pipeline" not in st.session_state:
@@ -172,7 +267,13 @@ if uploaded_file:
         st.session_state.current_llm_model = llm_model
         model, tokenizer = load_indobert_model()
         set_model(model, tokenizer)
-        st.session_state.pipeline = PMBAnalysisPipeline(file_name, llm_provider=llm_provider_key, llm_model=llm_model)
+        st.session_state.pipeline = PMBAnalysisPipeline(
+            file_name,
+            llm_provider=llm_provider_key,
+            llm_model=llm_model,
+            cloud_api_key=_openrouter_key if llm_provider_key == "OpenRouter" else None,
+            cloud_model=cloud_model_selected,
+        )
 
     st.sidebar.subheader("Run Steps")
     for i, step_label in enumerate(crisp_dm_steps):

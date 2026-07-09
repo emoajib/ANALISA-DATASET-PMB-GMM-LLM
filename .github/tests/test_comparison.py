@@ -1,6 +1,5 @@
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from comparison import (
     PROVIDERS, get_provider_dir, save_personas, load_personas,

@@ -9,7 +9,6 @@ import os
 import logging
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
 
 from pmb_pipeline import PMBAnalysisPipeline
 from comparison import run_comparison
@@ -34,7 +33,7 @@ def main():
     
     # Initialize pipeline (steps 1-8 only, we only need personas)
     logger.info("Initializing pipeline...")
-    pipeline = PMBAnalysisPipeline(str(DATA_FILE), llm_provider="Ollama", llm_model="llama3.2:latest")
+    pipeline = PMBAnalysisPipeline(str(DATA_FILE), llm_provider="Ollama", llm_model="llama3.2:3b")
     
     steps = [
         "business_understanding",

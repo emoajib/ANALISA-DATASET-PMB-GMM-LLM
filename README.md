@@ -76,7 +76,7 @@ Penelitian ini mengembangkan strategi segmentasi probabilistik calon mahasiswa m
 2. Install [Ollama](https://ollama.com)
 3. Pull model yang tersedia:
    ```bash
-   ollama pull llama3.2:latest
+   ollama pull llama3.2:3b
    ollama pull phi3:latest
    ollama pull deepseek-r1:1.5b
    ollama pull qwen2.5-coder:1.5b

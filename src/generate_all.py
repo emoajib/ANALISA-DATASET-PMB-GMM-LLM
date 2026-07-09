@@ -9,7 +9,6 @@ import os
 import logging
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
 
 from pmb_pipeline import PMBAnalysisPipeline, flush_embedding_cache
 from comparison import run_comparison

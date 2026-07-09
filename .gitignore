@@ -43,3 +43,8 @@ src/src/
 
 # Submodule internal state (ignored to avoid macOS clutter)
 data/geo/geo_data/
+
+# Caches
+*cache.json
+llm_cache.json
+embedding_cache.json

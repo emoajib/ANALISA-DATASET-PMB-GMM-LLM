@@ -10,3 +10,6 @@ openpyxl==3.1.2
 tqdm==4.66.1
 joblib==1.4.2
 ollama==0.1.9
+# Hybrid Pipeline — OpenRouter Cloud Integration
+requests>=2.31.0
+python-dotenv>=1.0.0
