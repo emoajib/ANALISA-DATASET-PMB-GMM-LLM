@@ -184,5 +184,40 @@ if bab1_idx is not None and dp_idx is not None:
         body_fixed += 1
     print(f"Fixed {body_fixed} body paragraphs to line=480, after=0, before=0")
 
+# ── 7. Abstrak Font Size and Spacing (12pt, 1 spasi) ──
+abstrak_start = None
+kp_idx = None
+for i, p in enumerate(paras):
+    txt = p.text.strip()
+    if txt == 'ABSTRAK':
+        abstrak_start = i
+    if txt == 'KATA PENGANTAR' or txt.startswith('DAFTAR ISI'):
+        kp_idx = i
+        if abstrak_start is not None: break
+
+if abstrak_start is not None and kp_idx is not None:
+    abs_fixed = 0
+    for i in range(abstrak_start + 1, kp_idx):
+        p = paras[i]
+        txt = p.text.strip()
+        if not txt: continue
+        if txt in ('ABSTRACT', 'ABSTRAK'): continue
+        
+        # Set 1 spasi
+        set_spacing_full(p._element, line_val=240, after_val=0)
+        
+        # Set 12pt font
+        for r in p.runs:
+            rPr = r._element.find(f'{{{NS_W}}}rPr')
+            if rPr is None:
+                rPr = etree.SubElement(r._element, f'{{{NS_W}}}rPr')
+                r._element.insert(0, rPr)
+            sz = rPr.find(f'{{{NS_W}}}sz')
+            if sz is None:
+                sz = etree.SubElement(rPr, f'{{{NS_W}}}sz')
+            sz.set(f'{{{NS_W}}}val', '24')
+        abs_fixed += 1
+    print(f"Fixed {abs_fixed} Abstrak body paragraphs to 12pt, 1 spasi")
+
 doc.save(DOC)
 print(f"\nSaved: {DOC}")

@@ -71,26 +71,10 @@ def set_bold(para, bold=True):
             if b is not None:
                 rPr.remove(b)
 
-def _get_h1_style_name(body):
-    """Detect the XML style name for Heading 1 from existing H1 paragraphs."""
-    NS_W = qn('w:pPr').replace('w:pPr', '').rstrip('}')
-    for c in body:
-        if c.tag != qn('w:p'): continue
-        pPr = c.find(qn('w:pPr'))
-        if pPr is None: continue
-        ps = pPr.find(qn('w:pStyle'))
-        if ps is None: continue
-        val = ps.get(qn('w:val'), '')
-        if val and ('Heading1' in val or 'heading1' in val or 'Judul1' in val):
-            return val
-        # Also check outline level
-        ol = pPr.find(qn('w:outlineLvl'))
-        if ol is not None and ol.get(qn('w:val')) == '1':
-            if val:
-                return val
-    return 'Heading 1'
-
-H1_STYLE = _get_h1_style_name(doc.element.body)
+try:
+    H1_STYLE = doc.styles['Heading 1'].style_id
+except:
+    H1_STYLE = 'Heading1'
 
 def set_heading1(para):
     """Set paragraph to Heading 1 style."""

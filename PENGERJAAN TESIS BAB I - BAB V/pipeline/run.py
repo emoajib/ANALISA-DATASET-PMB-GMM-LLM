@@ -181,7 +181,7 @@ def run_pipeline_thesis(doc_path):
     env['TESIS_DOC'] = str(doc_path)
 
     pipeline = [
-        ('A. Bibliografi (clean + sort + hanging indent)', 'fix_bibliography.py'),
+        # ('A. Bibliografi (clean + sort + hanging indent)', 'fix_bibliography.py'), # Disabled to preserve Mendeley fields
         ('B. Struktur (heading styles, outline, alignment)', 'fix_structure.py'),
         ('C. Tabel (borders, caption merge)', 'fix_tables.py'),
         ('D. Remaining (line spacing, italic, table font)', 'fix_remaining.py'),

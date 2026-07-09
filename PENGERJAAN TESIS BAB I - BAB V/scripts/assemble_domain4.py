@@ -43,14 +43,26 @@ def assemble():
     # Create temp_bib.docx
     doc_bib = docx.Document(base_path)
     delete_paragraphs_until(doc_bib, bib_idx)
-    # Also add a page break before DAFTAR PUSTAKA if needed (handled by pipeline)
+    # Delete all tables that were left behind in the document
+    for table in doc_bib.tables:
+        table._element.getparent().remove(table._element)
     doc_bib.save("temp_bib.docx")
     
     # Create temp_lampiran.docx
     print("Generating LAMPIRAN from Python source codes...")
     doc_lampiran = docx.Document()
-    doc_lampiran.add_heading("LAMPIRAN", level=1)
-    doc_lampiran.add_paragraph("Lampiran 1 – Kumpulan Kode Pemrograman Python", style="Heading 2")
+    
+    # 1. Separator Page "DAFTAR LAMPIRAN"
+    doc_lampiran.add_heading("DAFTAR LAMPIRAN", level=1)
+    doc_lampiran.add_paragraph("Lampiran 1 – Kode Python untuk olahdata")
+    doc_lampiran.add_paragraph("Lampiran 2 – Lembar Bimbingan Tesis")
+    doc_lampiran.add_paragraph("Lampiran 3 – Surat Keterangan Bebas Plagiarisme")
+    doc_lampiran.add_paragraph("Lampiran 4 – Hasil Cek Plagiarisme")
+    doc_lampiran.add_paragraph("Lampiran 5 – LOA Jurnal Penelitian")
+    doc_lampiran.add_page_break()
+    
+    # 2. Actual Appendices
+    doc_lampiran.add_paragraph("Lampiran 1 – Kode Python untuk olahdata", style="Heading 2")
     
     src_dir = "../../DATASET/OLAH DATA/src"
     for py_file in glob.glob(os.path.join(src_dir, "*.py")):
@@ -66,6 +78,22 @@ def assemble():
                 run.font.size = docx.shared.Pt(9)
         except Exception as e:
             print(f"Skipping {filename}: {e}")
+            
+    doc_lampiran.add_page_break()
+    doc_lampiran.add_paragraph("Lampiran 2 – Lembar Bimbingan Tesis", style="Heading 2")
+    doc_lampiran.add_paragraph("[Tempatkan scan Lembar Bimbingan Tesis di halaman ini]")
+    
+    doc_lampiran.add_page_break()
+    doc_lampiran.add_paragraph("Lampiran 3 – Surat Keterangan Bebas Plagiarisme", style="Heading 2")
+    doc_lampiran.add_paragraph("[Tempatkan scan Surat Keterangan Bebas Plagiarisme di halaman ini]")
+    
+    doc_lampiran.add_page_break()
+    doc_lampiran.add_paragraph("Lampiran 4 – Hasil Cek Plagiarisme", style="Heading 2")
+    doc_lampiran.add_paragraph("[Tempatkan lembar Hasil Cek Plagiarisme (Turnitin, dsb) di halaman ini]")
+    
+    doc_lampiran.add_page_break()
+    doc_lampiran.add_paragraph("Lampiran 5 – LOA Jurnal Penelitian", style="Heading 2")
+    doc_lampiran.add_paragraph("[Tempatkan LOA Jurnal RABIT di halaman ini]")
             
     doc_lampiran.save("temp_lampiran.docx")
     

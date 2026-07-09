@@ -20,3 +20,4 @@ venv/
 # Output caches
 data/processed/embeddings/*.json
 outputs/cache/*.json
+~.docx
