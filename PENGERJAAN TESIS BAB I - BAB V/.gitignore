@@ -1,0 +1,14 @@
+# Abaikan semua file berukuran besar dan dokumen
+*.docx
+*.pdf
+*.pptx
+*.xlsx
+*.xls
+*.png
+*.jpg
+*.csv
+*.txt
+*.rtf
+~$*.docx
+__pycache__/
+.DS_Store
