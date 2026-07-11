@@ -1,6 +1,0 @@
-trans,sim,kategori,interpretasi
-2019→2020,0.7901,Moderat,"Di atas threshold 0,70 — perubahan klaster mencerminkan data, bukan artefak"
-2020→2021,0.8024,Stabil,Konsistensi baik; fase COVID Crisis stabil secara semantik
-2021→2022,0.8128,Stabil,Nilai tertinggi; transisi Recovery paling konsisten secara semantik
-2022→2023,0.8009,Stabil,Konsistensi terjaga meski lonjakan volume 2023
-2023→2024,0.8095,Stabil,Konsistensi baik menuju stabilisasi 2024

@@ -1,6 +1,0 @@
-y1,y2,label,ari,jaccard,drift,isBreak,cat,interpretasi
-2019,2020,2019→2020,-0.0036,1.0,20.3555,True,⚡ Structural Break,"Lonjakan +87,7%; komposisi segmen berubah fundamental — H1 TERKONFIRMASI"
-2020,2021,2020→2021,0.016,1.0,17.2465,True,⚡ Structural Break,Adaptasi pandemi berlanjut; K tetap 6 tetapi posisi sentroid bergeser
-2021,2022,2021→2022,0.0055,0.8333,inf,True,⚡ Structural Break,Perubahan K (6→5); centroid drift ∞ = reorganisasi total klaster
-2022,2023,2022→2023,-0.0036,0.4,inf,True,⚡ Structural Break,"Konsolidasi K (5→2); lonjakan 2023 +48,5% dengan profil sangat homogen"
-2023,2024,2023→2024,0.0021,0.6667,inf,True,⚡ Structural Break,"Transisi K (2→3); penurunan 2024 −26,0% memunculkan segmen ketiga"
