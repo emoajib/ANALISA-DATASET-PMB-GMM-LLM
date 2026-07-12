@@ -1,0 +1,79 @@
+{
+  "version": "1.0",
+  "personas": {
+    "2019": [
+      {
+        "cluster": 2,
+        "persona": "Mahasiswa ITSNU Pekalongan dari kabupaten pekalongan, memilih prodi sarjana informatika melalui jalur beasiswa bidikmisi. Berasal dari keluarga menengah di wilayah pesisir Jawa Tengah, termotivasi oleh prospek karir teknologi informasi dan program beasiswa pemerintah. Aktif di kegiatan akademik dan berencana berkarir di sektor teknologi atau pemerintahan daerah."
+      },
+      {
+        "cluster": 1,
+        "persona": "Mahasiswa ITSNU Pekalongan dari kabupaten pekalongan, memilih prodi sarjana teknologi informasi melalui jalur pcnu. Berasal dari keluarga menengah di wilayah pesisir Jawa Tengah, termotivasi oleh prospek karir teknologi informasi dan program beasiswa pemerintah. Aktif di kegiatan akademik dan berencana berkarir di sektor teknologi atau pemerintahan daerah."
+      }
+    ],
+    "2020": [
+      {
+        "cluster": 2,
+        "persona": "Mahasiswa ITSNU Pekalongan dari kabupaten pekalongan, memilih prodi sarjana informatika melalui jalur beasiswa beasiswa kip kuliah kuliah. Berasal dari keluarga menengah di wilayah pesisir Jawa Tengah, termotivasi oleh prospek karir teknologi informasi dan program beasiswa pemerintah. Aktif di kegiatan akademik dan berencana berkarir di sektor teknologi atau pemerintahan daerah."
+      },
+      {
+        "cluster": 1,
+        "persona": "Mahasiswa ITSNU Pekalongan dari kabupaten pekalongan, memilih prodi sarjana informatika melalui jalur beasiswa beasiswa kip kuliah kuliah. Berasal dari keluarga menengah di wilayah pesisir Jawa Tengah, termotivasi oleh prospek karir teknologi informasi dan program beasiswa pemerintah. Aktif di kegiatan akademik dan berencana berkarir di sektor teknologi atau pemerintahan daerah."
+      }
+    ],
+    "2021": [
+      {
+        "cluster": 2,
+        "persona": "Mahasiswa ITSNU Pekalongan dari kabupaten pekalongan, memilih prodi sarjana informatika melalui jalur beasiswa beasiswa kip kuliah kuliah. Berasal dari keluarga menengah di wilayah pesisir Jawa Tengah, termotivasi oleh prospek karir teknologi informasi dan program beasiswa pemerintah. Aktif di kegiatan akademik dan berencana berkarir di sektor teknologi atau pemerintahan daerah."
+      },
+      {
+        "cluster": 1,
+        "persona": "Mahasiswa ITSNU Pekalongan dari kabupaten pekalongan, memilih prodi sarjana informatika melalui jalur beasiswa beasiswa kip kuliah kuliah. Berasal dari keluarga menengah di wilayah pesisir Jawa Tengah, termotivasi oleh prospek karir teknologi informasi dan program beasiswa pemerintah. Aktif di kegiatan akademik dan berencana berkarir di sektor teknologi atau pemerintahan daerah."
+      }
+    ],
+    "2022": [
+      {
+        "cluster": 1,
+        "persona": "Mahasiswa ITSNU Pekalongan dari kabupaten pekalongan, memilih prodi sarjana teknologi informasi melalui jalur beasiswa beasiswa pip. Berasal dari keluarga menengah di wilayah pesisir Jawa Tengah, termotivasi oleh prospek karir teknologi informasi dan program beasiswa pemerintah. Aktif di kegiatan akademik dan berencana berkarir di sektor teknologi atau pemerintahan daerah."
+      },
+      {
+        "cluster": 2,
+        "persona": "Mahasiswa ITSNU Pekalongan dari kabupaten pekalongan, memilih prodi diploma tiga akuntansi melalui jalur beasiswa beasiswa pip. Berasal dari keluarga menengah di wilayah pesisir Jawa Tengah, termotivasi oleh prospek karir teknologi informasi dan program beasiswa pemerintah. Aktif di kegiatan akademik dan berencana berkarir di sektor teknologi atau pemerintahan daerah."
+      }
+    ],
+    "2023": [
+      {
+        "cluster": 1,
+        "persona": "Mahasiswa ITSNU Pekalongan dari kabupaten pekalongan, memilih prodi sarjana informatika melalui jalur beasiswa beasiswa kip kuliah kuliah. Berasal dari keluarga menengah di wilayah pesisir Jawa Tengah, termotivasi oleh prospek karir teknologi informasi dan program beasiswa pemerintah. Aktif di kegiatan akademik dan berencana berkarir di sektor teknologi atau pemerintahan daerah."
+      },
+      {
+        "cluster": 2,
+        "persona": "Mahasiswa ITSNU Pekalongan dari kabupaten pekalongan, memilih prodi sarjana informatika melalui jalur beasiswa beasiswa kip kuliah kuliah. Berasal dari keluarga menengah di wilayah pesisir Jawa Tengah, termotivasi oleh prospek karir teknologi informasi dan program beasiswa pemerintah. Aktif di kegiatan akademik dan berencana berkarir di sektor teknologi atau pemerintahan daerah."
+      }
+    ],
+    "2024": [
+      {
+        "cluster": 2,
+        "persona": "Mahasiswa ITSNU Pekalongan dari kabupaten pekalongan, memilih prodi sarjana teknologi informasi melalui jalur beasiswa beasiswa kip kuliah kuliah. Berasal dari keluarga menengah di wilayah pesisir Jawa Tengah, termotivasi oleh prospek karir teknologi informasi dan program beasiswa pemerintah. Aktif di kegiatan akademik dan berencana berkarir di sektor teknologi atau pemerintahan daerah."
+      },
+      {
+        "cluster": 1,
+        "persona": "Mahasiswa ITSNU Pekalongan dari kabupaten pekalongan, memilih prodi sarjana teknik industri melalui jalur beasiswa beasiswa kip kuliah kuliah. Berasal dari keluarga menengah di wilayah pesisir Jawa Tengah, termotivasi oleh prospek karir teknologi informasi dan program beasiswa pemerintah. Aktif di kegiatan akademik dan berencana berkarir di sektor teknologi atau pemerintahan daerah."
+      }
+    ]
+  },
+  "metadata": {
+    "elapsed_seconds": 0.07,
+    "total_personas": 12,
+    "years": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "dataset_hash": "d1115bebc8b40d45"
+  },
+  "generated_at": 1783783270.819923
+}

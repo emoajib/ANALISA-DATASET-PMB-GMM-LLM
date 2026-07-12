@@ -1,0 +1,6 @@
+y1,y2,label,ari,isBreak,cat,method_x,jaccard,method_y,drift,method
+2019,2020,2019→2020,0.2784,True,⚡ Structural Break,cross_prediction,0.1263,hungarian_contingency,10.0659,hungarian_matched
+2020,2021,2020→2021,0.2088,True,⚡ Structural Break,cross_prediction,0.3629,hungarian_contingency,10.8587,hungarian_matched
+2021,2022,2021→2022,0.0733,True,⚡ Structural Break,cross_prediction,0.4616,hungarian_contingency,8.6281,hungarian_matched
+2022,2023,2022→2023,0.3581,False,⚠️ Drift Moderat,cross_prediction,0.3829,hungarian_contingency,3.7713,hungarian_matched
+2023,2024,2023→2024,0.0775,True,⚡ Structural Break,cross_prediction,0.2153,hungarian_contingency,14.8803,hungarian_matched

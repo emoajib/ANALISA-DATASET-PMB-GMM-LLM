@@ -83,7 +83,7 @@ def gen_4_1():
 
 
 def gen_4_2_scatter():
-    """Gambar 4.2a–f — Scatter plot PCA 2D klaster per tahun."""
+    """Gambar 4.5a–f — Scatter plot PCA 2D klaster per tahun."""
     profile_files = {
         2019: "tabel_4_9_profil_2019.csv",
         2020: "tabel_4_10_profil_2020.csv",
@@ -139,7 +139,7 @@ def gen_4_2_scatter():
             ax.scatter(cx, cy, c=CC[ci % len(CC)], marker='*', s=300,
                       edgecolors='black', linewidths=0.5, zorder=5)
 
-        ax.set_title(f"Gambar 4.{chr(97 + idx)} – PCA 2D Klaster Tahun {year}",
+        ax.set_title(f"Gambar 4.5{chr(97 + idx)} – PCA 2D Klaster GMM Tahun {year}",
                      fontsize=13, fontweight='bold', pad=10)
         ax.set_xlabel("PC1", fontsize=11)
         ax.set_ylabel("PC2", fontsize=11)
@@ -159,11 +159,11 @@ def gen_4_2_scatter():
 
         plt.tight_layout()
         letter = chr(97 + idx)
-        save_fig(f"gambar_4_2{letter}_scatter_{year}")
+        save_fig(f"gambar_4_5{letter}_scatter_{year}")
 
 
 def gen_4_3a():
-    """Gambar 4.3a — Line chart Silhouette Score per periode."""
+    """Gambar 4.2 — Line chart Silhouette Score per periode."""
     df = pd.read_csv(OUTPUTS / "tabel_4_5_kscan.csv")
     # Get optimal K per year (lowest BIC)
     optimal = df.loc[df.groupby('Tahun')['BIC_Optimal'].idxmin()]
@@ -191,7 +191,7 @@ def gen_4_3a():
         color = FC[FASE[years[i]]]
         ax.axvspan(years[i] - 0.3, years[i + 1] + 0.3, alpha=0.08, color=color)
 
-    ax.set_title("Gambar 4.3a – Silhouette Score per Periode (Optimal K)", fontsize=14, fontweight='bold', pad=15)
+    ax.set_title("Gambar 4.2 – Silhouette Score per Periode (Optimal K)", fontsize=14, fontweight='bold', pad=15)
     ax.set_xlabel("Tahun", fontsize=12)
     ax.set_ylabel("Silhouette Score", fontsize=12)
     ax.set_xticks(years)
@@ -201,11 +201,11 @@ def gen_4_3a():
     ax.grid(axis='y', alpha=0.3)
 
     plt.tight_layout()
-    save_fig("gambar_4_3a_silhouette")
+    save_fig("gambar_4_2_silhouette")
 
 
 def gen_4_3c():
-    """Gambar 4.3c — Bar chart ARI per transisi."""
+    """Gambar 4.3 — Bar chart ARI per transisi."""
     df = pd.read_csv(OUTPUTS / "tabel_4_6_ari.csv")
     labels = df["label"].tolist()
     ari_vals = df["ari"].tolist()
@@ -234,7 +234,7 @@ def gen_4_3c():
     ax.axhline(y=0, color='black', linewidth=0.8)
     ax.axhline(y=0.30, color='red', linewidth=1, linestyle='--', alpha=0.5, label='Threshold Break (<0.30)')
 
-    ax.set_title("Gambar 4.3c – Adjusted Rand Index (ARI) Stabilitas Klaster", fontsize=14, fontweight='bold', pad=15)
+    ax.set_title("Gambar 4.3 – Adjusted Rand Index (ARI) Stabilitas Klaster", fontsize=14, fontweight='bold', pad=15)
     ax.set_xlabel("Transisi", fontsize=12)
     ax.set_ylabel("ARI", fontsize=12)
     ax.set_ylim(min(ari_vals) - 0.01, max(max(ari_vals) + 0.01, 0.05))
@@ -244,11 +244,11 @@ def gen_4_3c():
     plt.xticks(rotation=15)
 
     plt.tight_layout()
-    save_fig("gambar_4_3c_ari")
+    save_fig("gambar_4_3_ari")
 
 
 def gen_4_5():
-    """Gambar 4.5 — Bar chart proyeksi 2025."""
+    """Gambar 4.4 — Bar chart proyeksi 2025."""
     df = pd.read_csv(OUTPUTS / "tabel_4_1_distribusi.csv")
     years = df["Tahun"].tolist()
     jumlah = df["Jumlah"].tolist()
@@ -284,7 +284,7 @@ def gen_4_5():
                 arrowprops=dict(arrowstyle='->', color='#8E44AD', lw=1.5),
                 ha='left')
 
-    ax.set_title("Gambar 4.5 – Proyeksi Pendaftar 2025", fontsize=14, fontweight='bold', pad=15)
+    ax.set_title("Gambar 4.4 – Proyeksi Pendaftar 2025", fontsize=14, fontweight='bold', pad=15)
     ax.set_xlabel("Tahun", fontsize=12)
     ax.set_ylabel("Jumlah Pendaftar", fontsize=12)
     ax.set_xticks(all_years)
@@ -303,7 +303,7 @@ def gen_4_5():
     ax.legend(handles=legend_elements, loc='upper left', fontsize=10)
 
     plt.tight_layout()
-    save_fig("gambar_4_5_proyeksi")
+    save_fig("gambar_4_4_proyeksi")
 
 
 def main():
@@ -338,19 +338,19 @@ def main():
     gen_4_1()
     print()
 
-    print("[2/5] Gambar 4.2a–f — Scatter PCA 2D Klaster")
+    print("[2/5] Gambar 4.5a–f — Scatter PCA 2D Klaster")
     gen_4_2_scatter()
     print()
 
-    print("[3/5] Gambar 4.3a — Silhouette Score")
+    print("[3/5] Gambar 4.2 — Silhouette Score")
     gen_4_3a()
     print()
 
-    print("[4/5] Gambar 4.3c — ARI Stabilitas")
+    print("[4/5] Gambar 4.3 — ARI Stabilitas")
     gen_4_3c()
     print()
 
-    print("[5/5] Gambar 4.5 — Proyeksi 2025")
+    print("[5/5] Gambar 4.4 — Proyeksi 2025")
     gen_4_5()
     print()
 

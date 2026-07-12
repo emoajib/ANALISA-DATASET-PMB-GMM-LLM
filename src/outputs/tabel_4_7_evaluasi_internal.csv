@@ -1,0 +1,7 @@
+Tahun,Fase,K,Silhouette,Calinski-Harabasz,Davies-Bouldin,Log-Likelihood
+2019,Pre-COVID,2,0.0522,4.14,5.6718,-23362.01
+2020,COVID Crisis,3,0.0798,19.4,3.1099,-43178.07
+2021,COVID Crisis,2,0.0748,27.3,3.191,-45504.4
+2022,Recovery,2,0.0663,27.51,3.7674,-70883.68
+2023,Recovery,5,0.0691,36.08,3.0046,-105094.15
+2024,Recovery,4,0.0585,27.19,3.1211,-75081.63

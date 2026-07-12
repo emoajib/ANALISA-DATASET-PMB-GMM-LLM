@@ -9,6 +9,8 @@ from providers import (
     PROVIDER_NAMES as COMPARISON_PROVIDERS,
     OLLAMA_MODELS, DEFAULT_OLLAMA_MODEL,
     OPENROUTER_FREE_MODELS, DEFAULT_OPENROUTER_MODEL,
+    NINEROUTER_MODELS, DEFAULT_NINEROUTER_MODEL,
+    fetch_ninerouter_models,
 )
 try:
     from dotenv import load_dotenv
@@ -45,8 +47,21 @@ def load_image_bytes(path):
         return None
 
 # Thesis Alignment Badge
-st.title("PMB ITSNU Analysis Dashboard")
-st.markdown("![98% Aligned with BAB IV](https://img.shields.io/badge/98%25-Aligned%20with%20BAB%20IV-brightgreen)")
+st.set_page_config(page_title="PMB ITSNU Dashboard", page_icon="🎓", layout="wide")
+
+st.markdown("""
+<style>
+    .main > div { padding-top: 1rem; }
+    .stTabs [data-baseweb="tab-list"] { gap: 2px; }
+    .stTabs [data-baseweb="tab"] { padding: 8px 16px; font-size: 0.85rem; }
+    div[data-testid="stMetric"] { background: #f0f2f6; border-radius: 8px; padding: 12px; }
+    div[data-testid="stExpander"] { border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 8px; }
+    .badge-container { display: flex; align-items: center; gap: 12px; margin-bottom: 0.5rem; }
+    .badge-container h1 { margin: 0; font-size: 1.6rem; }
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown('<div class="badge-container"><h1>🎓 PMB ITSNU Analysis Dashboard</h1></div>', unsafe_allow_html=True)
 
 # Detect demo mode (Ollama server must be actually reachable)
 _ollama_available = False
@@ -78,11 +93,19 @@ st.sidebar.markdown("### 🧠 Hybrid Cognitive Pipeline")
 _openrouter_key = os.getenv("OPENROUTER_API_KEY", "")
 _openrouter_available = bool(_openrouter_key)
 
+_ninerouter_key = os.getenv("NINEROUTER_API_KEY", "sk-dde8c533e27371c9-g79ucv-95effe97")
+_ninerouter_available = True  # 9Router runs locally, always available
+
 # ── Status Badge ────────────────────────────────────────────────
+# 9Router lokal selalu aktif (proxy lokal, tanpa rate limit) — tampilkan dulu
+if _ninerouter_available:
+    st.sidebar.success("🚀 9Router Local Proxy: **Aktif**")
+    st.sidebar.caption("60+ providers via 9Router · No rate limit")
+# OpenRouter cloud hanya sebagai info tambahan bila API key tersedia
 if _openrouter_available:
-    st.sidebar.success("🌐 Cloud Reasoning Engine: **Aktif**")
+    st.sidebar.success("🌐 OpenRouter Cloud: **Aktif**")
     st.sidebar.caption("OpenRouter API terkoneksi · Free Tier")
-else:
+if not (_ninerouter_available or _openrouter_available):
     st.sidebar.info("💻 Local-Only Mode · Llama 3.2 via Ollama")
 
 st.sidebar.markdown("---")
@@ -92,11 +115,17 @@ st.sidebar.markdown("**Pilih Mode Pipeline:**")
 
 PIPELINE_MODES = {
     "🌐 Hybrid (Cloud + Lokal)": "OpenRouter",
+    "🚀 9Router (Local Proxy)": "9Router",
     "💻 Lokal Saja (Llama 3.2)": "Ollama",
 }
 
-# Default: Hybrid jika key tersedia
-_default_mode = "🌐 Hybrid (Cloud + Lokal)" if _openrouter_available else "💻 Lokal Saja (Llama 3.2)"
+# Default: 9Router > Hybrid > Lokal
+if _ninerouter_available:
+    _default_mode = "🚀 9Router (Local Proxy)"
+elif _openrouter_available:
+    _default_mode = "🌐 Hybrid (Cloud + Lokal)"
+else:
+    _default_mode = "💻 Lokal Saja (Llama 3.2)"
 
 selected_mode = st.sidebar.radio(
     label="Mode Inferensi LLM:",
@@ -146,6 +175,34 @@ if llm_provider_key == "OpenRouter":
         "(ARI, Silhouette, n klaster) yang keluar ke API."
     )
 
+elif llm_provider_key == "9Router":
+    st.sidebar.markdown("""
+<div style='background:#1a2e1a;border-radius:8px;padding:10px;font-size:0.78rem;color:#cdd9e5;border:1px solid #2d5a2d'>
+<b>🚀 9Router Local Proxy (60+ Providers)</b><br><br>
+<b>Model:</b> COMBO (auto-routing) atau pilih manual<br>
+<b>Semua task:</b> Persona, Causal, Summary<br>
+<b>Privacy:</b> Data tidak keluar dari mesin lokal<br>
+<b>Rate Limit:</b> Tidak ada (proxy lokal)<br>
+</div>
+""", unsafe_allow_html=True)
+    st.sidebar.markdown("")
+
+    # Ambil daftar model LIVE dari endpoint 9Router (/v1/models) agar pilihan
+    # sesuai config proxy. COMBO (smart auto-router) jadi default.
+    _9r_models = fetch_ninerouter_models()
+    try:
+        _9r_default_idx = _9r_models.index("COMBO")
+    except ValueError:
+        _9r_default_idx = 0
+    cloud_model_selected = st.sidebar.selectbox(
+        "🚀 Model 9Router (live dari endpoint):",
+        _9r_models,
+        index=_9r_default_idx,
+        help="Diambil dari http://localhost:20128/v1/models. COMBO = auto-routing ke model terbaik; pilihan lain dari proxy.",
+    )
+    llm_model = cloud_model_selected
+    _ninerouter_key = os.getenv("NINEROUTER_API_KEY", "sk-dde8c533e27371c9-g79ucv-95effe97")
+
 else:  # Local only
     st.sidebar.markdown("""
 <div style='background:#1a2e1a;border-radius:8px;padding:10px;font-size:0.78rem;color:#cdd9e5;border:1px solid #2d5a2d'>
@@ -194,8 +251,6 @@ for step in step_names:
         st.session_state[step] = False
 if "errors" not in st.session_state:
     st.session_state.errors = {}
-if "active_tab" not in st.session_state:
-    st.session_state.active_tab = 0
 if "comparison_results" not in st.session_state:
     st.session_state.comparison_results = {}
 if "comparison_running" not in st.session_state:
@@ -271,8 +326,13 @@ if uploaded_file:
             file_name,
             llm_provider=llm_provider_key,
             llm_model=llm_model,
-            cloud_api_key=_openrouter_key if llm_provider_key == "OpenRouter" else None,
+            cloud_api_key=_openrouter_key if llm_provider_key == "OpenRouter"
+                          else _ninerouter_key if llm_provider_key == "9Router"
+                          else None,
             cloud_model=cloud_model_selected,
+            # Jangan kirim model cloud ("COMBO"/OpenRouter) ke Ollama.
+            # Ollama lokal pakai model nyata; mode cloud/9Router → default llama3.2:3b.
+            ollama_model=llm_model if llm_provider_key == "Ollama" else DEFAULT_OLLAMA_MODEL,
         )
 
     st.sidebar.subheader("Run Steps")
@@ -346,42 +406,14 @@ if uploaded_file:
             col4.metric("Avg Similarity", f"{avg_sim:.4f}", help="Rata-rata cosine similarity embedding IndoBERT")
             st.markdown("---")
 
-            # Lazy Loading Tab Navigation with Prev/Next buttons
-            tab_options = [
-                "📊 T4.1–4.2 & G4.1 (2 tables)",
-                "🔬 T4.3–4.4 (2 tables)",
-                "🧮 T4.5 & G4.3a (1 table)",
-                "📈 T4.6 & G4.3c (1 table)",
-                "🎯 T4.9–4.14 & G4.2 (6 tables)",
-                "🔄 T4.15 (1 table)",
-                "🚀 T4.16–4.18 & G4.5 (2 tables)",
-                "🔍 Tren Kausal & Naratif",
-                "📋 Ringkasan & Persona",
-                "⚖️ Model Comparison",
-            ]
+            tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10 = st.tabs([
+                "📊 Distribusi", "🔬 Preproses", "🧮 K-Scan", 
+                "📈 ARI", "🎯 Profil", "🔄 Lifecycle", 
+                "🚀 Proyeksi", "🔍 Kausal", "📋 Ringkasan", "⚖️ Comparison"
+            ])
 
-            # Previous and Next buttons with validation
-            col_prev, col_radio, col_next = st.columns([1, 4, 1])
-            with col_prev:
-                if st.button("⬅ Previous", disabled=st.session_state.active_tab == 0, key="prev_btn"):
-                    st.session_state.active_tab = max(0, st.session_state.active_tab - 1)
-            with col_next:
-                if st.button("Next ➡", disabled=st.session_state.active_tab == len(tab_options) - 1, key="next_btn"):
-                    st.session_state.active_tab = min(len(tab_options) - 1, st.session_state.active_tab + 1)
-
-            active_tab = st.radio(
-                "Select Result Section:",
-                tab_options,
-                index=st.session_state.active_tab,
-                horizontal=True,
-                key="tab_nav"
-            )
-            st.session_state.active_tab = tab_options.index(active_tab)
-            st.markdown("---")
-
-            # Tab 1: T4.1–4.2 & G4.1
-            if active_tab == tab_options[0]:
-                st.subheader("📊 Tabel 4.1–4.2 & Gambar 4.1")
+            with tab1:
+                st.subheader("📊 Distribusi Pendaftar — Tabel 4.1–4.2 & Gambar 4.1")
                 col1, col2 = st.columns([1, 1])
                 with col1:
                     with st.expander("📊 Tabel 4.1: Distribusi Pendaftar", expanded=True):
@@ -420,9 +452,8 @@ if uploaded_file:
                         else:
                             st.warning(f"Gambar 4.1 {img_fmt} tidak ditemukan.")
 
-            # Tab 2: T4.3–4.4
-            elif active_tab == tab_options[1]:
-                st.subheader("🔬 Tabel 4.3–4.4")
+            with tab2:
+                st.subheader("🔬 Preprocessing & Cosine Similarity — Tabel 4.3–4.4")
                 col1, col2 = st.columns([1, 1])
                 with col1:
                     with st.expander("📊 Tabel 4.3: Preprocessing", expanded=True):
@@ -446,9 +477,8 @@ if uploaded_file:
                         else:
                             st.warning("Tabel 4.4 tidak ditemukan.")
 
-            # Tab 3: T4.5 & G4.3a
-            elif active_tab == tab_options[2]:
-                st.subheader("🧮 Tabel 4.5 & Gambar 4.3a")
+            with tab3:
+                st.subheader("🧮 K-Scan & Silhouette — Tabel 4.5 & Gambar 4.2")
                 col1, col2 = st.columns([1, 1])
                 with col1:
                     with st.expander("📊 Tabel 4.5: K-Scan", expanded=True):
@@ -462,22 +492,21 @@ if uploaded_file:
                             st.warning("Tabel 4.5 tidak ditemukan.")
                 
                 with col2:
-                    with st.expander("🖼️ Gambar 4.3a: Silhouette", expanded=True):
-                        img_fmt = st.radio("Format Gambar", ["PNG", "SVG"], key="fmt_g43a", horizontal=True)
-                        img_path = str(OUTPUTS_DIR / f"gambar_4_3a_silhouette.{'png' if img_fmt == 'PNG' else 'svg'}")
+                    with st.expander("🖼️ Gambar 4.2: Silhouette", expanded=True):
+                        img_fmt = st.radio("Format Gambar", ["PNG", "SVG"], key="fmt_g42", horizontal=True)
+                        img_path = str(OUTPUTS_DIR / f"gambar_4_2_silhouette.{'png' if img_fmt == 'PNG' else 'svg'}")
                         img_bytes = load_image_bytes(img_path)
                         if img_bytes is not None:
                             st.image(img_bytes, use_column_width=True)
-                            if hasattr(pipeline, "image_narratives") and "gambar_4_3a" in pipeline.image_narratives:
-                                st.markdown(f"**📖 Analisis Akademik Gambar 4.3a**\n\n{pipeline.image_narratives['gambar_4_3a']}")
+                            if hasattr(pipeline, "image_narratives") and "gambar_4_2" in pipeline.image_narratives:
+                                st.markdown(f"**📖 Analisis Akademik Gambar 4.2**\n\n{pipeline.image_narratives['gambar_4_2']}")
                             with open(img_path, "rb") as f:
-                                st.download_button(f"⬇ Download Gambar 4.3a {img_fmt}", f, img_path.split("/")[-1], key="dl_g43a")
+                                st.download_button(f"⬇ Download Gambar 4.2 {img_fmt}", f, img_path.split("/")[-1], key="dl_g42")
                         else:
-                            st.warning(f"Gambar 4.3a {img_fmt} tidak ditemukan.")
+                            st.warning(f"Gambar 4.2 {img_fmt} tidak ditemukan.")
 
-            # Tab 4: T4.6 & G4.3c
-            elif active_tab == tab_options[3]:
-                st.subheader("📈 Tabel 4.6 & Gambar 4.3c")
+            with tab4:
+                st.subheader("📈 Adjusted Rand Index — Tabel 4.6 & Gambar 4.3")
                 col1, col2 = st.columns([1, 1])
                 with col1:
                     with st.expander("📊 Tabel 4.6: ARI", expanded=True):
@@ -491,27 +520,26 @@ if uploaded_file:
                             st.warning("Tabel 4.6 tidak ditemukan.")
                 
                 with col2:
-                    with st.expander("🖼️ Gambar 4.3c: ARI Trend", expanded=True):
-                        img_fmt = st.radio("Format Gambar", ["PNG", "SVG"], key="fmt_g43c", horizontal=True)
-                        img_path = str(OUTPUTS_DIR / f"gambar_4_3c_ari.{'png' if img_fmt == 'PNG' else 'svg'}")
+                    with st.expander("🖼️ Gambar 4.3: ARI Trend", expanded=True):
+                        img_fmt = st.radio("Format Gambar", ["PNG", "SVG"], key="fmt_g43", horizontal=True)
+                        img_path = str(OUTPUTS_DIR / f"gambar_4_3_ari.{'png' if img_fmt == 'PNG' else 'svg'}")
                         img_bytes = load_image_bytes(img_path)
                         if img_bytes is not None:
                             st.image(img_bytes, use_column_width=True)
-                            if hasattr(pipeline, "image_narratives") and "gambar_4_3c" in pipeline.image_narratives:
-                                st.markdown(f"**📖 Analisis Akademik Gambar 4.3c**\n\n{pipeline.image_narratives['gambar_4_3c']}")
+                            if hasattr(pipeline, "image_narratives") and "gambar_4_3" in pipeline.image_narratives:
+                                st.markdown(f"**📖 Analisis Akademik Gambar 4.3**\n\n{pipeline.image_narratives['gambar_4_3']}")
                             with open(img_path, "rb") as f:
-                                st.download_button(f"⬇ Download Gambar 4.3c {img_fmt}", f, img_path.split("/")[-1], key="dl_g43c")
+                                st.download_button(f"⬇ Download Gambar 4.3 {img_fmt}", f, img_path.split("/")[-1], key="dl_g43")
                         else:
-                            st.warning(f"Gambar 4.3c {img_fmt} tidak ditemukan.")
+                            st.warning(f"Gambar 4.3 {img_fmt} tidak ditemukan.")
 
-            # Tab 5: T4.9–4.14 & G4.2
-            elif active_tab == tab_options[4]:
-                st.subheader("🎯 Profil per Tahun & Scatter PCA")
+            with tab5:
+                st.subheader("🎯 Profil Klaster per Tahun & Scatter PCA — Tabel 4.9–4.14 & Gambar 4.5a–f")
                 for y in years:
                     st.subheader(f"Tahun {y}")
                     csv_file = str(OUTPUTS_DIR / f"tabel_4_{9 + years.index(y)}_profil_{y}.csv")
-                    png_file = str(OUTPUTS_DIR / f"gambar_4_2{chr(97 + years.index(y))}_scatter_{y}.png")
-                    svg_file = str(OUTPUTS_DIR / f"gambar_4_2{chr(97 + years.index(y))}_scatter_{y}.svg")
+                    png_file = str(OUTPUTS_DIR / f"gambar_4_5{chr(97 + years.index(y))}_scatter_{y}.png")
+                    svg_file = str(OUTPUTS_DIR / f"gambar_4_5{chr(97 + years.index(y))}_scatter_{y}.svg")
                     col1, col2 = st.columns([1, 1])
                     with col1:
                         with st.expander(f"📊 Profil {y}", expanded=True):
@@ -531,7 +559,7 @@ if uploaded_file:
                             img_bytes = load_image_bytes(img_path)
                             if img_bytes is not None:
                                 st.image(img_bytes, use_column_width=True)
-                                image_key = f"gambar_4_2{chr(97 + years.index(y))}"
+                                image_key = f"gambar_4_5{chr(97 + years.index(y))}"
                                 if hasattr(pipeline, "image_narratives") and image_key in pipeline.image_narratives:
                                     st.markdown(f"**📖 Analisis Akademik Scatter {y}**\n\n{pipeline.image_narratives[image_key]}")
                                 with open(img_path, "rb") as f:
@@ -539,9 +567,8 @@ if uploaded_file:
                             else:
                                 st.warning(f"Scatter {y} {img_fmt} tidak ditemukan.")
 
-            # Tab 6: T4.15
-            elif active_tab == tab_options[5]:
-                st.subheader("🔄 Tabel 4.15: Lifecycle")
+            with tab6:
+                st.subheader("🔄 Lifecycle Cluster — Tabel 4.15")
                 with st.expander("📊 Tabel 4.15: Lifecycle Pendaftar", expanded=True):
                     df415 = load_csv_safe(OUTPUTS_DIR / "tabel_4_15_lifecycle.csv")
                     if df415 is not None:
@@ -552,9 +579,8 @@ if uploaded_file:
                     else:
                         st.warning("Tabel 4.15 tidak ditemukan.")
 
-            # Tab 7: T4.16–4.18 & G4.5
-            elif active_tab == tab_options[6]:
-                st.subheader("🚀 Tabel 4.16–4.18 & Gambar 4.5")
+            with tab7:
+                st.subheader("🚀 Prioritas 2025 & Proyeksi — Tabel 4.16–4.18 & Gambar 4.4")
                 col1, col2 = st.columns([1, 1])
                 with col1:
                     with st.expander("📊 Tabel 4.16: Prioritas 2025", expanded=True):
@@ -578,21 +604,20 @@ if uploaded_file:
                             st.warning("Tabel 4.18 tidak ditemukan.")
                 
                 with col2:
-                    with st.expander("🖼️ Gambar 4.5: Proyeksi 2025", expanded=True):
-                        img_fmt = st.radio("Format Gambar", ["PNG", "SVG"], key="fmt_g45", horizontal=True)
-                        img_path = str(OUTPUTS_DIR / f"gambar_4_5_proyeksi.{'png' if img_fmt == 'PNG' else 'svg'}")
+                    with st.expander("🖼️ Gambar 4.4: Proyeksi 2025", expanded=True):
+                        img_fmt = st.radio("Format Gambar", ["PNG", "SVG"], key="fmt_g44", horizontal=True)
+                        img_path = str(OUTPUTS_DIR / f"gambar_4_4_proyeksi.{'png' if img_fmt == 'PNG' else 'svg'}")
                         img_bytes = load_image_bytes(img_path)
                         if img_bytes is not None:
                             st.image(img_bytes, use_column_width=True)
-                            if hasattr(pipeline, "image_narratives") and "gambar_4_5" in pipeline.image_narratives:
-                                st.markdown(f"**📖 Analisis Akademik Gambar 4.5**\n\n{pipeline.image_narratives['gambar_4_5']}")
+                            if hasattr(pipeline, "image_narratives") and "gambar_4_4" in pipeline.image_narratives:
+                                st.markdown(f"**📖 Analisis Akademik Gambar 4.4**\n\n{pipeline.image_narratives['gambar_4_4']}")
                             with open(img_path, "rb") as f:
-                                st.download_button(f"⬇ Download Gambar 4.5 {img_fmt}", f, img_path.split("/")[-1], key="dl_g45")
+                                st.download_button(f"⬇ Download Gambar 4.4 {img_fmt}", f, img_path.split("/")[-1], key="dl_g44")
                         else:
-                            st.warning(f"Gambar 4.5 {img_fmt} tidak ditemukan.")
+                            st.warning(f"Gambar 4.4 {img_fmt} tidak ditemukan.")
 
-            # Tab 8: Tren Kausal & Naratif
-            elif active_tab == tab_options[7]:
+            with tab8:
                 st.subheader("🔍 Analisis Tren Kausal & Ringkasan Naratif")
                 if hasattr(pipeline, "ari_pairs") and pipeline.ari_pairs:
                     with st.expander("📊 Tabel Adjusted Rand Index (ARI) Antar Tahun", expanded=True):
@@ -612,9 +637,8 @@ Adjusted Rand Index (ARI) mengukur stabilitas cluster antara dua tahun berurutan
                     with st.expander("📖 Ringkasan Naratif Komprehensif", expanded=True):
                         st.markdown(pipeline.narrative)
 
-            # Tab 9: Ringkasan & Persona
-            elif active_tab == tab_options[8]:
-                st.subheader("📋 Ringkasan Metrik Utama & Validasi Data")
+            with tab9:
+                st.subheader("📋 Ringkasan Metrik Utama & Persona")
                 # Preserved original metrics display
                 total_n = len(pipeline.raw) if hasattr(pipeline, 'raw') else 0
                 avg_rec = 0
@@ -675,8 +699,7 @@ Berdasarkan analisis persona mahasiswa yang dihasilkan melalui clustering GMM da
 - **Sosial**: Aktif dalam kegiatan kampus, dengan motivasi untuk berkontribusi pada masyarakat lokal.
                     """)
 
-            # Tab 10: Model Comparison
-            elif active_tab == tab_options[9]:
+            with tab10:
                 st.subheader("⚖️ Model Comparison — Persona Generation")
                 st.markdown("Bandingkan kualitas persona generation antar 4 LLM providers.")
                 
@@ -739,7 +762,8 @@ Berdasarkan analisis persona mahasiswa yang dihasilkan melalui clustering GMM da
                     
                     available_providers = [p for p in compare_providers if p in results and results[p].get("personas")]
                     if len(available_providers) >= 2:
-                        for y in sorted(set().union(*[results[p].get("personas", {}).keys() for p in available_providers])):
+                        _years = set().union(*[results[p].get("personas", {}).keys() for p in available_providers])
+                        for y in sorted(_years, key=lambda k: str(k)):
                             st.markdown(f"### Tahun {y}")
                             cols = st.columns(len(available_providers))
                             for idx, provider in enumerate(available_providers):
@@ -753,7 +777,7 @@ Berdasarkan analisis persona mahasiswa yang dihasilkan melalui clustering GMM da
                         provider = available_providers[0]
                         st.markdown(f"### {provider}")
                         personas = results[provider].get("personas", {})
-                        for y in sorted(personas.keys()):
+                        for y in sorted(personas.keys(), key=lambda k: str(k)):
                             st.markdown(f"#### Tahun {y}")
                             for p in personas[y]:
                                 with st.expander(f"Klaster {p['cluster']}", expanded=True):

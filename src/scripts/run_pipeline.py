@@ -19,8 +19,9 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)s:%(name)s:%(message
 logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).parent.parent
+PROJECT_ROOT = BASE_DIR.parent
 OUTPUTS_DIR = BASE_DIR / "outputs"
-DATA_FILE = BASE_DIR / "data" / "DATASET PMB ITSNUPKL2019-2024_FIX.xlsx"
+DATA_FILE = PROJECT_ROOT / "DATASET" / "DATASET PMB ITSNUPKL2019-2024_FIX.xls"
 
 def main():
     os.makedirs(OUTPUTS_DIR, exist_ok=True)
@@ -110,15 +111,15 @@ def main():
         "tabel_4_17_rekomendasi_channel.csv",
         "tabel_4_18_perbandingan.csv",
         "gambar_4_1_distribusi.png",
-        "gambar_4_2a_scatter_2019.png",
-        "gambar_4_2b_scatter_2020.png",
-        "gambar_4_2c_scatter_2021.png",
-        "gambar_4_2d_scatter_2022.png",
-        "gambar_4_2e_scatter_2023.png",
-        "gambar_4_2f_scatter_2024.png",
-        "gambar_4_3a_silhouette.png",
-        "gambar_4_3c_ari.png",
-        "gambar_4_5_proyeksi.png",
+        "gambar_4_5a_scatter_2019.png",
+        "gambar_4_5b_scatter_2020.png",
+        "gambar_4_5c_scatter_2021.png",
+        "gambar_4_5d_scatter_2022.png",
+        "gambar_4_5e_scatter_2023.png",
+        "gambar_4_5f_scatter_2024.png",
+        "gambar_4_2_silhouette.png",
+        "gambar_4_3_ari.png",
+        "gambar_4_4_proyeksi.png",
     ]
 
     missing = []

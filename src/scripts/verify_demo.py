@@ -29,10 +29,10 @@ def check_outputs():
         "tabel_4_17_rekomendasi_channel.csv",
         "tabel_4_18_perbandingan.csv",
         "gambar_4_1_distribusi.png",
-        "gambar_4_2a_scatter_2019.png",
-        "gambar_4_3a_silhouette.png",
-        "gambar_4_3c_ari.png",
-        "gambar_4_5_proyeksi.png",
+        "gambar_4_5a_scatter_2019.png",
+        "gambar_4_2_silhouette.png",
+        "gambar_4_3_ari.png",
+        "gambar_4_4_proyeksi.png",
     ]
     
     missing = []

@@ -54,6 +54,8 @@ class PMBAnalysisPipeline(
         self.emb_dim = 768
         self.n_comp = None
         self.gmm_res = {}
+        self.gmm_models = {}
+        self.pca_pts_cache = {}
         self.k_scan = {}
         self.ari_pairs = []
         self.jaccard_pairs = []
@@ -131,20 +133,42 @@ class PMBAnalysisPipeline(
         self._report_progress("Generating embeddings (batch)", 40)
         self.cos_sim = []
         years = sorted(self.by_year.keys())
-        sample_size = 100
+
+        # A3: Cosine ENTITAS IDENTIK — per sekolah yang muncul di kedua tahun.
+        school_emb = {}
+        for y in years:
+            school_emb[y] = {}
+            for r in self.by_year[y]:
+                sch = str(r.get(self.cols["sekolah"], "")).strip().lower()
+                if not sch:
+                    continue
+                text = " ".join([
+                    str(r.get(self.cols["nama"], "")),
+                    str(r.get(self.cols["sekolah"], "")),
+                    str(r.get(self.cols["kab"], "")),
+                    str(r.get(self.cols["kec"], "")),
+                    str(r.get(self.cols["alamat"], "")),
+                ])
+                emb = get_embedding(text, dim=self.emb_dim)
+                school_emb[y].setdefault(sch, []).append(np.array(emb))
+
         total_pairs = len(years) - 1
         for i in range(total_pairs):
             y1, y2 = years[i], years[i + 1]
             pair_pct = 40 + (i + 1) / total_pairs * 20
-            self._report_progress(f"Embedding {y1}→{y2}", int(pair_pct))
-            sample1 = self.by_year[y1] if len(self.by_year[y1]) <= sample_size else random.sample(self.by_year[y1], sample_size)
-            sample2 = self.by_year[y2] if len(self.by_year[y2]) <= sample_size else random.sample(self.by_year[y2], sample_size)
-            texts1 = [" ".join([r.get(self.cols["nama"], ""), r.get(self.cols["sekolah"], ""), r.get(self.cols["kab"], ""), r.get(self.cols["kec"], ""), r.get(self.cols["alamat"], "")]) for r in sample1]
-            texts2 = [" ".join([r.get(self.cols["nama"], ""), r.get(self.cols["sekolah"], ""), r.get(self.cols["kab"], ""), r.get(self.cols["kec"], ""), r.get(self.cols["alamat"], "")]) for r in sample2]
-            emb1 = get_embeddings_batch(texts1, dim=self.emb_dim, batch_size=32)
-            emb2 = get_embeddings_batch(texts2, dim=self.emb_dim, batch_size=32)
-            sim = avg([cosine_similarity([e1], [e2])[0][0] for e1 in emb1 for e2 in emb2])
-            self.cos_sim.append({"trans": f"{y1}→{y2}", "sim": rnd(sim, 4)})
+            self._report_progress(f"Cosine entitas {y1}↔{y2}", int(pair_pct))
+            common = set(school_emb[y1]) & set(school_emb[y2])
+            sims = []
+            for s in common:
+                v1 = np.mean(school_emb[y1][s], axis=0)
+                v2 = np.mean(school_emb[y2][s], axis=0)
+                sims.append(cosine_similarity([v1], [v2])[0][0])
+            sim = avg(sims) if sims else 0.0
+            self.cos_sim.append({
+                "trans": f"{y1}→{y2}",
+                "sim": rnd(sim, 4),
+                "n_entitas": len(common),
+            })
         self.avg_sim = rnd(avg([c["sim"] for c in self.cos_sim]), 4)
 
         self._report_progress("Geocoding coordinates", 60)
@@ -224,7 +248,9 @@ class PMBAnalysisPipeline(
 if __name__ == "__main__":
     _script_dir = Path(__file__).parent
     _data_path = (
-        _script_dir.parent.parent / "data" / "raw" / "PMB_2019_2024.xlsx"
+        _script_dir.parent.parent.parent
+        / "DATASET"
+        / "DATASET PMB ITSNUPKL2019-2024_FIX.xls"
     )
     if not _data_path.exists():
         logger.error(f"Data file not found: {_data_path}")

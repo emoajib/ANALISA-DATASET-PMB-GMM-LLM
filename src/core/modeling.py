@@ -2,6 +2,8 @@ import logging
 from collections import Counter
 
 import numpy as np
+from scipy.optimize import linear_sum_assignment
+from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
@@ -14,7 +16,7 @@ from sklearn.metrics import (
 from sklearn.mixture import GaussianMixture
 
 from src.config import ARI_THRESHOLD, FASE, PCA_VARIANCE_RATIO
-from src.core.preprocessor import avg, centroid_drift, jaccard_similarity, pct, rnd
+from src.core.preprocessor import avg, pct, rnd
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +34,9 @@ class ModelingMixin:
         self.pca = PCA(n_components=PCA_VARIANCE_RATIO)
         self.pca.fit(scaled_ref)
         self.n_comp = self.pca.n_components_
+        # A7: PCA 2D di-fit SEKALI pada 2019 -> basis koordinat konsisten semua tahun
+        self.pca_2d_model = PCA(n_components=2)
+        self.pca_2d_model.fit(scaled_ref)
 
     def modeling(self):
         logger.info("MODELING: GMM per periode")
@@ -59,7 +64,8 @@ class ModelingMixin:
                 try:
                     gmm = GaussianMixture(
                         n_components=k,
-                        covariance_type="full",
+                        covariance_type="diag",
+                        reg_covar=1.0,
                         init_params="k-means++",
                         max_iter=300,
                         n_init=10,
@@ -97,7 +103,8 @@ class ModelingMixin:
                 self._report_progress(f"GMM {y} - fitting final K={best_k}", int(progress_base + 45))
                 gmm = GaussianMixture(
                     n_components=best_k,
-                    covariance_type="full",
+                    covariance_type="diag",
+                    reg_covar=1.0,
                     init_params="k-means++",
                     max_iter=300,
                     n_init=10,
@@ -112,7 +119,7 @@ class ModelingMixin:
                 ch = calinski_harabasz_score(pca_pts, labels)
                 db = davies_bouldin_score(pca_pts, labels)
                 ll = gmm.score(pca_pts) * len(pca_pts)
-                pts_2d = self.pca_2d(pca_pts)
+                pts_2d = self.pca_2d(scaled_pts)
 
                 clusters = []
                 for ci in range(best_k):
@@ -147,50 +154,85 @@ class ModelingMixin:
                     "post": post.tolist(),
                     "centers": gmm.means_.tolist(),
                 }
+                # A1: simpan model & titik PCA untuk cross-prediction di time_series_analysis
+                self.gmm_models[y] = gmm
+                self.pca_pts_cache[y] = pca_pts
+
                 self._report_progress(f"GMM {y} completed", int(progress_base + 50))
         self._report_progress("Modeling completed", 100)
 
     def pca_2d(self, matrix):
-        from sklearn.decomposition import PCA
-        pca2 = PCA(n_components=2)
-        return pca2.fit_transform(matrix).tolist()
+        # A7: transform dengan basis 2D yang di-fit sekali pada 2019 (lihat dimensionality_reduction)
+        return self.pca_2d_model.transform(matrix).tolist()
 
     def top_n(self, rows, col, n=5):
         cnt = Counter(str(r.get(col, "")).strip() or "(kosong)" for r in rows)
         return cnt.most_common(n)
 
     def time_series_analysis(self):
-        logger.info("TIME SERIES ANALYSIS: Deteksi structural break dan forecasting 2025")
+        logger.info("TIME SERIES ANALYSIS: Hungarian-matched ARI, Jaccard, centroid drift + forecasting 2025")
         years = sorted(self.by_year.keys())
         for i in range(len(years) - 1):
             y1, y2 = years[i], years[i + 1]
-            l1 = self.gmm_res[y1]["labels"]
-            l2 = self.gmm_res[y2]["labels"]
-            n = min(len(l1), len(l2))
-            a = adjusted_rand_score(l1[:n], l2[:n])
-            is_break = a < ARI_THRESHOLD
+            c1 = np.array(self.gmm_res[y1].get("centers", []))
+            c2 = np.array(self.gmm_res[y2].get("centers", []))
+
+            # Hungarian matching of centroids (centroid drift + alignment cluster index)
+            if len(c1) > 0 and len(c2) > 0:
+                cost = cdist(c1, c2, metric="euclidean")
+                row_ind, col_ind = linear_sum_assignment(cost)
+                matched_cost = cost[row_ind, col_ind].mean()
+            else:
+                row_ind = np.array([])
+                col_ind = np.array([])
+                matched_cost = float("inf")
+
+            # A1: ARI cross-prediction — GMM(thn t) prediksi data thn t+1,
+            #     ARI(label prediksi vs label aktual GMM thn t+1) = stabilitas struktural valid.
+            actual = np.array(self.gmm_res[y2]["labels"])
+            pred = self.gmm_models[y1].predict(self.pca_pts_cache[y2])
+            ari_val = adjusted_rand_score(actual, pred) if len(actual) > 1 else 0.0
+            is_break = ari_val < ARI_THRESHOLD
             self.ari_pairs.append({
                 "y1": y1, "y2": y2,
                 "label": f"{y1}→{y2}",
-                "ari": rnd(a, 4),
+                "ari": rnd(ari_val, 4),
                 "isBreak": is_break,
-                "cat": "⚡ Structural Break" if is_break else ("⚠️ Drift Moderat" if a < 0.6 else "✅ Stabil"),
+                "cat": "⚡ Structural Break" if is_break else ("⚠️ Drift Moderat" if ari_val < 0.6 else "✅ Stabil"),
+                "method": "cross_prediction",
             })
-            set1 = set(l1)
-            set2 = set(l2)
-            j = jaccard_similarity(set1, set2)
+
+            # A2: Jaccard keanggotaan dari confusion matrix prediksi vs aktual,
+            #     di-align via Hungarian centroid (cluster t+1 -> index t).
+            if len(c1) > 0 and len(c2) > 0:
+                from sklearn.metrics import confusion_matrix
+                label_map = {old: new for old, new in zip(col_ind, row_ind)}
+                actual_m = np.array([label_map.get(lab, -1) for lab in actual])
+                cm = confusion_matrix(pred, actual_m)
+                jaccards = []
+                for idx in range(min(cm.shape[0], cm.shape[1])):
+                    tp = cm[idx, idx]
+                    fp = cm[idx, :].sum() - tp
+                    fn = cm[:, idx].sum() - tp
+                    denom = tp + fp + fn
+                    jaccards.append(tp / denom if denom > 0 else 0.0)
+                jaccard_val = np.mean(jaccards) if jaccards else 0.0
+            else:
+                jaccard_val = 0.0
             self.jaccard_pairs.append({
                 "y1": y1, "y2": y2,
                 "label": f"{y1}→{y2}",
-                "jaccard": rnd(j, 4),
+                "jaccard": rnd(jaccard_val, 4),
+                "method": "hungarian_contingency",
             })
-            c1 = self.gmm_res[y1].get("centers", [])
-            c2 = self.gmm_res[y2].get("centers", [])
-            cd = centroid_drift(c1, c2)
+
+            # 3. Centroid drift dengan pasangan Hungarian
+            cd = rnd(matched_cost, 4) if matched_cost != float("inf") else float("inf")
             self.centroid_drifts.append({
                 "y1": y1, "y2": y2,
                 "label": f"{y1}→{y2}",
-                "drift": rnd(cd, 4),
+                "drift": cd,
+                "method": "hungarian_matched",
             })
         rec_yrs = [y for y in years if FASE[y] == "Recovery"]
         rec_ns = [self.gmm_res[y]["n"] for y in rec_yrs]

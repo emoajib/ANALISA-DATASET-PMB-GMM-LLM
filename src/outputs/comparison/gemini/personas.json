@@ -1,0 +1,87 @@
+{
+  "version": "1.0",
+  "personas": {
+    "2019": [
+      {
+        "cluster": 2,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: Budi Setiawan\nAsal: Kabupaten Pekalongan\nProgram Studi: Sarjana S1 Informatika (SIP)\nJalur: Beasiswa Bidik Misi\nLatar Belakang Keluarga: Orang tua pekerja swadaya, memiliki 2 anak.\nMotivasi Kuliah: Mencari kesempatan untuk meningkatkan kehidupan keluarga dan masyarakat sekitar.\nAktivitas Kampus: Aktif dalam organisasi mahasiswa, mengikuti kompetisi programming, serta mengajar anak-anak di sekolah.\nProspek Karir: Menjadi programmer senior di perusahaan teknologi atau menjadi pengembang aplikasi."
+      },
+      {
+        "cluster": 1,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: [Nama Mahasiswa]\n\nAsal: Kabupaten Pekalongan\n\nProgram Studi: Sarjana S1 Teknologi Informasi (STI)\n\nJalur: Beasiswa Bidikmisi\n\nLatar Belakang Keluarga: Orang tua pekerja swasta, memiliki 2 anak.\n\nMotivasi Kuliah: Mencari kesempatan untuk meningkatkan kualitas hidup keluarga dan menjadi contoh bagi generasi mendatang.\n\nAktivitas Kampus: Aktif dalam organisasi mahasiswa, serta mengikuti kompetisi teknologi informasi.\n\nProspek Karir: Diharapkan dapat menjadi pengembang teknologi informasi di perusahaan besar atau menjadi pengembang aplikasi yang inovatif."
+      }
+    ],
+    "2020": [
+      {
+        "cluster": 2,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: Rizki Andika\n\nAsal: Kabupaten Pekalongan\n\nProgram Studi: Sarjana S1 Informatika\n\nLatar Belakang Keluarga: Orang tua pekerja swasta, 2 orang adik.\n\nMotivasi Kuliah: Mencari kesempatan untuk meningkatkan kemampuan dan kehidupan ekonomi keluarga.\n\nAktivitas Kampus: Aktif dalam tim kompetisi programming, mengikuti seminar dan workshop teknologi informasi.\n\nProspek Karir: Diharapkan dapat menjadi pengembang aplikasi atau manajer proyek di perusahaan teknologi."
+      },
+      {
+        "cluster": 4,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: [Nama Mahasiswa]\n\nAsal: Kabupaten Pekalongan\n\nProgram Studi: Sarjana S1 Teknologi Informasi (STI)\n\nLatar Belakang Keluarga: Orang tua pekerja di sektor pertanian, membutuhkan beasiswa untuk melanjutkan pendidikan.\n\nMotivasi Kuliah: Mencari kesempatan karir yang lebih baik dan meningkatkan kesejahteraan keluarga.\n\nAktivitas Kampus: Aktif dalam organisasi mahasiswa, mengikuti kompetisi teknologi, serta berpartisipasi dalam kegiatan sosial.\n\nProspek Karir: Menjadi pengembang teknologi di perusahaan atau lembaga pemerintah."
+      },
+      {
+        "cluster": 3,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: Rizki Andika\n\nAsal: Kabupaten Pekalongan\n\nProgram Studi: Sarjana S1 Informatika\n\nLatar Belakang Keluarga: Orang tua pekerja swasta, 2 orang adik.\n\nMotivasi Kuliah: Mencari kesempatan untuk meningkatkan kemampuan dan kehidupan ekonomi keluarga.\n\nAktivitas Kampus: Aktif dalam tim kompetisi programming, mengikuti seminar dan workshop teknologi informasi.\n\nProspek Karir: Diharapkan dapat menjadi pengembang aplikasi atau manajer proyek di perusahaan teknologi."
+      }
+    ],
+    "2021": [
+      {
+        "cluster": 5,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: Rizki Andika\n\nAsal: Kabupaten Pekalongan\n\nProgram Studi: Sarjana S1 Informatika\n\nLatar Belakang Keluarga: Orang tua pekerja swasta, 2 orang adik.\n\nMotivasi Kuliah: Mencari kesempatan untuk meningkatkan kemampuan dan kehidupan ekonomi keluarga.\n\nAktivitas Kampus: Aktif dalam tim kompetisi programming, mengikuti seminar dan workshop teknologi informasi.\n\nProspek Karir: Diharapkan dapat menjadi pengembang aplikasi atau manajer proyek di perusahaan teknologi."
+      },
+      {
+        "cluster": 6,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: [Nama Mahasiswa]\n\nAsal: Kabupaten Pekalongan\n\nProgram Studi: Sarjana S1 Teknologi Informasi (STI)\n\nLatar Belakang Keluarga: Orang tua pekerja di sektor pertanian, membutuhkan beasiswa untuk melanjutkan pendidikan.\n\nMotivasi Kuliah: Mencari kesempatan karir yang lebih baik dan meningkatkan kesejahteraan keluarga.\n\nAktivitas Kampus: Aktif dalam organisasi mahasiswa, mengikuti kompetisi teknologi, serta berpartisipasi dalam kegiatan sosial.\n\nProspek Karir: Menjadi pengembang teknologi di perusahaan atau lembaga pemerintah."
+      },
+      {
+        "cluster": 2,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: Rizki Andika\n\nAsal: Kabupaten Pekalongan\n\nProgram Studi: Sarjana S1 Informatika\n\nLatar Belakang Keluarga: Orang tua pekerja swasta, 2 orang adik.\n\nMotivasi Kuliah: Mencari kesempatan untuk meningkatkan kemampuan dan kehidupan ekonomi keluarga.\n\nAktivitas Kampus: Aktif dalam tim kompetisi programming, mengikuti seminar dan workshop teknologi informasi.\n\nProspek Karir: Diharapkan dapat menjadi pengembang aplikasi atau manajer proyek di perusahaan teknologi."
+      }
+    ],
+    "2022": [
+      {
+        "cluster": 1,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: Rizki Andika\n\nAsal: Kabupaten Pekalongan\n\nProgram Studi: Sarjana S1 Teknologi Informasi (STI)\n\nJalur: Beasiswa PIP\n\nLatar Belakang Keluarga: Orang tua bekerja sebagai petani, membutuhkan bantuan keuangan untuk melanjutkan pendidikan.\n\nMotivasi Kuliah: Mencari kesempatan karir yang lebih baik dan meningkatkan kesejahteraan keluarga.\n\nAktivitas Kampus: Aktif dalam organisasi mahasiswa dan mengikuti kompetisi teknologi informasi.\n\nProspek Karir: Menjadi pengembang aplikasi atau teknisi informasi di perusahaan teknologi."
+      },
+      {
+        "cluster": 2,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: X (nama asli)\n\nAsal: Kabupaten Pekalongan\n\nProgram Studi: Diploma Tiga Administrasi Perkantoran\n\nLatar Belakang Keluarga: Orang tua pekerja di pertanian, membutuhkan beasiswa untuk melanjutkan pendidikan.\n\nMotivasi Kuliah: Mencari kesempatan karir yang lebih baik dan meningkatkan kesejahteraan keluarga.\n\nAktivitas Kampus: Aktif dalam organisasi mahasiswa, mengikuti program kerja sama antar universitas (PKL), serta mengembangkan kemampuan melalui kegiatan ekstrakurikuler.\n\nProspek Karir: Mencari pekerjaan di bidang administrasi perkantoran atau bisnis, dengan harapan dapat menjadi manajer atau pengusaha sukses."
+      }
+    ],
+    "2023": [
+      {
+        "cluster": 2,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: Rizki Andika\n\nAsal: Kabupaten Pekalongan\n\nProgram Studi: Sarjana S1 Informatika\n\nLatar Belakang Keluarga: Orang tua pekerja swasta, 2 orang adik.\n\nMotivasi Kuliah: Mencari kesempatan untuk meningkatkan kemampuan dan kehidupan ekonomi keluarga.\n\nAktivitas Kampus: Aktif dalam tim kompetisi programming, mengikuti seminar dan workshop teknologi informasi.\n\nProspek Karir: Diharapkan dapat menjadi pengembang aplikasi atau manajer proyek di perusahaan teknologi."
+      },
+      {
+        "cluster": 1,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: [Nama Mahasiswa]\n\nAsal: Kabupaten Pekalongan\n\nProgram Studi: Sarjana S1 Teknologi Informasi (STI)\n\nLatar Belakang Keluarga: Orang tua pekerja di sektor pertanian, membutuhkan beasiswa untuk melanjutkan pendidikan.\n\nMotivasi Kuliah: Mencari kesempatan karir yang lebih baik dan meningkatkan kesejahteraan keluarga.\n\nAktivitas Kampus: Aktif dalam organisasi mahasiswa, mengikuti kompetisi teknologi, serta berpartisipasi dalam kegiatan sosial.\n\nProspek Karir: Menjadi pengembang teknologi di perusahaan atau lembaga pemerintah."
+      }
+    ],
+    "2024": [
+      {
+        "cluster": 2,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: [Nama Mahasiswa]\n\nAsal: Kabupaten Pekalongan\n\nProgram Studi: Sarjana S1 Teknologi Informasi (STI)\n\nLatar Belakang Keluarga: Orang tua pekerja di sektor pertanian, membutuhkan beasiswa untuk melanjutkan pendidikan.\n\nMotivasi Kuliah: Mencari kesempatan karir yang lebih baik dan meningkatkan kesejahteraan keluarga.\n\nAktivitas Kampus: Aktif dalam organisasi mahasiswa, mengikuti kompetisi teknologi, serta berpartisipasi dalam kegiatan sosial.\n\nProspek Karir: Menjadi pengembang teknologi di perusahaan atau lembaga pemerintah."
+      },
+      {
+        "cluster": 1,
+        "persona": "Berikut adalah deskripsi persona mahasiswa ITSNU Pekalongan:\n\nNama: Rizki Andika\n\nAsal: Kabupaten Pekalongan\n\nProgram Studi: Sarjana S1 Informatika\n\nLatar Belakang Keluarga: Orang tua pekerja swasta, 2 orang adik.\n\nMotivasi Kuliah: Mencari kesempatan untuk meningkatkan kemampuan dan kehidupan ekonomi keluarga.\n\nAktivitas Kampus: Aktif dalam tim kompetisi programming, mengikuti seminar dan workshop teknologi informasi.\n\nProspek Karir: Diharapkan dapat menjadi pengembang aplikasi atau manajer proyek di perusahaan teknologi."
+      }
+    ]
+  },
+  "metadata": {
+    "elapsed_seconds": 0.0,
+    "total_personas": 14,
+    "years": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "dataset_hash": "d1115bebc8b40d45"
+  },
+  "generated_at": 1783800205.361226
+}

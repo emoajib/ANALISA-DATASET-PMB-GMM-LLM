@@ -146,40 +146,40 @@ class DeploymentMixin:
             ) or """Gambar 4.1 menampilkan distribusi pendaftar 2019-2024."""
 
         if os.path.exists(str(OUTPUTS_DIR / "tabel_4_5_kscan.csv")):
-            _narr_progress("Gambar 4.3a")
+            _narr_progress("Gambar 4.2")
             df_kscan = pd.read_csv(str(OUTPUTS_DIR / "tabel_4_5_kscan.csv"))
-            prompt = f"Analisis visual Gambar 4.3a silhouette scores. Data: {df_kscan.to_string()}"
-            self.image_narratives["gambar_4_3a"] = self.generate_llm_response(
+            prompt = f"Analisis visual Gambar 4.2 silhouette scores. Data: {df_kscan.to_string()}"
+            self.image_narratives["gambar_4_2"] = self.generate_llm_response(
                 prompt, self.llm_provider, None, 2000, model=self.llm_model
-            ) or """Gambar 4.3a memvisualisasikan silhouette scores."""
+            ) or """Gambar 4.2 memvisualisasikan silhouette scores."""
 
         if os.path.exists(str(OUTPUTS_DIR / "tabel_4_6_ari.csv")):
-            _narr_progress("Gambar 4.3c")
+            _narr_progress("Gambar 4.3")
             df_ari = pd.read_csv(str(OUTPUTS_DIR / "tabel_4_6_ari.csv"))
-            prompt = f"Analisis visual Gambar 4.3c ARI heatmap. Data: {df_ari.to_string()}"
-            self.image_narratives["gambar_4_3c"] = self.generate_llm_response(
+            prompt = f"Analisis visual Gambar 4.3 ARI heatmap. Data: {df_ari.to_string()}"
+            self.image_narratives["gambar_4_3"] = self.generate_llm_response(
                 prompt, self.llm_provider, None, 2000, model=self.llm_model
-            ) or """Gambar 4.3c menampilkan heatmap ARI."""
+            ) or """Gambar 4.3 menampilkan heatmap ARI."""
 
         if os.path.exists(str(OUTPUTS_DIR / "tabel_4_16_prioritasi_2025.csv")):
-            _narr_progress("Gambar 4.5")
+            _narr_progress("Gambar 4.4")
             df_proj = pd.read_csv(str(OUTPUTS_DIR / "tabel_4_16_prioritasi_2025.csv"))
-            prompt = f"Analisis visual Gambar 4.5 proyeksi 2025. Data: {df_proj.to_string()}"
-            self.image_narratives["gambar_4_5"] = self.generate_llm_response(
+            prompt = f"Analisis visual Gambar 4.4 proyeksi 2025. Data: {df_proj.to_string()}"
+            self.image_narratives["gambar_4_4"] = self.generate_llm_response(
                 prompt, self.llm_provider, None, 2000, model=self.llm_model
-            ) or """Gambar 4.5 memvisualisasikan proyeksi 2025."""
+            ) or """Gambar 4.4 memvisualisasikan proyeksi 2025."""
 
         years = sorted(self.by_year.keys())
         for i, y in enumerate(years):
-            _narr_progress(f"Gambar 4.2{chr(97 + i)}")
-            scatter_key = f"gambar_4_2{chr(97 + i)}"
+            _narr_progress(f"Gambar 4.5{chr(97 + i)}")
+            scatter_key = f"gambar_4_5{chr(97 + i)}"
             csv_file = str(OUTPUTS_DIR / f"tabel_4_{9 + i}_profil_{y}.csv")
             if os.path.exists(csv_file):
                 df_scatter = pd.read_csv(csv_file)
-                prompt = f"Analisis visual scatter plot Gambar 4.2{chr(97 + i)} tahun {y}. Data: {df_scatter.to_string()}"
+                prompt = f"Analisis visual scatter plot Gambar 4.5{chr(97 + i)} tahun {y}. Data: {df_scatter.to_string()}"
                 self.image_narratives[scatter_key] = self.generate_llm_response(
                     prompt, self.llm_provider, None, 2000, model=self.llm_model
-                ) or f"""Gambar 4.2{chr(97 + i)} scatter plot clustering tahun {y}."""
+                ) or f"""Gambar 4.5{chr(97 + i)} scatter plot clustering tahun {y}."""
 
     def save_outputs(self):
         years = sorted(self.by_year.keys())
@@ -244,11 +244,11 @@ class DeploymentMixin:
         sils = [self.gmm_res[y]["sil"] for y in years]
         plt.figure(figsize=(10, 6))
         plt.plot(years, sils, marker="o")
-        plt.title("Gambar 4.3a – Silhouette Score per Periode (BAB IV)")
+        plt.title("Gambar 4.2 – Silhouette Score per Periode (BAB IV)")
         plt.xlabel("Tahun")
         plt.ylabel("Silhouette Score")
-        plt.savefig(str(OUTPUTS_DIR / "gambar_4_3a_silhouette.png"))
-        plt.savefig(str(OUTPUTS_DIR / "gambar_4_3a_silhouette.svg"))
+        plt.savefig(str(OUTPUTS_DIR / "gambar_4_2_silhouette.png"))
+        plt.savefig(str(OUTPUTS_DIR / "gambar_4_2_silhouette.svg"))
         plt.close()
 
         ari_df = pd.DataFrame(self.ari_pairs)
@@ -273,11 +273,11 @@ class DeploymentMixin:
 
         plt.figure(figsize=(10, 6))
         plt.bar([p["label"] for p in self.ari_pairs], [p["ari"] for p in self.ari_pairs])
-        plt.title("Gambar 4.3c – ARI Stabilitas Klaster (BAB IV)")
+        plt.title("Gambar 4.3 – ARI Stabilitas Klaster (BAB IV)")
         plt.xlabel("Transisi")
         plt.ylabel("ARI")
-        plt.savefig(str(OUTPUTS_DIR / "gambar_4_3c_ari.png"))
-        plt.savefig(str(OUTPUTS_DIR / "gambar_4_3c_ari.svg"))
+        plt.savefig(str(OUTPUTS_DIR / "gambar_4_3_ari.png"))
+        plt.savefig(str(OUTPUTS_DIR / "gambar_4_3_ari.svg"))
         plt.close()
 
         for y in years:
@@ -301,11 +301,11 @@ class DeploymentMixin:
                 plt.figure(figsize=(8, 6))
                 for i, pt in enumerate(pts2d[:400]):
                     plt.scatter(pt[0], pt[1], c=CC[self.gmm_res[y]["labels"][i] % len(CC)], alpha=0.5)
-                plt.title(f"Gambar 4.2{chr(97 + years.index(y))} – PCA 2D Klaster Tahun {y}")
+                plt.title(f"Gambar 4.5{chr(97 + years.index(y))} – PCA 2D Klaster GMM Tahun {y}")
                 plt.xlabel("PC1")
                 plt.ylabel("PC2")
-                plt.savefig(str(OUTPUTS_DIR / f"gambar_4_2{chr(97 + years.index(y))}_scatter_{y}.png"))
-                plt.savefig(str(OUTPUTS_DIR / f"gambar_4_2{chr(97 + years.index(y))}_scatter_{y}.svg"))
+                plt.savefig(str(OUTPUTS_DIR / f"gambar_4_5{chr(97 + years.index(y))}_scatter_{y}.png"))
+                plt.savefig(str(OUTPUTS_DIR / f"gambar_4_5{chr(97 + years.index(y))}_scatter_{y}.svg"))
                 plt.close()
 
         lifecycle_data = [{
@@ -332,11 +332,11 @@ class DeploymentMixin:
 
         plt.figure(figsize=(10, 6))
         plt.bar(list(years) + [2025], [self.gmm_res[y]["n"] for y in years] + [self.proj_2025])
-        plt.title("Gambar 4.5 – Proyeksi Pendaftar 2025")
+        plt.title("Gambar 4.4 – Proyeksi Pendaftar 2025")
         plt.xlabel("Tahun")
         plt.ylabel("Jumlah")
-        plt.savefig(str(OUTPUTS_DIR / "gambar_4_5_proyeksi.png"))
-        plt.savefig(str(OUTPUTS_DIR / "gambar_4_5_proyeksi.svg"))
+        plt.savefig(str(OUTPUTS_DIR / "gambar_4_4_proyeksi.png"))
+        plt.savefig(str(OUTPUTS_DIR / "gambar_4_4_proyeksi.svg"))
         plt.close()
 
         comp_data = [
