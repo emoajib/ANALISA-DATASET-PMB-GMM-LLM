@@ -1,0 +1,118 @@
+{
+  "targets": [
+    {
+      "id": "kesimpulan_5_1_butir1",
+      "verbatim": "Efektivitas Integrasi Segmentasi Probabilistik dan Ekstraksi SemantikPenelitian ini secara empiris membuktikan bahwa integrasi antara representasi ruang vektor berdimensi 768 dari model bahasa besar berbahasa Indonesia (IndoBERT) dengan soft clustering probabilistik (GMM) sangat efektif dalam memetakan profil calon mahasiswa secara presisi. Dari dataset 2.362 pendaftar, pendekatan ini sukses mengidentifikasi K=2 secara konsisten untuk seluruh 6 periode (2019–2024), dengan posterior probability berkisar 0,514–1,000. Temuan ini mengungkapkan bahwa segmen pendaftar ITSNU Pekalongan secara fundamental hanya terbagi menjadi dua profil: mayoritas homogen (98%+) dan segmen minoritas spesifik. Konsistensi K=2 di semua tahun, meskipun volume pendaftar berfluktuasi dari 146 hingga 680, mengindikasikan stabilitas struktur segmen yang lebih tinggi dari yang diperkirakan sebelumnya.",
+      "note": "multi-run: no (entire target lies within a single run; paragraph has 3 non-empty run(s))",
+      "paraline": "P795 (BAB V Kesimpulan)"
+    },
+    {
+      "id": "tabel_4_11_narrative",
+      "verbatim": "Tabel 4.11 menunjukkan pola yang konsisten dengan 2020: K=2 dengan dominasi satu klaster. Klaster 2 mencakup 300 pendaftar (99,7%) dengan prodi dominan S1 Informatika (112) dan S1 Teknologi Informasi (107), didominasi asal Kabupaten Pekalongan (243) dan Kota Pekalongan (24). Klaster 1 hanya 1 pendaftar (0,3%) dengan prodi S1 Teknologi Informasi. Posterior probability = 0,624 (K2) dan 0,672 (K1). Konsistensi pola K=2 antara 2020 dan 2021 mengindikasikan bahwa disrupsi COVID-19 tidak mengubah struktur dasar segmen pendaftar, melainkan memperkuat dominasi profil mayoritas yang sudah ada.",
+      "note": "multi-run: no (entire target lies within a single run; paragraph has 1 non-empty run(s))",
+      "paraline": "P683 (BAB IV)"
+    },
+    {
+      "id": "tabel_4_12_narrative",
+      "verbatim": "Tabel 4.12 menandai awal fase Recovery dengan pola yang konsisten: K=2 dengan distribusi timpang. Klaster 2 mendominasi dengan 453 pendaftar (98,9%) dengan prodi dominan S1 Teknologi Informasi (130) dan S1 Informatika (120), mayoritas dari Kabupaten Pekalongan (316) dan Kota Pekalongan (91). Klaster 1 hanya mencakup 5 pendaftar (1,1%) dengan prodi S1 Teknik Industri (3) dan D3 Administrasi Perkantoran (1). Posterior probability = 0,536 (K2) dan 0,530 (K1). Dibandingkan fase COVID, posterior semakin mendekati 0,5 yang menandakan overlap lebih besar antar dua klaster pada fase Recovery.",
+      "note": "multi-run: no (entire target lies within a single run; paragraph has 1 non-empty run(s))",
+      "paraline": "P694 (BAB IV)"
+    },
+    {
+      "id": "subbab_4_6_1",
+      "verbatim": "Pada 2019 (baseline 146 pendaftar), GMM mengidentifikasi 2 klaster dengan distribusi yang sangat timpang: satu klaster dominan mencakup 98% pendaftar dan satu klaster minoritas hanya 2%. Dominasi satu klaster ini mencerminkan homogenitas profil pendaftar pada kondisi normal pra pandemi.",
+      "note": "multi-run: no (entire target lies within a single run; paragraph has 3 non-empty run(s))",
+      "paraline": "P657 (BAB IV 4.6.1)"
+    },
+    {
+      "id": "gambar_4_5a",
+      "verbatim": "Gambar 4.5a menampilkan distribusi 146 pendaftar 2019 dalam ruang PCA 2D dengan dua warna klaster dan simbol bintang (★) sebagai penanda sentroid. Visualisasi menunjukkan bahwa mayoritas titik (Klaster 1, 98%) mengelompok di area tengah ruang PCA, sementara Klaster 2 (2%) berada di area yang lebih terpisah. Pola ini konsisten dengan identifikasi K=2 oleh GMM, di mana satu klaster dominan mencakup hampir seluruh populasi dan satu klaster minoritas memiliki karakteristik yang berbeda secara semantik.",
+      "note": "multi-run: no (entire target lies within a single run; paragraph has 1 non-empty run(s))",
+      "paraline": "P667 (BAB IV)"
+    },
+    {
+      "id": "gambar_4_5c",
+      "verbatim": "Gambar 4.5c memperlihatkan distribusi 301 pendaftar 2021 dengan pola K=2 yang konsisten: satu klaster dominan (K2, 99,7%) yang mencakup hampir seluruh ruang PCA, dan satu titik klaster 1 yang terisolasi. Peningkatan jumlah titik pada 2021 dibandingkan 2020 menunjukkan tren pertumbuhan pendaftar yang berlanjut selama pandemi.",
+      "note": "multi-run: no (entire target lies within a single run; paragraph has 1 non-empty run(s))",
+      "paraline": "P688 (BAB IV)"
+    },
+    {
+      "id": "gambar_4_5d",
+      "verbatim": "Gambar 4.5d memvisualisasikan distribusi 458 pendaftar 2022 pada fase Recovery awal dengan dua klaster hasil GMM (K=2). Klaster 2 (dominan, 98,9%) menguasai area PCA dengan kepadatan tinggi di bagian tengah ruang fitur. Lima titik klaster 1 (1,1%) muncul sebagai outlier di area terpisah. Volume data yang jauh lebih besar dibandingkan tahun-tahun sebelumnya (lonjakan 52% dari 2021) terlihat dari kepadatan titik yang lebih tinggi.",
+      "note": "multi-run: no (entire target lies within a single run; paragraph has 1 non-empty run(s))",
+      "paraline": "P699 (BAB IV)"
+    },
+    {
+      "id": "gambar_4_2",
+      "verbatim": "Gambar 4.2 menampilkan visualisasi tren Silhouette Score GMM selama enam periode dalam bentuk line chart. Grafik memperlihatkan fluktuasi yang tidak monoton: nilai tertinggi pada 2019 (0,0883) menurun drastis ke nilai negatif pada 2020 (−0,0008) dan 2021 (−0,0064), yang mengindikasikan bahwa selama fase COVID Crisis, dua klaster yang teridentifikasi memiliki overlap sangat tinggi. Pada fase Recovery, nilai Silhouette meningkat kembali ke 0,0518 (2022) sebelum menurun secara bertahap ke 0,0366 (2023) dan 0,0202 (2024). Pola ini konsisten dengan temuan structural break: perubahan komposisi segmen yang terus terjadi setiap tahun membuat batas antar klaster selalu kabur.",
+      "note": "multi-run: no (entire target lies within a single run; paragraph has 2 non-empty run(s))",
+      "paraline": "P617 (BAB IV)"
+    },
+    {
+      "id": "tabel_4_7_narrative",
+      "verbatim": "Tabel 4.7 menyajikan empat metrik evaluasi internal untuk setiap periode. Beberapa pola penting perlu dicermati. Pertama, nilai Log Likelihood seluruhnya negatif dengan tren menurun dari −23.376 (2019) hingga −98.775 (2023), mencerminkan peningkatan jumlah observasi secara konsisten. Kedua, nilai Calinski-Harabasz meningkat dari 0,96–1,93 pada fase Pre-COVID dan COVID Crisis menjadi 1,97–3,88 pada fase Recovery, mengindikasikan bahwa pemisahan antar klaster semakin jelas seiring bertambahnya data. Ketiga, nilai Davies-Bouldin berfluktuasi antara 0,99 dan 4,01, dengan nilai tertinggi pada 2024 (4,01) yang menandakan overlap lebih besar antar dua klaster pada tahun tersebut. Keempat, Silhouette Score berada dalam rentang −0,0064 hingga 0,0883, dengan nilai tertinggi pada 2019 (0,0883) saat jumlah data paling sedikit dan diferensiasi paling jelas. Nilai negatif pada 2020 (−0,0008) dan 2021 (−0,0064) mengindikasikan bahwa selama fase COVID Crisis, dua klaster yang teridentifikasi memiliki overlap yang sangat tinggi, konsisten dengan teori disrupsi pasar pada masa pandemi. Scrucca et al. (2016) menegaskan bahwa dalam konteks soft clustering probabilistik seperti GMM, Silhouette Score bukanlah metrik absolut melainkan indikator komplementer yang harus diinterpretasikan bersama BIC, log-likelihood, dan validasi substantif.",
+      "note": "multi-run: no (entire target lies within a single run; paragraph has 2 non-empty run(s))",
+      "paraline": "P647 (BAB IV)"
+    },
+    {
+      "id": "subbab_4_6_5_persona",
+      "verbatim": "Setiap persona mencakup informasi: asal kecamatan, latar belakang keluarga (pekerjaan orang tua, jumlah saudara, status sosial ekonomi), motivasi kuliah (karir, kesejahteraan, minat), aktivitas kampus (organisasi, ekstrakurikuler, kompetisi), dan prospek karir yang diharapkan. Data ini dihasilkan untuk seluruh klaster di setiap periode, menghasilkan 12 profil persona unik (K=2 x 6 tahun).",
+      "note": "multi-run: no (entire target lies within a single run; paragraph has 1 non-empty run(s))",
+      "paraline": "P732 (BAB IV 4.6.5)"
+    },
+    {
+      "id": "tabel_4_16_stabil98",
+      "verbatim": "Mayoritas IT Kab. Pekalongan || Stabil 98%+ di seluruh periode || TINGGI || Kab. Pekalongan + Kota Pekalongan || S1 Informatika, S1 Teknologi Informasi || Intensifikasi Instagram/TikTok Ads geo-targeted; kunjungan SMA/SMK mitra; pesan kunci 'Teknologi & Karir Masa Depan', Nov–Jan",
+      "note": "multi-run: n/a (this is a TABLE CELL, not a narrative paragraph; T750 row1)",
+      "paraline": "T750 row1 (BAB IV Tabel 4.16)"
+    }
+  ],
+  "csv_paths": {
+    "kscan": "/Volumes/WORK/MTI UNSIBANK/TESIS/src/outputs/tabel_4_5_kscan.csv",
+    "eval_internal": "/Volumes/WORK/MTI UNSIBANK/TESIS/src/outputs/tabel_4_7_evaluasi_internal.csv",
+    "p2019": "/Volumes/WORK/MTI UNSIBANK/TESIS/src/outputs/tabel_4_9_profil_2019.csv",
+    "p2021": "/Volumes/WORK/MTI UNSIBANK/TESIS/src/outputs/tabel_4_11_profil_2021.csv",
+    "p2022": "/Volumes/WORK/MTI UNSIBANK/TESIS/src/outputs/tabel_4_12_profil_2022.csv"
+  },
+  "csv_contents": {
+    "kscan": "Tahun,Fase,K,Sil,BIC,AIC,CH,DB,LL\n2019,Pre-COVID,2,0.05219697330496087,48144.343031557575,47294.0151443707,0.0,0.0,-23362.00757218535\n2019,Pre-COVID,3,0.08234487205928406,48520.19546376991,47243.21182967874,0.0,0.0,-23193.60591483937\n2019,Pre-COVID,4,0.03768124569506462,48925.0556332784,47221.41625228294,0.0,0.0,-23039.70812614147\n2020,COVID Crisis,2,0.10658409951876686,88922.17691476227,87892.43540444167,0.0,0.0,-43661.217702220834\n2020,COVID Crisis,3,0.07979249523306212,88758.55370605506,87212.13487652096,0.0,0.0,-43178.06743826048\n2020,COVID Crisis,4,0.053442181202918694,88986.40139338086,86923.30524463327,0.0,0.0,-42890.65262231664\n2020,COVID Crisis,5,0.062271968130547084,88877.04772867306,86297.27426071197,0.0,0.0,-42434.637130355986\n2020,COVID Crisis,6,0.06962811598062067,89077.54624646032,85981.09545928575,0.0,0.0,-42133.54772964287\n2020,COVID Crisis,7,0.0637648147618956,89424.48117684956,85811.35307046148,0.0,0.0,-41905.67653523074\n2021,COVID Crisis,2,0.07479064520223949,92635.32807796712,91578.80165251369,0.0,0.0,-45504.400826256846\n2021,COVID Crisis,3,0.06616997602950712,92949.2566287588,91362.61343544628,0.0,0.0,-45253.30671772314\n2021,COVID Crisis,4,0.06914675036809152,92687.46468657334,90570.70472540172,0.0,0.0,-44714.35236270086\n2021,COVID Crisis,5,0.07059015864794056,93383.80037594147,90736.92364691077,0.0,0.0,-44654.461823455385\n2021,COVID Crisis,6,0.07237784579347697,93246.73385682542,90069.74035993563,0.0,0.0,-44177.87017996782\n2021,COVID Crisis,7,0.07349570982735004,93530.48409739077,89823.3738326419,0.0,0.0,-43911.68691632095\n2021,COVID Crisis,8,0.07026913618065814,93965.7860371281,89728.55900452014,0.0,0.0,-43721.27950226007\n2022,Recovery,2,0.06626395262403537,143513.51643056268,142337.35871309013,0.0,0.0,-70883.67935654506\n2022,Recovery,3,0.048949541403420026,143563.6537338989,141797.353723098,0.0,0.0,-70470.676861549\n2022,Recovery,4,0.053127541393409326,143823.82052639872,141467.37822226953,0.0,0.0,-70162.68911113476\n2023,Recovery,2,0.11989517853437374,215058.8353599406,213770.0389124621,0.0,0.0,-106600.01945623105\n2023,Recovery,3,0.0678241468989359,214904.4611507592,212969.00543314236,0.0,0.0,-106056.50271657118\n2023,Recovery,4,0.05006653774065424,214893.85546388864,212311.74047613348,0.0,0.0,-105584.87023806674\n2023,Recovery,5,0.0690750566404226,214845.07848570496,211616.30422781146,0.0,0.0,-105094.15211390573\n2023,Recovery,6,0.07208530880588655,215017.90339298014,211142.4698649483,0.0,0.0,-104714.23493247415\n2023,Recovery,7,0.06621484174600593,215211.4518735196,210689.35907534946,0.0,0.0,-104344.67953767473\n2024,Recovery,2,0.06691249233805269,154031.29224634264,152828.42404786422,0.0,0.0,-76129.21202393211\n2024,Recovery,3,0.06685966649261978,153875.09857414252,152068.68598133983,0.0,0.0,-75606.34299066992\n2024,Recovery,4,0.05854314155090451,153715.22089561488,151305.26390848792,0.0,0.0,-75081.63195424396\n2024,Recovery,5,0.06622718084236762,153898.7305066298,150885.2291251786,0.0,0.0,-74728.6145625893\n2024,Recovery,6,0.0678379877867059,153918.95790729494,150301.91213151946,0.0,0.0,-74293.95606575973",
+    "eval_internal": "Tahun,Fase,K,Silhouette,Calinski-Harabasz,Davies-Bouldin,Log-Likelihood\n2019,Pre-COVID,2,0.0522,4.14,5.6718,-23362.01\n2020,COVID Crisis,3,0.0798,19.4,3.1099,-43178.07\n2021,COVID Crisis,2,0.0748,27.3,3.191,-45504.4\n2022,Recovery,2,0.0663,27.51,3.7674,-70883.68\n2023,Recovery,5,0.0691,36.08,3.0046,-105094.15\n2024,Recovery,4,0.0585,27.19,3.1211,-75081.63",
+    "p2019": "Klaster,N,Persen_%,Avg_Posterior,Nama_Dominan,Prodi_Dominan,Kab_Dominan\n1,95,65.1,0.992,m nur rifqi(1); rofiqoh(1),sarjana informatika(32); sarjana teknologi informasi(30),kabupaten pekalongan(87); kota pekalongan(8)\n2,51,34.9,0.991,m agus ulunudin(1); nurul fatikah(1),sarjana informatika(23); sarjana teknik industri(14),kabupaten pekalongan(24); kota pekalongan(13)",
+    "p2021": "Klaster,N,Persen_%,Avg_Posterior,Nama_Dominan,Prodi_Dominan,Kab_Dominan\n2,178,59.1,0.951,edi sutanto(1); samsul mu arif(1),sarjana informatika(74); sarjana teknologi informasi(65),kabupaten pekalongan(132); kabupaten batang(19)\n1,123,40.9,0.97,qothrunnada nafi ah(1); muhammad irfan(1),sarjana teknologi informasi(43); sarjana informatika(38),kabupaten pekalongan(112); kota pekalongan(10)",
+    "p2022": "Klaster,N,Persen_%,Avg_Posterior,Nama_Dominan,Prodi_Dominan,Kab_Dominan\n1,313,68.3,0.966,vini rizki wahyu nur rohmah(1); muhammad adhar(1),sarjana teknologi informasi(93); sarjana informatika(82),kabupaten pekalongan(233); kota pekalongan(50)\n2,145,31.7,0.918,tiara irani(1); dava putri isneta(1),sarjana informatika(38); sarjana teknologi informasi(37),kabupaten pekalongan(88); kota pekalongan(41)"
+  },
+  "nine_router_occurrences": [
+    "[P736 | BAB IV HASIL PENELITIAN DAN PEMBAHASAN] ...Sistem otomasi LLM hybrid menghasilkan reasoning kausal melalui cloud engine via proxy lokal 9Router (menggunakan nvidia/minimaxai/minimax-m2.7 sebagai model utama dengan fallback ke oc/deepseek-v4-flash-free) menggunakan chain of thought p...",
+    "[P745 | BAB IV HASIL PENELITIAN DAN PEMBAHASAN] ...Ringkasan eksekutif yang dihasilkan oleh cloud engine via proxy lokal 9Router (menggunakan nvidia/minimaxai/minimax-m2.7)...",
+    "[P747 | BAB IV HASIL PENELITIAN DAN PEMBAHASAN] ...Sumber: Ringkasan naratif dihasilkan otomatis oleh cloud engine via proxy lokal 9Router (nvidia/minimaxai/minimax-m2.7) dengan fallback ke Llama 3.2 lokal berbasis profil statistik GMM (2025)...",
+    "[P794 | BAB VKESIMPULAN DAN SARAN] ...nsional. Penggabungan otomasi penalaran (reasoning) berskala besar menggunakan Hybrid Cognitive Pipeline dengan model cloud via proxy lokal 9Router (nvidia/minimaxai/minimax-m2.7 sebagai model utama dengan fallback oc/deepseek-v4-flash-free) juga telah menunjukkan kapabilitas AI generat...",
+    "[P808 | BAB VKESIMPULAN DAN SARAN] ...# Cache build_pt() results — cuts 4× recomputation        self.progress_callback = None        # Hybrid pipeline: OpenRouter cloud engine / 9Router local proxy        _api_key = cloud_api_key or os.getenv(\"OPENROUTER_API_KEY\", \"\")        _provider = os.getenv(\"LLM_PROVIDER\", llm_provide...",
+    "[P808 | BAB VKESIMPULAN DAN SARAN] ...by_year.keys())        total_pairs = len(years) - 1        for i in range(1, len(years)):            # Jeda antar pair agar tidak mem-burst 9Router (cegah rate-limit 429            # pada backend Cloudflare proxy). Pair pertama langsung jalan.            if i > 1:                time.sl...",
+    "[P808 | BAB VKESIMPULAN DAN SARAN] ...ting ──────────────────────────────────────────            if self.hybrid and self.hybrid.cloud_available:                provider_label = \"9Router proxy\" if (self.hybrid.cloud_engine and self.hybrid.cloud_engine.base_url and \"localhost\" in self.hybrid.cloud_engine.base_url) else \"OpenR...",
+    "[P808 | BAB VKESIMPULAN DAN SARAN] ... Routing ──────────────────────────────────────────────        if self.hybrid and self.hybrid.cloud_available:            provider_label = \"9Router proxy\" if (self.hybrid.cloud_engine and self.hybrid.cloud_engine.base_url and \"localhost\" in self.hybrid.cloud_engine.base_url) else \"OpenR...",
+    "[P809 | BAB VKESIMPULAN DAN SARAN] ...ool(_openrouter_key)_ninerouter_key = os.getenv(\"NINEROUTER_API_KEY\", \"sk-dde8c533e27371c9-g79ucv-95effe97\")_ninerouter_available = True  # 9Router runs locally, always available# ── Status Badge ────────────────────────────────────────────────# 9Router lokal selalu aktif (proxy lokal, ...",
+    "[P809 | BAB VKESIMPULAN DAN SARAN] ...\")_ninerouter_available = True  # 9Router runs locally, always available# ── Status Badge ────────────────────────────────────────────────# 9Router lokal selalu aktif (proxy lokal, tanpa rate limit) — tampilkan duluif _ninerouter_available:    st.sidebar.success(\"🚀 9Router Local Proxy: ...",
+    "[P809 | BAB VKESIMPULAN DAN SARAN] ...────────────# 9Router lokal selalu aktif (proxy lokal, tanpa rate limit) — tampilkan duluif _ninerouter_available:    st.sidebar.success(\"🚀 9Router Local Proxy: **Aktif**\")    st.sidebar.caption(\"60+ providers via 9Router · No rate limit\")# OpenRouter cloud hanya sebagai info tambahan b...",
+    "[P809 | BAB VKESIMPULAN DAN SARAN] ... tampilkan duluif _ninerouter_available:    st.sidebar.success(\"🚀 9Router Local Proxy: **Aktif**\")    st.sidebar.caption(\"60+ providers via 9Router · No rate limit\")# OpenRouter cloud hanya sebagai info tambahan bila API key tersediaif _openrouter_available:    st.sidebar.success(\"🌐 Ope...",
+    "[P809 | BAB VKESIMPULAN DAN SARAN] ...logi BAB III) ─────────st.sidebar.markdown(\"**Pilih Mode Pipeline:**\")PIPELINE_MODES = {    \"🌐 Hybrid (Cloud + Lokal)\": \"OpenRouter\",    \"🚀 9Router (Local Proxy)\": \"9Router\",    \"💻 Lokal Saja (Llama 3.2)\": \"Ollama\",}# Default: 9Router > Hybrid > Lokalif _ninerouter_available:    _defaul...",
+    "[P809 | BAB VKESIMPULAN DAN SARAN] ....sidebar.markdown(\"**Pilih Mode Pipeline:**\")PIPELINE_MODES = {    \"🌐 Hybrid (Cloud + Lokal)\": \"OpenRouter\",    \"🚀 9Router (Local Proxy)\": \"9Router\",    \"💻 Lokal Saja (Llama 3.2)\": \"Ollama\",}# Default: 9Router > Hybrid > Lokalif _ninerouter_available:    _default_mode = \"🚀 9Router (Loca...",
+    "[P809 | BAB VKESIMPULAN DAN SARAN] ...{    \"🌐 Hybrid (Cloud + Lokal)\": \"OpenRouter\",    \"🚀 9Router (Local Proxy)\": \"9Router\",    \"💻 Lokal Saja (Llama 3.2)\": \"Ollama\",}# Default: 9Router > Hybrid > Lokalif _ninerouter_available:    _default_mode = \"🚀 9Router (Local Proxy)\"elif _openrouter_available:    _default_mode = \"🌐 Hyb...",
+    "[P809 | BAB VKESIMPULAN DAN SARAN] ...y)\": \"9Router\",    \"💻 Lokal Saja (Llama 3.2)\": \"Ollama\",}# Default: 9Router > Hybrid > Lokalif _ninerouter_available:    _default_mode = \"🚀 9Router (Local Proxy)\"elif _openrouter_available:    _default_mode = \"🌐 Hybrid (Cloud + Lokal)\"else:    _default_mode = \"💻 Lokal Saja (Llama 3.2)\"s...",
+    "[P809 | BAB VKESIMPULAN DAN SARAN] ... \"TIDAK dikirim ke cloud. Hanya statistik agregat \"        \"(ARI, Silhouette, n klaster) yang keluar ke API.\"    )elif llm_provider_key == \"9Router\":    st.sidebar.markdown(\"\"\"<div style='background:#1a2e1a;border-radius:8px;padding:10px;font-size:0.78rem;color:#cdd9e5;border:1px solid ...",
+    "[P809 | BAB VKESIMPULAN DAN SARAN] ...ar.markdown(\"\"\"<div style='background:#1a2e1a;border-radius:8px;padding:10px;font-size:0.78rem;color:#cdd9e5;border:1px solid #2d5a2d'><b>🚀 9Router Local Proxy (60+ Providers)</b><br><br><b>Model:</b> COMBO (auto-routing) atau pilih manual<br><b>Semua task:</b> Persona, Causal, Summary<...",
+    "[P809 | BAB VKESIMPULAN DAN SARAN] ...it:</b> Tidak ada (proxy lokal)<br></div>\"\"\", unsafe_allow_html=True)    st.sidebar.markdown(\"\")    # Ambil daftar model LIVE dari endpoint 9Router (/v1/models) agar pilihan    # sesuai config proxy. COMBO (smart auto-router) jadi default.    _9r_models = fetch_ninerouter_models()    tr...",
+    "[P809 | BAB VKESIMPULAN DAN SARAN] ... _9r_models.index(\"COMBO\")    except ValueError:        _9r_default_idx = 0    cloud_model_selected = st.sidebar.selectbox(        \"🚀 Model 9Router (live dari endpoint):\",        _9r_models,        index=_9r_default_idx,        help=\"Diambil dari http://localhost:20128/v1/models. COMBO ...",
+    "[P809 | BAB VKESIMPULAN DAN SARAN] ...    cloud_api_key=_openrouter_key if llm_provider_key == \"OpenRouter\"                          else _ninerouter_key if llm_provider_key == \"9Router\"                          else None,            cloud_model=cloud_model_selected,            # Jangan kirim model cloud (\"COMBO\"/OpenRouter...",
+    "[P809 | BAB VKESIMPULAN DAN SARAN] ...del_selected,            # Jangan kirim model cloud (\"COMBO\"/OpenRouter) ke Ollama.            # Ollama lokal pakai model nyata; mode cloud/9Router → default llama3.2:3b.            ollama_model=llm_model if llm_provider_key == \"Ollama\" else DEFAULT_OLLAMA_MODEL,        )    st.sidebar...."
+  ],
+  "other_stale_98": [
+    "[P657 | BAB IV HASIL PENELITIAN DAN PEMBAHASAN] ...stribusi yang sangat timpang: satu klaster dominan mencakup 98% pendaftar dan satu klaster minoritas hanya 2%. Dominasi sat...",
+    "[P667 | BAB IV HASIL PENELITIAN DAN PEMBAHASAN] .... Visualisasi menunjukkan bahwa mayoritas titik (Klaster 1, 98%) mengelompok di area tengah ruang PCA, sementara Klaster 2 ...",
+    "[P683 | BAB IV HASIL PENELITIAN DAN PEMBAHASAN] ...an dominasi satu klaster. Klaster 2 mencakup 300 pendaftar (99,7%) dengan prodi dominan S1 Informatika (112) dan S1 Teknologi...",
+    "[P688 | BAB IV HASIL PENELITIAN DAN PEMBAHASAN] ...1 dengan pola K=2 yang konsisten: satu klaster dominan (K2, 99,7%) yang mencakup hampir seluruh ruang PCA, dan satu titik kla...",
+    "[P694 | BAB IV HASIL PENELITIAN DAN PEMBAHASAN] ...ribusi timpang. Klaster 2 mendominasi dengan 453 pendaftar (98,9%) dengan prodi dominan S1 Teknologi Informasi (130) dan S1 I...",
+    "[P699 | BAB IV HASIL PENELITIAN DAN PEMBAHASAN] ...wal dengan dua klaster hasil GMM (K=2). Klaster 2 (dominan, 98,9%) menguasai area PCA dengan kepadatan tinggi di bagian tenga...",
+    "[P729 | BAB IV HASIL PENELITIAN DAN PEMBAHASAN] ...si (2024). Temuan ini menggantikan narasi mayoritas tunggal 98%+ yang sebelumnya diasumsikan, dan mengindikasikan bahwa stru...",
+    "[P795 | BAB VKESIMPULAN DAN SARAN] ...mental hanya terbagi menjadi dua profil: mayoritas homogen (98%+) dan segmen minoritas spesifik. Konsistensi K=2 di semua ta..."
+  ]
+}

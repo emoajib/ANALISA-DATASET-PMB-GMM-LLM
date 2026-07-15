@@ -1,0 +1,229 @@
+{
+  "source_csv": {
+    "t47": "/Volumes/WORK/MTI UNSIBANK/TESIS/src/outputs/tabel_4_7_evaluasi_internal.csv",
+    "kscan": "/Volumes/WORK/MTI UNSIBANK/TESIS/src/outputs/tabel_4_5_kscan.csv"
+  },
+  "docx_table_index_for_t47": 21,
+  "docx_table_caption": "Tabel 4.7 - Ringkasan Metrik Evaluasi Internal GMM per Periode",
+  "formatting_note": "Indonesian decimal comma (dot->comma). No thousands separator, matching Tabel 4.5 (docx table 19) convention for LL/Silhouette. K written as plain integer (no '(optimal)' suffix) to match existing Tabel 4.7 cell style.",
+  "t47_new_rows": [
+    {
+      "tahun": "2019",
+      "fase": "Pre-COVID",
+      "K": 2,
+      "silhouette": "0,0522",
+      "ch": "4,14",
+      "db": "5,6718",
+      "ll": "-23362,01"
+    },
+    {
+      "tahun": "2020",
+      "fase": "COVID Crisis",
+      "K": 3,
+      "silhouette": "0,0798",
+      "ch": "19,4",
+      "db": "3,1099",
+      "ll": "-43178,07"
+    },
+    {
+      "tahun": "2021",
+      "fase": "COVID Crisis",
+      "K": 2,
+      "silhouette": "0,0748",
+      "ch": "27,3",
+      "db": "3,191",
+      "ll": "-45504,4"
+    },
+    {
+      "tahun": "2022",
+      "fase": "Recovery",
+      "K": 2,
+      "silhouette": "0,0663",
+      "ch": "27,51",
+      "db": "3,7674",
+      "ll": "-70883,68"
+    },
+    {
+      "tahun": "2023",
+      "fase": "Recovery",
+      "K": 5,
+      "silhouette": "0,0691",
+      "ch": "36,08",
+      "db": "3,0046",
+      "ll": "-105094,15"
+    },
+    {
+      "tahun": "2024",
+      "fase": "Recovery",
+      "K": 4,
+      "silhouette": "0,0585",
+      "ch": "27,19",
+      "db": "3,1211",
+      "ll": "-75081,63"
+    }
+  ],
+  "t47_crosscheck_kscan": [
+    {
+      "tahun": "2019",
+      "optimal_K": 2,
+      "sil_at_optimal_K": "0,0522",
+      "kscan_raw": 0.05219697330496087,
+      "match": true
+    },
+    {
+      "tahun": "2020",
+      "optimal_K": 3,
+      "sil_at_optimal_K": "0,0798",
+      "kscan_raw": 0.07979249523306212,
+      "match": true
+    },
+    {
+      "tahun": "2021",
+      "optimal_K": 2,
+      "sil_at_optimal_K": "0,0748",
+      "kscan_raw": 0.07479064520223949,
+      "match": true
+    },
+    {
+      "tahun": "2022",
+      "optimal_K": 2,
+      "sil_at_optimal_K": "0,0663",
+      "kscan_raw": 0.06626395262403537,
+      "match": true
+    },
+    {
+      "tahun": "2023",
+      "optimal_K": 5,
+      "sil_at_optimal_K": "0,0691",
+      "kscan_raw": 0.0690750566404226,
+      "match": true
+    },
+    {
+      "tahun": "2024",
+      "optimal_K": 4,
+      "sil_at_optimal_K": "0,0585",
+      "kscan_raw": 0.05854314155090451,
+      "match": true
+    }
+  ],
+  "silhouette_series": {
+    "2019": "0,0522",
+    "2020": "0,0798",
+    "2021": "0,0748",
+    "2022": "0,0663",
+    "2023": "0,0691",
+    "2024": "0,0585"
+  },
+  "stale_strings": [
+    {
+      "id": "t47_table_hardcoded",
+      "sentence": "Tabel 4.7 (docx table 21) entire table is hardcoded: K=2 for ALL years; 2019 Silhouette=0.0883; 2020=-0.0008; 2021=-0.0064; 2022=0.0518; 2023=0.0366; 2024=0.0202; with wrong CH/DB/LL. Must be fully replaced by t47_new_rows.",
+      "context": "Tabel 4.7 (docx table index 21)"
+    },
+    {
+      "id": "sil_0,0883_P596",
+      "sentence": "Grafik memperlihatkan fluktuasi yang tidak monoton: nilai tertinggi pada 2019 (0,0883) menurun drastis ke nilai negatif pada 2020 (-0,0008) dan 2021 (-0,0064), yang mengindikasikan bahwa selama fase COVID Crisis, dua klaster yang teridentifikasi memiliki overlap sangat tinggi.",
+      "context": "Bab IV - P596 (narasi Gambar 4.2)"
+    },
+    {
+      "id": "sil_0,0883_P624",
+      "sentence": "Keempat, Silhouette Score berada dalam rentang -0,0064 hingga 0,0883, dengan nilai tertinggi pada 2019 (0,0883) saat jumlah data paling sedikit dan diferensiasi paling jelas. Nilai negatif pada 2020 (-0,0008) dan 2021 (-0,0064) mengindikasikan bahwa selama fase COVID Crisis, dua klaster yang teridentifikasi memiliki overlap yang sangat tinggi.",
+      "context": "Bab IV - P624 (narasi Tabel 4.7)"
+    },
+    {
+      "id": "sil_neg_P596_P624",
+      "sentence": "(same as above) 2020 (-0,0008) dan 2021 (-0,0064) adalah klaim silhouette NEGATIF yang salah; nilai otoritatif positif: 2020=0,0798, 2021=0,0748.",
+      "context": "Bab IV - P596 & P624"
+    },
+    {
+      "id": "sil_old_P596",
+      "sentence": "Pada fase Recovery, nilai Silhouette meningkat kembali ke 0,0518 (2022) sebelum menurun secara bertahap ke 0,0366 (2023) dan 0,0202 (2024). (Semua salah: otoritatif 2022=0,0663, 2023=0,0691, 2024=0,0585.)",
+      "context": "Bab IV - P596 (narasi Gambar 4.2)"
+    },
+    {
+      "id": "ll_old_P624",
+      "sentence": "Pertama, nilai Log Likelihood seluruhnya negatif dengan tren menurun dari -23.376 (2019) hingga -98.775 (2023). (Salah: otoritatif 2019=-23362,01, 2023=-105094,15; dan 2024=-75081,63 lebih tinggi dari 2023 sehingga 'tren menurun' sampai 2023 lalu naik.)",
+      "context": "Bab IV - P624 (narasi Tabel 4.7)"
+    },
+    {
+      "id": "ch_db_old_P624",
+      "sentence": "Kedua, nilai Calinski-Harabasz meningkat dari 0,96-1,93 pada fase Pre-COVID dan COVID Crisis menjadi 1,97-3,88 pada fase Recovery. Ketiga, nilai Davies-Bouldin berfluktuasi antara 0,99 dan 4,01. (Salah: CH otoritatif 4,14-36,08; DB otoritatif 3,0046-5,6718.)",
+      "context": "Bab IV - P624 (narasi Tabel 4.7)"
+    },
+    {
+      "id": "9router_P705",
+      "sentence": "Sistem otomasi LLM hybrid menghasilkan reasoning kausal melalui cloud engine via proxy lokal 9Router (menggunakan nvidia/minimaxai/minimax-m2.7 sebagai model utama dengan fallback ke oc/deepseek-v4-flash-free) menggunakan chain of thought prompting.",
+      "context": "Bab IV - P705 (naratif; '9Router' diduga korupsi token 'OpenRouter')"
+    },
+    {
+      "id": "9router_P714",
+      "sentence": "Ringkasan eksekutif yang dihasilkan oleh cloud engine via proxy lokal 9Router (menggunakan nvidia/minimaxai/minimax-m2.7)",
+      "context": "Bab IV - P714 (naratif)"
+    },
+    {
+      "id": "9router_P716",
+      "sentence": "Sumber: Ringkasan naratif dihasilkan otomatis oleh cloud engine via proxy lokal 9Router (nvidia/minimaxai/minimax-m2.7) dengan fallback ke Llama 3.2 lokal berbasis profil statistik GMM (2025)",
+      "context": "Bab IV - P716 (naratif)"
+    },
+    {
+      "id": "9router_P759",
+      "sentence": "Penggabungan otomasi penalaran (reasoning) berskala besar menggunakan Hybrid Cognitive Pipeline dengan model cloud via proxy lokal 9Router (nvidia/minimaxai/minimax-m2.7 sebagai model utama dengan fallback oc/deepseek-v4-flash-free) juga telah menunjukkan kapabilitas AI generatif...",
+      "context": "Bab V - P759 (naratif; Kesimpulan)"
+    },
+    {
+      "id": "stabil_98pct_t416",
+      "sentence": "Mayoritas IT Kab. Pekalongan | Stabil 98%+ di seluruh periode | TINGGI | ... (Kolom 'Tren 2022-2024' salah: pangsa klaster terbesar turun 65,1% (2019) -> 33,6% (2024) per Tabel 4.15/P698, bukan stabil 98%+.)",
+      "context": "Tabel 4.16 (docx table 30), R1"
+    },
+    {
+      "id": "pct98_P633",
+      "sentence": "Pada 2019 (baseline 146 pendaftar), GMM mengidentifikasi 2 klaster dengan distribusi yang sangat timpang: satu klaster dominan mencakup 98% pendaftar dan satu klaster minoritas hanya 2%. (Bertentangan dengan temuan P698: pangsa terbesar 2019=65,1%, bukan 98%.)",
+      "context": "Bab IV - P633 (narasi Tabel 4.8/4.9)"
+    },
+    {
+      "id": "pct98_P642",
+      "sentence": "Visualisasi menunjukkan bahwa mayoritas titik (Klaster 1, 98%) mengelompok di area tengah ruang PCA, sementara Klaster 2 (2%) berada di area yang lebih terpisah. (Salah: pangsa klaster terbesar 2019=65,1%.)",
+      "context": "Bab IV - P642 (narasi Gambar 4.5a)"
+    },
+    {
+      "id": "pct98_P760",
+      "sentence": "Temuan ini mengungkapkan bahwa segmen pendaftar ITSNU Pekalongan secara fundamental hanya terbagi menjadi dua profil: mayoritas homogen (98%+) dan segmen minoritas spesifik. (Salah & bertentangan dengan P698.)",
+      "context": "Bab V - P760 (Kesimpulan)"
+    },
+    {
+      "id": "pct98_selfref_P698",
+      "sentence": "Temuan ini menggantikan narasi mayoritas tunggal 98%+ yang sebelumnya diasumsikan, dan mengindikasikan bahwa struktur pasar ITSNU Pekalongan secara gradual menjadi lebih beragam. (Ini rujukan meta ke asumsi lama; aman, tapi pastikan tidak ada '98%' lain yang tersisa.)",
+      "context": "Bab IV - P698 (narasi Tabel 4.15; meta-reference, bukan data)"
+    },
+    {
+      "id": "pct99_7_P656",
+      "sentence": "Tabel 4.11 menunjukkan pola yang konsisten dengan 2020: K=2 dengan dominasi satu klaster. Klaster 2 mencakup 300 pendaftar (99,7%) ... Konsistensi pola K=2 antara 2020 dan 2021 ... (Salah: 2020 optimal K=K3, bukan K2; dan pangsa 99,7% bertentangan dengan P698.)",
+      "context": "Bab IV - P656 (narasi Tabel 4.11)"
+    },
+    {
+      "id": "pct99_7_P661",
+      "sentence": "Gambar 4.5c memperlihatkan distribusi 301 pendaftar 2021 dengan pola K=2 yang konsisten: satu klaster dominan (K2, 99,7%) yang mencakup hampir seluruh ruang PCA, dan satu titik klaster 1 yang terisolasi. (Pangsa 99,7% salah per P698.)",
+      "context": "Bab IV - P661 (narasi Gambar 4.5c)"
+    },
+    {
+      "id": "pct98_9_P666",
+      "sentence": "Tabel 4.12 menandai awal fase Recovery dengan pola yang konsisten: K=2 dengan distribusi timpang. Klaster 2 mendominasi dengan 453 pendaftar (98,9%) ... (Pangsa 98,9% salah per P698; K=2 untuk 2022 benar, tapi narasi 'konsisten' menyesatkan.)",
+      "context": "Bab IV - P666 (narasi Tabel 4.12)"
+    },
+    {
+      "id": "pct98_9_P671",
+      "sentence": "Gambar 4.5d memvisualisasikan distribusi 458 pendaftar 2022 pada fase Recovery awal dengan dua klaster hasil GMM (K=2). Klaster 2 (dominan, 98,9%) menguasai area PCA ... (Pangsa 98,9% salah per P698.)",
+      "context": "Bab IV - P671 (narasi Gambar 4.5d)"
+    },
+    {
+      "id": "k2_konsisten_P760",
+      "sentence": "Dari dataset 2.362 pendaftar, pendekatan ini sukses mengidentifikasi K=2 secara konsisten untuk seluruh 6 periode (2019-2024), dengan posterior probability berkisar 0,514-1,000. ... Konsistensi K=2 di semua tahun ... (SALAH TOTAL: K bervariasi 2-5: 2019=K2,2020=K3,2021=K2,2022=K2,2023=K5,2024=K4.)",
+      "context": "Bab V - P760 (Kesimpulan - klaim 'K=2 konsisten' yang eksplisit salah)"
+    },
+    {
+      "id": "k2_konsisten_implied_P656",
+      "sentence": "Konsistensi pola K=2 antara 2020 dan 2021 mengindikasikan bahwa disrupsi COVID-19 tidak mengubah struktur dasar segmen pendaftar. (Salah: 2020 optimal K=K3.)",
+      "context": "Bab IV - P656 (narasi Tabel 4.11)"
+    }
+  ]
+}
