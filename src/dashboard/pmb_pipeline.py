@@ -862,10 +862,10 @@ class PMBAnalysisPipeline:
             )
         self._report_progress("Generating table narratives...", 20)
         # Generate narratives for tables and images
-        self.generate_table_narratives()
         self._report_progress("Saving outputs...", 80)
         # Save outputs
         self.save_outputs()
+        self.generate_table_narratives()
         # Flush LLM cache once at end of pipeline
         flush_llm_cache()
         self._report_progress("Deployment completed", 100)
@@ -884,7 +884,12 @@ class PMBAnalysisPipeline:
 
         def generate_narrative(table_name, file_path, prompt_text):
             if os.path.exists(file_path):
-                df = pd.read_csv(file_path)
+                try:
+                    df = pd.read_csv(file_path)
+                except (pd.errors.EmptyDataError, pd.errors.ParserError) as e:
+                    logger.warning(f"Empty/corrupt file for {table_name}: {e}")
+                    _narr_progress(f"{table_name} (empty)")
+                    return None
                 prompt = f"Berikan penjelasan lengkap dan detail untuk {table_name} berdasarkan data berikut: {df.to_string()}. {prompt_text} Pastikan penjelasan lengkap, analisis mendalam, dan berikan kesimpulan yang jelas. Provide a complete, detailed analysis with no abbreviations or omissions."
                 try:
                     _narr_progress(table_name)
@@ -942,7 +947,7 @@ class PMBAnalysisPipeline:
         # Narrative for Tabel 4.5
         self.table_narratives["tabel_4_5"] = (
             generate_narrative(
-                "Tabel 4.5 K-Means Clustering",
+                "Tabel 4.5 GMM K-Scan",
                 str(OUTPUTS_DIR / "tabel_4_5_kscan.csv"),
                 "Jelaskan hasil clustering dengan K-Means dan silhouette scores.",
             )
@@ -1028,7 +1033,10 @@ class PMBAnalysisPipeline:
         # Narrative for Gambar 4.1 - Visual bar chart analysis
         if os.path.exists(str(OUTPUTS_DIR / "tabel_4_1_distribusi.csv")):
             _narr_progress("Gambar 4.1")
-            df = pd.read_csv(str(OUTPUTS_DIR / "tabel_4_1_distribusi.csv"))
+            try:
+                df = pd.read_csv(str(OUTPUTS_DIR / "tabel_4_1_distribusi.csv"))
+            except (pd.errors.EmptyDataError, pd.errors.ParserError):
+                df = pd.DataFrame()
             prompt = f"Analisis visual Gambar 4.1 sebagai diagram batang distribusi pendaftar PMB ITSNU Pekalongan 2019-2024. Fokus pada elemen visual: kode warna fase (Pre-COVID biru, COVID Crisis merah, Recovery hijau), tinggi bar setiap tahun, pola tren naik/turun, dampak visual COVID-19 sebagai penurunan drastis, dan recovery sebagai pemulihan bertahap. Jelaskan bagaimana visualisasi memperlihatkan structural break dan transisi fase. Berikan interpretasi visual detail untuk setiap bar tahun dan kesimpulan visual komprehensif. Provide a complete, detailed visual analysis with no abbreviations or omissions."
             self.image_narratives["gambar_4_1"] = generate_llm_response(
                 prompt, self.llm_provider, None, 2000, model=self.llm_model
@@ -1037,7 +1045,10 @@ class PMBAnalysisPipeline:
         # Narrative for Gambar 4.2 - Silhouette score visualization
         if os.path.exists(str(OUTPUTS_DIR / "tabel_4_5_kscan.csv")):
             _narr_progress("Gambar 4.2")
-            df_kscan = pd.read_csv(str(OUTPUTS_DIR / "tabel_4_5_kscan.csv"))
+            try:
+                df_kscan = pd.read_csv(str(OUTPUTS_DIR / "tabel_4_5_kscan.csv"))
+            except (pd.errors.EmptyDataError, pd.errors.ParserError):
+                df_kscan = pd.DataFrame()
             prompt = f"Analisis visual Gambar 4.2 yang menampilkan silhouette scores untuk berbagai nilai k dalam clustering. Fokus pada elemen visual: kurva silhouette per tahun, titik optimal k, perbandingan GMM vs K-Means, pola tren skor, dan bagaimana visualisasi membantu identifikasi kualitas cluster. Jelaskan perbedaan visual antara metode clustering dan implikasi untuk segmentasi mahasiswa. Provide a complete, detailed visual analysis with no abbreviations or omissions."
             self.image_narratives["gambar_4_2"] = generate_llm_response(
                 prompt, self.llm_provider, None, 2000, model=self.llm_model
@@ -1046,7 +1057,10 @@ class PMBAnalysisPipeline:
         # Narrative for Gambar 4.3 - ARI heatmap/matrix visualization
         if os.path.exists(str(OUTPUTS_DIR / "tabel_4_6_ari.csv")):
             _narr_progress("Gambar 4.3")
-            df_ari = pd.read_csv(str(OUTPUTS_DIR / "tabel_4_6_ari.csv"))
+            try:
+                df_ari = pd.read_csv(str(OUTPUTS_DIR / "tabel_4_6_ari.csv"))
+            except (pd.errors.EmptyDataError, pd.errors.ParserError):
+                df_ari = pd.DataFrame()
             prompt = f"Analisis visual Gambar 4.3 sebagai heatmap atau matriks ARI antar tahun. Fokus pada elemen visual: skala warna untuk nilai ARI (biru untuk tinggi, merah untuk rendah/negatif), pola diagonal, structural break sebagai area merah, stabilitas sebagai area biru, dan tren temporal. Jelaskan bagaimana visualisasi memperlihatkan dampak COVID-19 dan transisi fase. Provide a complete, detailed visual analysis with no abbreviations or omissions."
             self.image_narratives["gambar_4_3"] = generate_llm_response(
                 prompt, self.llm_provider, None, 2000, model=self.llm_model
@@ -1055,7 +1069,10 @@ class PMBAnalysisPipeline:
         # Narrative for Gambar 4.4 - Projection visualization
         if os.path.exists(str(OUTPUTS_DIR / "tabel_4_16_prioritasi_2025.csv")):
             _narr_progress("Gambar 4.4")
-            df_proj = pd.read_csv(str(OUTPUTS_DIR / "tabel_4_16_prioritasi_2025.csv"))
+            try:
+                df_proj = pd.read_csv(str(OUTPUTS_DIR / "tabel_4_16_prioritasi_2025.csv"))
+            except (pd.errors.EmptyDataError, pd.errors.ParserError):
+                df_proj = pd.DataFrame()
             prompt = f"Analisis visual Gambar 4.4 yang menunjukkan proyeksi pendaftar 2025. Fokus pada elemen visual: garis tren historis, titik proyeksi 2025, confidence interval jika ada, pola pertumbuhan, dan implikasi visual untuk perencanaan kampus. Jelaskan bagaimana visualisasi mendukung forecasting dan strategi rekrutmen. Provide a complete, detailed visual analysis with no abbreviations or omissions."
             self.image_narratives["gambar_4_4"] = generate_llm_response(
                 prompt, self.llm_provider, None, 2000, model=self.llm_model
@@ -1068,7 +1085,11 @@ class PMBAnalysisPipeline:
             scatter_key = f"gambar_4_5{chr(97 + i)}"
             csv_file = str(OUTPUTS_DIR / f"tabel_4_{9 + i}_profil_{y}.csv")
             if os.path.exists(csv_file):
-                df_scatter = pd.read_csv(csv_file)
+                try:
+                    df_scatter = pd.read_csv(csv_file)
+                except (pd.errors.EmptyDataError, pd.errors.ParserError):
+                    self.image_narratives[scatter_key] = None
+                    continue
                 prompt = f"Analisis visual scatter plot Gambar 4.5{chr(97 + i)} untuk tahun {y}, menampilkan clustering PCA mahasiswa. Fokus pada elemen visual: distribusi titik cluster, warna/shape untuk setiap cluster, centroid sebagai pusat cluster, dispersi titik, overlap antar cluster, dan pola geografis. Jelaskan bagaimana visualisasi memperlihatkan segmentasi mahasiswa berdasarkan profil demografis dan akademik. Provide a complete, detailed visual analysis with no abbreviations or omissions."
                 self.image_narratives[scatter_key] = generate_llm_response(
                     prompt, self.llm_provider, None, 2000, model=self.llm_model
